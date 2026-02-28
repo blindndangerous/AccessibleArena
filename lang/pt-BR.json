@@ -767,5 +767,9 @@
   "EventScreenTitle_Format": "Evento: {0}",
   "PacketOf_Format": "Pacote {0} de {1}",
 
+  "CurrencyGold": "Ouro",
+  "CurrencyGems": "Gemas",
+  "CurrencyWildcards": "Wildcards",
+
   "NumberWords": "uma=1,um=1,dois=2,duas=2,três=3,quatro=4,cinco=5,seis=6,sete=7,oito=8,nove=9,dez=10"
 }

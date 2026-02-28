@@ -766,5 +766,9 @@
   "EventScreenTitle_Format": "이벤트: {0}",
   "PacketOf_Format": "패킷 {0}/{1}",
 
+  "CurrencyGold": "골드",
+  "CurrencyGems": "젬",
+  "CurrencyWildcards": "와일드카드",
+
   "NumberWords": ""
 }

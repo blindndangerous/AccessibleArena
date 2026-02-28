@@ -64,6 +64,11 @@ namespace AccessibleArena.Core.Services
             if (overrideLabel != null)
                 return overrideLabel;
 
+            // Check if this is a currency display element (Gold, Gems, Wildcards)
+            string currencyLabel = TryGetCurrencyLabel(gameObject);
+            if (!string.IsNullOrEmpty(currencyLabel))
+                return currencyLabel;
+
             // Check if this is a deck entry (MetaDeckView) - look for parent with input field containing deck name
             string deckName = TryGetDeckName(gameObject);
             if (!string.IsNullOrEmpty(deckName))
@@ -243,6 +248,87 @@ namespace AccessibleArena.Core.Services
             // NewDeckButton shows "Enter deck name..." placeholder but is actually a create deck button
             if (objectName.Contains("NewDeckButton"))
                 return "New Deck";
+
+            return null;
+        }
+
+        /// <summary>
+        /// Detects navbar currency buttons (Nav_Coins, Nav_Gems, Nav_WildCard) and provides
+        /// proper labeled text. Gold/Gems get "Label: amount", Wildcards get the tooltip
+        /// text which contains per-rarity wildcard counts and vault progress.
+        /// </summary>
+        private static string TryGetCurrencyLabel(GameObject gameObject)
+        {
+            string name = gameObject.name;
+
+            if (name == "Nav_Coins" || name == "Nav_Gems")
+            {
+                // Extract the numeric amount from TMP_Text child
+                var tmpText = gameObject.GetComponentInChildren<TMP_Text>();
+                string amount = tmpText != null ? CleanText(tmpText.text) : "";
+
+                string label = name == "Nav_Coins"
+                    ? Models.Strings.CurrencyGold
+                    : Models.Strings.CurrencyGems;
+
+                return !string.IsNullOrEmpty(amount)
+                    ? LocaleManager.Instance.Format("LabelValue_Format", label, amount)
+                    : label;
+            }
+
+            if (name == "Nav_WildCard")
+            {
+                // Read TooltipData.Text from TooltipTrigger component (same pattern as UIActivator)
+                // The game's NavBarController.UpdateWildcardTooltip() populates this with
+                // localized wildcard counts + vault progress
+                string tooltipText = GetWildcardTooltipText(gameObject);
+                if (!string.IsNullOrEmpty(tooltipText))
+                    return Models.Strings.CurrencyWildcards + ": " + tooltipText;
+
+                return Models.Strings.CurrencyWildcards;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Reads the wildcard tooltip text from a TooltipTrigger component.
+        /// Strips rich text style tags and joins lines with ", " for screen reader flow.
+        /// </summary>
+        private static string GetWildcardTooltipText(GameObject gameObject)
+        {
+            var pubFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+
+            foreach (var comp in gameObject.GetComponents<MonoBehaviour>())
+            {
+                if (comp == null || comp.GetType().Name != "TooltipTrigger") continue;
+
+                // TooltipData is a public field
+                var dataField = comp.GetType().GetField("TooltipData", pubFlags);
+                if (dataField == null) continue;
+
+                var data = dataField.GetValue(comp);
+                if (data == null) continue;
+
+                // Text is a public property (virtual getter with localization)
+                var textProp = data.GetType().GetProperty("Text", pubFlags);
+                if (textProp == null) continue;
+
+                var text = textProp.GetValue(data) as string;
+                if (string.IsNullOrWhiteSpace(text)) continue;
+
+                // Strip <style="VaultText"> and </style> tags
+                text = System.Text.RegularExpressions.Regex.Replace(text, @"</?style[^>]*>", "");
+                // Replace newlines with ", " for screen reader flow
+                text = text.Replace("\r\n", ", ").Replace("\n", ", ").Replace("\r", ", ");
+                // Clean up any double commas or trailing commas
+                while (text.Contains(",  ,") || text.Contains(",,"))
+                    text = text.Replace(",  ,", ",").Replace(",,", ",");
+                text = text.Trim().TrimEnd(',').Trim();
+
+                if (!string.IsNullOrEmpty(text))
+                    return text;
+            }
 
             return null;
         }

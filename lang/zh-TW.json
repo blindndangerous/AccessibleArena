@@ -767,5 +767,9 @@
   "EventScreenTitle_Format": "賽事：{0}",
   "PacketOf_Format": "包 {0}/{1}",
 
+  "CurrencyGold": "金幣",
+  "CurrencyGems": "寶石",
+  "CurrencyWildcards": "萬能牌",
+
   "NumberWords": ""
 }

@@ -659,6 +659,13 @@ namespace AccessibleArena.Core.Models
         }
 
         // ===========================================
+        // CURRENCY LABELS
+        // ===========================================
+        public static string CurrencyGold => L.Get("CurrencyGold");
+        public static string CurrencyGems => L.Get("CurrencyGems");
+        public static string CurrencyWildcards => L.Get("CurrencyWildcards");
+
+        // ===========================================
         // MANA SYMBOLS (for rules text parsing)
         // ===========================================
         public static string ManaTap => L.Get("ManaTap");
