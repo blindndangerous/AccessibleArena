@@ -850,5 +850,9 @@
   "RoleScrollbar": "scrollbar",
   "RoleProgress": "progress",
   "RoleControl": "control",
-  "HintUseLeftRightArrows": "use left and right arrows"
+  "HintUseLeftRightArrows": "use left and right arrows",
+  "CraftConfirm_Title": "Craft Card",
+  "CraftConfirm_Body_Format": "Craft {0} using a {1} wildcard?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Cancel"
 }

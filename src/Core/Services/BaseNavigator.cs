@@ -141,6 +141,9 @@ namespace AccessibleArena.Core.Services
         /// <summary>Called after a deck builder card (collection or deck list) is activated. Subclasses can trigger rescan.</summary>
         protected virtual void OnDeckBuilderCardActivated() { }
 
+        /// <summary>Called before a collection card is activated. Return true to intercept (e.g., show craft confirmation).</summary>
+        protected virtual bool OnCollectionCardActivating(GameObject element) => false;
+
         /// <summary>Build the initial screen announcement</summary>
         protected virtual string GetActivationAnnouncement()
         {
@@ -1774,6 +1777,10 @@ namespace AccessibleArena.Core.Services
             // Collection cards should NOT go to CardInfoNavigator on Enter - they should be added to deck
             if (UIActivator.IsCollectionCard(element))
             {
+                // Allow subclass to intercept (e.g., craft confirmation)
+                if (OnCollectionCardActivating(element))
+                    return;
+
                 MelonLogger.Msg($"[{NavigatorId}] Collection card detected - activating to add to deck");
                 var collectionResult = UIActivator.Activate(element);
                 _announcer.Announce(collectionResult.Message, AnnouncementPriority.Normal);

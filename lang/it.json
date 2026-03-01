@@ -787,5 +787,9 @@
   "RoleScrollbar": "barra di scorrimento",
   "RoleProgress": "avanzamento",
   "RoleControl": "controllo",
-  "HintUseLeftRightArrows": "usa le frecce sinistra e destra"
+  "HintUseLeftRightArrows": "usa le frecce sinistra e destra",
+  "CraftConfirm_Title": "Crea carta",
+  "CraftConfirm_Body_Format": "Creare {0} usando una wildcard {1}?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Annulla"
 }

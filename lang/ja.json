@@ -786,5 +786,9 @@
   "RoleScrollbar": "スクロールバー",
   "RoleProgress": "進行状況",
   "RoleControl": "コントロール",
-  "HintUseLeftRightArrows": "左右の矢印キーを使用"
+  "HintUseLeftRightArrows": "左右の矢印キーを使用",
+  "CraftConfirm_Title": "カード作成",
+  "CraftConfirm_Body_Format": "{1}ワイルドカードを使用して{0}を作成しますか？",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "キャンセル"
 }

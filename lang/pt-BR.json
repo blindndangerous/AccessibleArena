@@ -787,5 +787,9 @@
   "RoleScrollbar": "barra de rolagem",
   "RoleProgress": "progresso",
   "RoleControl": "controle",
-  "HintUseLeftRightArrows": "use as setas esquerda e direita"
+  "HintUseLeftRightArrows": "use as setas esquerda e direita",
+  "CraftConfirm_Title": "Fabricar carta",
+  "CraftConfirm_Body_Format": "Fabricar {0} usando um curinga {1}?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Cancelar"
 }

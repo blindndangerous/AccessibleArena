@@ -835,5 +835,9 @@
   "RoleScrollbar": "Scrollleiste",
   "RoleProgress": "Fortschritt",
   "RoleControl": "Steuerelement",
-  "HintUseLeftRightArrows": "Pfeiltasten links und rechts verwenden"
+  "HintUseLeftRightArrows": "Pfeiltasten links und rechts verwenden",
+  "CraftConfirm_Title": "Karte herstellen",
+  "CraftConfirm_Body_Format": "{0} mit einer {1}-Wildcard herstellen?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Abbrechen"
 }

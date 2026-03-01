@@ -801,5 +801,9 @@
   "RoleScrollbar": "pasek przewijania",
   "RoleProgress": "postęp",
   "RoleControl": "kontrolka",
-  "HintUseLeftRightArrows": "użyj strzałek w lewo i w prawo"
+  "HintUseLeftRightArrows": "użyj strzałek w lewo i w prawo",
+  "CraftConfirm_Title": "Stwórz kartę",
+  "CraftConfirm_Body_Format": "Stworzyć {0} używając dzikiej karty {1}?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Anuluj"
 }

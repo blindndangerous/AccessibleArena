@@ -786,5 +786,9 @@
   "RoleScrollbar": "스크롤바",
   "RoleProgress": "진행",
   "RoleControl": "컨트롤",
-  "HintUseLeftRightArrows": "좌우 화살표 키를 사용하세요"
+  "HintUseLeftRightArrows": "좌우 화살표 키를 사용하세요",
+  "CraftConfirm_Title": "카드 제작",
+  "CraftConfirm_Body_Format": "{1} 와일드카드를 사용하여 {0}을(를) 제작하시겠습니까?",
+  "CraftConfirm_OK": "확인",
+  "CraftConfirm_Cancel": "취소"
 }

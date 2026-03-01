@@ -195,6 +195,12 @@ namespace AccessibleArena.Core.Services
         private bool _isPopupActive;
         private readonly PopupHandler _popupHandler;
 
+        // Craft confirmation popup
+        private CraftConfirmationPopup _craftPopup;
+        private GameObject _pendingCraftElement;
+        private bool _craftConfirmPending;
+        private Toggle _craftToggle;
+
         #endregion
 
         #region Helper Methods
@@ -901,6 +907,7 @@ namespace AccessibleArena.Core.Services
             _hasLoggedUIOnce = false;
             _activationDelay = ActivationDelaySeconds;
             _isDeckBuilderReadOnly = false;
+            _craftToggle = null;
 
             // Reset NPE button tracking for new scene
             _npeButtonCheckTimer = NPEButtonCheckInterval;
@@ -1147,6 +1154,7 @@ namespace AccessibleArena.Core.Services
                 if (!_popupHandler.ValidatePopup())
                 {
                     ClearPopupState();
+                    HandleCraftConfirmationResult();
                     return false;
                 }
                 _popupHandler.HandleInput();
@@ -5073,6 +5081,91 @@ namespace AccessibleArena.Core.Services
                 // Invalidate cached card info so Owned/InDeck/Quantity updates on next arrow press
                 AccessibleArenaMod.Instance?.CardNavigator?.InvalidateBlocks();
             }
+        }
+
+        /// <summary>
+        /// Intercept collection card activation when craft toggle is ON.
+        /// Shows a confirmation popup instead of immediately crafting.
+        /// </summary>
+        protected override bool OnCollectionCardActivating(GameObject element)
+        {
+            if (!IsCraftModeActive())
+                return false;
+
+            var cardInfo = CardModelProvider.ExtractCardInfoFromModel(element);
+            string cardName = cardInfo.HasValue && cardInfo.Value.IsValid && !string.IsNullOrEmpty(cardInfo.Value.Name)
+                ? cardInfo.Value.Name
+                : "Unknown";
+            string rarity = cardInfo.HasValue && !string.IsNullOrEmpty(cardInfo.Value.Rarity)
+                ? cardInfo.Value.Rarity
+                : "Unknown";
+
+            string bodyText = Models.Strings.CraftConfirmBody(cardName, rarity);
+
+            _pendingCraftElement = element;
+            _craftConfirmPending = false;
+
+            if (_craftPopup == null)
+            {
+                _craftPopup = new CraftConfirmationPopup();
+                _craftPopup.Initialize();
+            }
+
+            _craftPopup.Show(bodyText,
+                onConfirm: () => { _craftConfirmPending = true; },
+                onCancel: () =>
+                {
+                    _craftConfirmPending = false;
+                    _pendingCraftElement = null;
+                    _announcer.AnnounceInterrupt(Models.Strings.Cancelled);
+                });
+
+            _isPopupActive = true;
+            _activePopup = _craftPopup.GameObject;
+            _popupHandler.OnPopupDetected(_craftPopup.GameObject);
+
+            MelonLogger.Msg($"[{NavigatorId}] Craft confirmation shown for: {cardName} ({rarity})");
+            return true;
+        }
+
+        /// <summary>
+        /// Check if the craft toggle (filterButton_Craft) is currently ON.
+        /// </summary>
+        private bool IsCraftModeActive()
+        {
+            // Re-find if cached toggle is destroyed (e.g., scene change)
+            if (_craftToggle == null || !_craftToggle.gameObject.activeInHierarchy)
+            {
+                _craftToggle = null;
+                foreach (var toggle in GameObject.FindObjectsOfType<Toggle>())
+                {
+                    if (toggle != null && toggle.gameObject.name == "filterButton_Craft")
+                    {
+                        _craftToggle = toggle;
+                        break;
+                    }
+                }
+            }
+
+            return _craftToggle != null && _craftToggle.isOn;
+        }
+
+        /// <summary>
+        /// After the craft confirmation popup closes, check if user confirmed.
+        /// If so, activate the card (perform the craft) and trigger rescan.
+        /// </summary>
+        private void HandleCraftConfirmationResult()
+        {
+            if (_craftConfirmPending && _pendingCraftElement != null && _pendingCraftElement.activeInHierarchy)
+            {
+                MelonLogger.Msg($"[{NavigatorId}] Craft confirmed - activating card");
+                var result = UIActivator.Activate(_pendingCraftElement);
+                _announcer.Announce(result.Message, AnnouncementPriority.Normal);
+                OnDeckBuilderCardActivated();
+            }
+
+            _craftConfirmPending = false;
+            _pendingCraftElement = null;
         }
 
         /// <summary>

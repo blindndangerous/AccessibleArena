@@ -787,5 +787,9 @@
   "RoleScrollbar": "滚动条",
   "RoleProgress": "进度",
   "RoleControl": "控件",
-  "HintUseLeftRightArrows": "使用左右方向键"
+  "HintUseLeftRightArrows": "使用左右方向键",
+  "CraftConfirm_Title": "合成卡牌",
+  "CraftConfirm_Body_Format": "使用{1}万能牌合成{0}？",
+  "CraftConfirm_OK": "确定",
+  "CraftConfirm_Cancel": "取消"
 }

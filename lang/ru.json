@@ -801,5 +801,9 @@
   "RoleScrollbar": "полоса прокрутки",
   "RoleProgress": "прогресс",
   "RoleControl": "элемент управления",
-  "HintUseLeftRightArrows": "используйте стрелки влево и вправо"
+  "HintUseLeftRightArrows": "используйте стрелки влево и вправо",
+  "CraftConfirm_Title": "Создать карту",
+  "CraftConfirm_Body_Format": "Создать {0}, используя джокер {1}?",
+  "CraftConfirm_OK": "OK",
+  "CraftConfirm_Cancel": "Отмена"
 }
