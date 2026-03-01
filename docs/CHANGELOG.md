@@ -2,6 +2,19 @@
 
 All notable changes to Accessible Arena.
 
+## v0.7.4-dev
+
+### New: Codex of the Multiverse Accessibility
+- Full keyboard navigation for the Codex of the Multiverse (Learn to Play) screen
+- Hierarchical table of contents with drill-down navigation: Enter to open categories, Backspace to go back
+- Article content mode with paragraph-by-paragraph reading (Up/Down arrows)
+- Credits mode with sequential navigation
+- Categories announced as "section" to distinguish from articles
+- Embedded card displays filtered from content paragraphs
+- Standalone buttons (Replay Tutorial, Credits) included in TOC
+- Navigation stack preserves position when drilling in and out of categories
+- Files: CodexNavigator.cs
+
 ## v0.7.3-dev
 
 ### New: Invalid Deck Status in Deck Picker

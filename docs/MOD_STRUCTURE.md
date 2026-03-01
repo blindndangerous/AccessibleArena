@@ -97,6 +97,7 @@
         GeneralMenuNavigator.cs      - Main menu, login, NPE, and general menu screens
         StoreNavigator.cs            - Store screen (tabs, items, purchase options, details view, popups)
         MasteryNavigator.cs          - Mastery/Rewards screen (levels, tiers, XP progress, action buttons)
+        CodexNavigator.cs            - Codex of the Multiverse / Learn to Play (TOC drill-down, content, credits)
 
         # Deprecated navigators (in old/ folder)
         # WelcomeGateNavigator, LoginPanelNavigator, CodeOfConductNavigator

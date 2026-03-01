@@ -279,45 +279,34 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Scan a container for all TableOfContentsSection components in its descendants.
-        /// Finds items at any nesting depth (game may use intermediate containers).
+        /// Scan a container's direct children for TableOfContentsSection components.
+        /// Only scans one level to avoid picking up nested subcategories.
         /// </summary>
         private void ScanContainerForItems(Transform container)
         {
-            foreach (var mb in container.GetComponentsInChildren<MonoBehaviour>(false))
+            for (int i = 0; i < container.childCount; i++)
             {
-                if (mb == null || !mb.gameObject.activeInHierarchy) continue;
-                if (mb.transform == container) continue; // skip container itself
+                var child = container.GetChild(i);
+                if (child == null || !child.gameObject.activeInHierarchy) continue;
 
-                bool isSection;
-                if (_tocSectionType != null)
-                    isSection = _tocSectionType.IsInstanceOfType(mb);
-                else
-                    isSection = mb.GetType().Name == "TableOfContentsSection";
+                var tocSection = FindTocSectionComponent(child.gameObject);
+                if (tocSection == null) continue;
 
-                if (!isSection) continue;
-
-                // Cache type from first found instance if needed
-                if (_tocSectionType == null)
-                    CacheTocSectionType(mb.GetType());
-
-                // Extract button GO
-                var buttonGo = GetCustomButtonGameObject(mb);
+                var buttonGo = GetCustomButtonGameObject(tocSection);
                 if (buttonGo == null) continue;
 
-                // Extract label
-                string label = ExtractSectionLabel(mb, buttonGo);
+                string label = ExtractSectionLabel(tocSection, buttonGo);
 
                 // Determine if drillable: has childAnchor OR has child sections in LearnMoreSection
-                var childAnchor = GetChildAnchor(mb);
-                bool isCategory = childAnchor != null || HasChildSections(mb);
+                var childAnchor = GetChildAnchor(tocSection);
+                bool isCategory = childAnchor != null || HasChildSections(tocSection);
 
-                MelonLogger.Msg($"[Codex] TOC item: '{label}' isCategory={isCategory} (anchor={childAnchor != null}, childSections={HasChildSections(mb)}) section='{mb.gameObject.name}'");
+                MelonLogger.Msg($"[Codex] TOC item: '{label}' isCategory={isCategory} section='{tocSection.gameObject.name}'");
 
                 _tocItems.Add(new TocItem
                 {
                     ButtonGameObject = buttonGo,
-                    SectionComponent = mb,
+                    SectionComponent = tocSection,
                     Label = label,
                     IsCategory = isCategory,
                     IsStandalone = false
@@ -519,10 +508,20 @@ namespace AccessibleArena.Core.Services
             var contentViewGo = GetFieldGameObject(_contentViewField);
             if (contentViewGo == null || !contentViewGo.activeInHierarchy) return;
 
+            int skippedCards = 0;
+            var contentTransform = contentViewGo.transform;
             var texts = contentViewGo.GetComponentsInChildren<TMPro.TMP_Text>(false);
             foreach (var tmp in texts)
             {
                 if (tmp == null || !tmp.gameObject.activeInHierarchy) continue;
+
+                // Skip text inside embedded card displays
+                if (IsInsideCardDisplay(tmp.transform, contentTransform))
+                {
+                    skippedCards++;
+                    continue;
+                }
+
                 string text = tmp.text;
                 if (string.IsNullOrEmpty(text)) continue;
 
@@ -532,7 +531,40 @@ namespace AccessibleArena.Core.Services
                 _contentParagraphs.Add(text);
             }
 
-            MelonLogger.Msg($"[Codex] Extracted {_contentParagraphs.Count} content paragraphs");
+            MelonLogger.Msg($"[Codex] Extracted {_contentParagraphs.Count} content paragraphs (skipped {skippedCards} card texts)");
+        }
+
+        /// <summary>
+        /// Check if a TMP_Text element is inside an embedded card display.
+        /// Walks up the parent hierarchy looking for card-related components or names.
+        /// </summary>
+        private static bool IsInsideCardDisplay(Transform textTransform, Transform stopAt)
+        {
+            var current = textTransform.parent;
+            while (current != null && current != stopAt)
+            {
+                // Check GO name for card display patterns
+                string goName = current.gameObject.name;
+                if (goName.Contains("CardAnchor") ||
+                    goName.Contains("MetaCardView") ||
+                    goName.Contains("DuelCardView") ||
+                    goName.Contains("CardRenderer"))
+                    return true;
+
+                // Check component types for card-related MonoBehaviours
+                foreach (var mb in current.GetComponents<MonoBehaviour>())
+                {
+                    if (mb == null) continue;
+                    string typeName = mb.GetType().Name;
+                    if (typeName.Contains("CardView") ||
+                        typeName.Contains("CardRenderer") ||
+                        typeName.Contains("CDC"))
+                        return true;
+                }
+
+                current = current.parent;
+            }
+            return false;
         }
 
         private void ExtractCreditsParagraphs()
@@ -669,16 +701,16 @@ namespace AccessibleArena.Core.Services
         {
             if (_contentIndex < 0 || _contentIndex >= _contentParagraphs.Count) return;
 
-            string prefix = Strings.CodexContentBlock(_contentIndex + 1, _contentParagraphs.Count);
-            _announcer.AnnounceInterrupt($"{prefix}: {_contentParagraphs[_contentIndex]}");
+            string position = Strings.CodexContentBlock(_contentIndex + 1, _contentParagraphs.Count);
+            _announcer.AnnounceInterrupt($"{_contentParagraphs[_contentIndex]}, {position}");
         }
 
         private void AnnounceCreditsBlock()
         {
             if (_creditsIndex < 0 || _creditsIndex >= _creditsParagraphs.Count) return;
 
-            string prefix = Strings.CodexContentBlock(_creditsIndex + 1, _creditsParagraphs.Count);
-            _announcer.AnnounceInterrupt($"{prefix}: {_creditsParagraphs[_creditsIndex]}");
+            string position = Strings.CodexContentBlock(_creditsIndex + 1, _creditsParagraphs.Count);
+            _announcer.AnnounceInterrupt($"{_creditsParagraphs[_creditsIndex]}, {position}");
         }
 
         #endregion

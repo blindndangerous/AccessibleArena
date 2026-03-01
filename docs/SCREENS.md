@@ -895,6 +895,53 @@ The Store screen provides two-level keyboard navigation for browsing and purchas
 - Tab activation via `Tab.OnClicked()` reflection call
 - Item labels extracted from TMPro text on `_label` OptionalObject, with fallback to child TMP_Text
 
+## Codex of the Multiverse (Learn to Play)
+
+**Controller:** `LearnToPlayControllerV2`
+**Navigator:** `CodexNavigator`
+**Priority:** 50
+
+The Codex of the Multiverse screen provides a hierarchical table of contents for learning Magic: The Gathering rules, with article content views and credits.
+
+**Three Modes:**
+- **Table of Contents (TOC)** - Hierarchical drill-down navigation through categories and topics
+- **Content** - Article paragraphs navigable sequentially
+- **Credits** - Credits text navigable sequentially
+
+**Navigation - Table of Contents:**
+- Up/Down arrows (or W/S, Tab/Shift+Tab): Navigate between TOC items
+- Home/End: Jump to first/last item
+- Enter: Drill into a category (shows children) or open an article
+- Backspace: Go back one level in drill-down hierarchy
+- Backspace at top level: Navigate Home
+
+**Navigation - Content / Credits:**
+- Up/Down arrows (or W/S): Navigate between paragraphs
+- Home/End: Jump to first/last paragraph
+- Backspace: Close content and return to TOC
+
+**Announcements:**
+- Activation: "Codex of the Multiverse. N items. Arrow keys to navigate."
+- Category items: "CategoryName, section, X of Y"
+- Article items: "ArticleName, X of Y"
+- Drill-down: "CategoryName. FirstChild, 1 of N"
+- Content: "Paragraph text, block X of Y"
+
+**Technical Notes:**
+- Detected via `LearnToPlayControllerV2` MonoBehaviour with `IsOpen` property
+- TOC items discovered from `TableOfContentsSection` components in `tableOfContents` (depth 0) and `tableOfContentsTopics` (depth 2) containers
+- Drill-down uses a navigation stack to preserve position at each level
+- Category detection via `childAnchor` field or `_childSections` list on `LearnMoreSection`
+- Content paragraphs extracted from `TMP_Text` elements in `contentView`, filtering out embedded card displays
+- Standalone buttons (Replay Tutorial, Credits) appear at the end of the TOC
+- Delayed drill-down (0.4s) allows the game to expand children after clicking a category
+- Credits mode detected when `learnToPlayRoot` is inactive but `CreditsDisplay` is active
+
+**Files:**
+- `src/Core/Services/CodexNavigator.cs` - Main navigator implementation
+
+---
+
 ## Adding New Screens
 
 For implementing accessibility for a new screen, see the "Adding Support for New Screens" section in BEST_PRACTICES.md which covers:
