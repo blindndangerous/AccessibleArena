@@ -5124,6 +5124,9 @@ namespace AccessibleArena.Core.Services
             _activePopup = _craftPopup.GameObject;
             _popupHandler.OnPopupDetected(_craftPopup.GameObject);
 
+            // Deactivate card info navigator so Up/Down goes to popup, not card blocks
+            AccessibleArenaMod.Instance?.CardNavigator?.Deactivate();
+
             MelonLogger.Msg($"[{NavigatorId}] Craft confirmation shown for: {cardName} ({rarity})");
             return true;
         }

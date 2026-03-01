@@ -117,6 +117,54 @@ Mana color pips (W/U/B/R/G) in card costs and other contexts are not localized t
 
 ---
 
+## Under Investigation
+
+### Craft Confirmation Popup - Incomplete, Needs Visual Verification
+
+**Status:** Initial implementation exists but is not working correctly. Paused pending visual confirmation of game behavior.
+
+**Goal:** Show a confirmation popup before spending a wildcard to craft a card.
+
+**Current implementation:**
+- `CraftConfirmationPopup.cs`: Custom Unity UI popup with body text, OK, and Cancel buttons
+- `BaseNavigator.cs`: Virtual hook `OnCollectionCardActivating()` called before collection card activation
+- `GeneralMenuNavigator.cs`: Overrides hook, shows popup, defers activation until user confirms
+- Localized strings in all `lang/*.json` files
+
+**Problem 1 - Craft toggle is not a crafting mode:**
+The `filterButton_Craft` toggle only filters the collection view (showing craftable cards). It does NOT control whether clicking a card crafts it. Currently the popup only appears when the craft toggle is ON, but crafting happens on ANY collection card click regardless of toggle state. The check needs to be removed or replaced.
+
+**Problem 2 - Game's CardViewerPopup appears after crafting:**
+After our confirmation and `UIActivator.Activate()`, the game opens its own `CardViewerPopup_Desktop_16x9(Clone)` (detected as Popup by PanelStateManager). This popup shows the card, resources (Gold, Gems), craft pips, wildcard count, and a "Herstellen" (Craft) button. PopupHandler picks it up and announces items like "Gold: 17,925", which is confusing. This popup needs to be auto-dismissed.
+
+**Problem 3 - Unclear if crafting is caused by our activation or game behavior:**
+Our activation path for collection cards:
+1. `UIActivator.TryActivateCollectionCard()` tries `OnAddClicked` property (Strategy 1) - returns null
+2. Falls through to `IPointerClickHandler.OnPointerClick` (Strategy 3) - this is what fires
+3. Single activation, no double-activation bug confirmed
+
+After `OnPointerClick`, the game both crafts the card AND opens the CardViewerPopup. Wildcard count drops immediately (observed: 35 -> 34 -> 33 in log). It's unclear whether:
+- The game's `OnPointerClick` always crafts (even for owned cards with spare copies), OR
+- Our `OnPointerClick` invocation behaves differently than a real mouse click, OR
+- The game has a separate confirmation flow that we're bypassing
+
+**Log evidence (from MelonLoader/Latest.log):**
+- Card "Fluchtroute" had Owned: 1, InDeck: 0 (spare copy available), craft toggle OFF
+- After `OnPointerClick`: Owned became 2, wildcard dropped 35 -> 34
+- Game's `CardViewerPopup` opened showing "x35" wildcard count (before dismiss), but rescan after dismiss showed 34
+- Inside the popup: Gold, Gems, craft pips, wildcard count, "Herstellen" button are all discovered as navigable items
+
+**Next steps (after visual confirmation):**
+1. Determine if OnPointerClick is the correct activation method or if we should use a different API
+2. Remove `IsCraftModeActive()` check - intercept ALL collection card activations instead
+3. Detect whether a card actually needs crafting (compare OwnedCount vs available copies)
+4. Auto-dismiss the game's `CardViewerPopup` after craft confirmation succeeds
+5. Fix CardInfoNavigator not deactivating when popup opens (fix already committed but untested)
+
+**Files:** `CraftConfirmationPopup.cs`, `BaseNavigator.cs`, `GeneralMenuNavigator.cs`, `Strings.cs`, `UIActivator.cs`
+
+---
+
 ## Needs Testing
 
 ### Other Windows Versions and Screen Readers
