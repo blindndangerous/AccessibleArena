@@ -223,7 +223,7 @@ namespace AccessibleArena.Core.Services
                     if (exitButton.activeInHierarchy)
                     {
                         _continueButton = exitButton;
-                        AddElement(exitButton, $"Continue, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
+                        AddElement(exitButton, BuildLabel("Continue", Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                         Log($"  ADDED: ExitMatchOverlayButton (active)");
                     }
                     else
@@ -251,7 +251,7 @@ namespace AccessibleArena.Core.Services
                     if (string.IsNullOrEmpty(label))
                         label = go.name;
 
-                    AddElement(go, $"{label}, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
+                    AddElement(go, BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                     Log($"  ADDED (EventTrigger): {go.name} -> '{label}'");
                 }
 
@@ -272,7 +272,7 @@ namespace AccessibleArena.Core.Services
                     if (string.IsNullOrEmpty(label))
                         label = go.name;
 
-                    AddElement(go, $"{label}, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
+                    AddElement(go, BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                     Log($"  ADDED (CustomButton): {go.name} -> '{label}'");
                 }
             }
@@ -333,7 +333,7 @@ namespace AccessibleArena.Core.Services
                         // Check if parent has EventTrigger (clickable)
                         var parentET = textObj.GetComponentInParent<EventTrigger>();
                         var targetObj = parentET != null ? parentET.gameObject : textObj;
-                        AddElement(targetObj, $"{viewBattlefieldText}, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
+                        AddElement(targetObj, BuildLabel(viewBattlefieldText, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                         Log($"  ADDED (view): {targetObj.name} -> '{viewBattlefieldText}'");
                     }
                 }

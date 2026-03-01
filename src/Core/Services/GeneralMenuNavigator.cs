@@ -2763,7 +2763,7 @@ namespace AccessibleArena.Core.Services
             // Also filter if the extracted text is just the object name cleaned up
             string extractedText = UITextExtractor.GetText(obj);
             string objNameCleaned = obj.name.ToLowerInvariant().Replace("_", " ").Replace("-", " ");
-            string extractedCleaned = extractedText?.ToLowerInvariant().Replace(", button", "").Trim() ?? "";
+            string extractedCleaned = extractedText?.ToLowerInvariant().Replace($", {Models.Strings.RoleButton.ToLowerInvariant()}", "").Trim() ?? "";
 
             // If the extracted text matches the object name (with minor variations), filter it
             if (!string.IsNullOrEmpty(extractedCleaned) && objNameCleaned.Contains(extractedCleaned))
@@ -4070,10 +4070,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         protected virtual string BuildAnnouncement(UIElementClassifier.ClassificationResult classification)
         {
-            if (string.IsNullOrEmpty(classification.RoleLabel))
-                return classification.Label;
-
-            return $"{classification.Label}, {classification.RoleLabel}";
+            return BuildLabel(classification.Label, classification.RoleLabel, classification.Role);
         }
 
         /// <summary>

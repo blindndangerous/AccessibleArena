@@ -474,10 +474,7 @@ namespace AccessibleArena.Core.Services
 
         private string BuildAnnouncement(UIElementClassifier.ClassificationResult classification)
         {
-            if (string.IsNullOrEmpty(classification.RoleLabel))
-                return classification.Label;
-
-            return $"{classification.Label}, {classification.RoleLabel}";
+            return BuildLabel(classification.Label, classification.RoleLabel, classification.Role);
         }
 
         private static bool IsChildOf(GameObject child, GameObject parent)

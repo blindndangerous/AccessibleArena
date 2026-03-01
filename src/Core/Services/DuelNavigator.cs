@@ -251,11 +251,11 @@ namespace AccessibleArena.Core.Services
                 string name = selectable.gameObject.name;
                 string typeName = selectable.GetType().Name;
                 string label = GetButtonText(selectable.gameObject, name);
-                string elementType = GetSelectableType(selectable);
+                var (elementType, elementRole) = GetSelectableTypeAndRole(selectable);
 
                 MelonLogger.Msg($"[{NavigatorId}] Selectable ({typeName}): {name} - Text: '{label}'");
 
-                AddElement(selectable.gameObject, $"{label}, {elementType}");
+                AddElement(selectable.gameObject, BuildLabel(label, elementType, elementRole), default, null, null, elementRole);
                 addedObjects.Add(selectable.gameObject);
             }
         }
@@ -280,7 +280,7 @@ namespace AccessibleArena.Core.Services
 
                 MelonLogger.Msg($"[{NavigatorId}] CustomButton: {name} - Text: '{label}'");
 
-                AddElement(mb.gameObject, $"{label}, {Models.Strings.RoleButton}");
+                AddElement(mb.gameObject, BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                 addedObjects.Add(mb.gameObject);
             }
         }
@@ -336,7 +336,7 @@ namespace AccessibleArena.Core.Services
                     string label = GetButtonText(obj, CleanName(name));
                     MelonLogger.Msg($"[{NavigatorId}] Named element: {name} - Text: '{label}'");
 
-                    AddElement(obj, $"{label}, {Models.Strings.RoleButton}");
+                    AddElement(obj, BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
                     addedObjects.Add(obj);
                 }
             }
@@ -584,20 +584,20 @@ namespace AccessibleArena.Core.Services
             return false;
         }
 
-        private string GetSelectableType(Selectable selectable)
+        private (string roleLabel, UIElementClassifier.ElementRole role) GetSelectableTypeAndRole(Selectable selectable)
         {
-            if (selectable is Button) return Models.Strings.RoleButton;
-            if (selectable is Toggle) return Models.Strings.RoleCheckbox;
-            if (selectable is Slider) return Models.Strings.RoleSlider;
-            if (selectable is Scrollbar) return Models.Strings.RoleScrollbar;
-            if (selectable is Dropdown) return Models.Strings.RoleDropdown;
-            if (selectable is InputField) return Models.Strings.TextField;
+            if (selectable is Button) return (Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button);
+            if (selectable is Toggle) return (Models.Strings.RoleCheckbox, UIElementClassifier.ElementRole.Toggle);
+            if (selectable is Slider) return (Models.Strings.RoleSlider, UIElementClassifier.ElementRole.Slider);
+            if (selectable is Scrollbar) return (Models.Strings.RoleScrollbar, UIElementClassifier.ElementRole.Scrollbar);
+            if (selectable is Dropdown) return (Models.Strings.RoleDropdown, UIElementClassifier.ElementRole.Dropdown);
+            if (selectable is InputField) return (Models.Strings.TextField, UIElementClassifier.ElementRole.TextField);
 
             string typeName = selectable.GetType().Name.ToLower();
-            if (typeName.Contains("button")) return Models.Strings.RoleButton;
-            if (typeName.Contains("toggle")) return Models.Strings.RoleCheckbox;
+            if (typeName.Contains("button")) return (Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button);
+            if (typeName.Contains("toggle")) return (Models.Strings.RoleCheckbox, UIElementClassifier.ElementRole.Toggle);
 
-            return Models.Strings.RoleControl;
+            return (Models.Strings.RoleControl, UIElementClassifier.ElementRole.Unknown);
         }
 
         private bool HasComponent(GameObject obj, string componentName)

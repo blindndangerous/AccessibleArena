@@ -517,8 +517,8 @@ namespace AccessibleArena.Core.Services
             }
             else
             {
-                string suffix = item.Type == PopupItemType.Button ? $", {Models.Strings.RoleButton}" : "";
-                label = $"{label}{suffix}";
+                if (item.Type == PopupItemType.Button)
+                    label = BaseNavigator.BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button);
             }
 
             _announcer?.Announce(

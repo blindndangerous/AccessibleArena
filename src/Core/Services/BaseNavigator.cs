@@ -261,11 +261,7 @@ namespace AccessibleArena.Core.Services
                 {
                     var classification = UIElementClassifier.Classify(obj);
                     if (classification != null && classification.IsNavigable)
-                    {
-                        label = string.IsNullOrEmpty(classification.RoleLabel)
-                            ? classification.Label
-                            : $"{classification.Label}, {classification.RoleLabel}";
-                    }
+                        label = BuildLabel(classification.Label, classification.RoleLabel, classification.Role);
                 }
             }
 
@@ -274,11 +270,7 @@ namespace AccessibleArena.Core.Services
             {
                 var classification = UIElementClassifier.Classify(obj);
                 if (classification != null && classification.IsNavigable)
-                {
-                    label = string.IsNullOrEmpty(classification.RoleLabel)
-                        ? classification.Label
-                        : $"{classification.Label}, {classification.RoleLabel}";
-                }
+                    label = BuildLabel(classification.Label, classification.RoleLabel, classification.Role);
             }
 
             return label;
@@ -1445,14 +1437,28 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Build a display label from a text label, role label, and role enum.
+        /// Suppresses the "button" role when tutorial messages are off,
+        /// since it's purely informational. Other roles (checkbox, dropdown, slider)
+        /// carry state information and are always included.
+        /// </summary>
+        public static string BuildLabel(string label, string roleLabel, UIElementClassifier.ElementRole role)
+        {
+            if (string.IsNullOrEmpty(roleLabel))
+                return label;
+            if (role == UIElementClassifier.ElementRole.Button &&
+                AccessibleArenaMod.Instance?.Settings?.TutorialMessages == false)
+                return label;
+            return $"{label}, {roleLabel}";
+        }
+
+        /// <summary>
         /// Build the display label from a classification result.
         /// Subclasses may override this for custom label formatting.
         /// </summary>
         protected virtual string BuildElementLabel(UIElementClassifier.ClassificationResult classification)
         {
-            if (string.IsNullOrEmpty(classification.RoleLabel))
-                return classification.Label;
-            return $"{classification.Label}, {classification.RoleLabel}";
+            return BuildLabel(classification.Label, classification.RoleLabel, classification.Role);
         }
 
         /// <summary>Move to next (direction=1) or previous (direction=-1) element without wrapping</summary>
@@ -1906,7 +1912,7 @@ namespace AccessibleArena.Core.Services
             if (buttonObj == null) return;
 
             string label = UITextExtractor.GetButtonText(buttonObj, fallbackLabel);
-            AddElement(buttonObj, $"{label}, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
+            AddElement(buttonObj, BuildLabel(label, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
         }
 
         /// <summary>Add a toggle with label (state is added dynamically)</summary>
