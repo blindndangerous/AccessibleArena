@@ -818,5 +818,22 @@
   "CurrencyGems": "Edelsteine",
   "CurrencyWildcards": "Wildcards",
 
-  "NumberWords": "eine=1,einer=1,einem=1,einen=1,ein=1,zwei=2,drei=3,vier=4,fünf=5,sechs=6,sieben=7,acht=8,neun=9,zehn=10"
+  "NumberWords": "eine=1,einer=1,einem=1,einen=1,ein=1,zwei=2,drei=3,vier=4,fünf=5,sechs=6,sieben=7,acht=8,neun=9,zehn=10",
+
+  "RoleButton": "Schaltfläche",
+  "RoleLink": "Link",
+  "RoleCheckbox": "Kontrollkästchen",
+  "RoleChecked": "aktiviert",
+  "RoleUnchecked": "deaktiviert",
+  "RoleDropdown": "Dropdown",
+  "RoleSlider": "Schieberegler",
+  "RoleSliderPercent": "Prozent",
+  "RoleStepper": "Schrittregler",
+  "RoleCarousel": "Karussell",
+  "RoleCard": "Karte",
+  "RoleNavigation": "Navigation",
+  "RoleScrollbar": "Scrollleiste",
+  "RoleProgress": "Fortschritt",
+  "RoleControl": "Steuerelement",
+  "HintUseLeftRightArrows": "Pfeiltasten links und rechts verwenden"
 }

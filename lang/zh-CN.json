@@ -771,5 +771,21 @@
   "CurrencyGems": "宝石",
   "CurrencyWildcards": "万能牌",
 
-  "NumberWords": ""
+  "NumberWords": "",
+  "RoleButton": "按钮",
+  "RoleLink": "链接",
+  "RoleCheckbox": "复选框",
+  "RoleChecked": "已选中",
+  "RoleUnchecked": "未选中",
+  "RoleDropdown": "下拉菜单",
+  "RoleSlider": "滑块",
+  "RoleSliderPercent": "百分比",
+  "RoleStepper": "步进器",
+  "RoleCarousel": "轮播",
+  "RoleCard": "卡牌",
+  "RoleNavigation": "导航",
+  "RoleScrollbar": "滚动条",
+  "RoleProgress": "进度",
+  "RoleControl": "控件",
+  "HintUseLeftRightArrows": "使用左右方向键"
 }

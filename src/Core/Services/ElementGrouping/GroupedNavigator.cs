@@ -27,6 +27,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
     {
         public GameObject GameObject { get; set; }
         public string Label { get; set; }
+        public UIElementClassifier.ElementRole Role { get; set; }
         public ElementGroup Group { get; set; }
         /// <summary>
         /// For deck elements, the name of the folder they belong to (e.g., "Meine Decks", "Starterdecks").
@@ -555,7 +556,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         /// Call this after DiscoverElements() populates the raw element list.
         /// Supports folder-based grouping for Decks screen.
         /// </summary>
-        public void OrganizeIntoGroups(IEnumerable<(GameObject obj, string label)> elements)
+        public void OrganizeIntoGroups(IEnumerable<(GameObject obj, string label, UIElementClassifier.ElementRole role)> elements)
         {
             _groups.Clear();
             _currentGroupIndex = -1;
@@ -568,7 +569,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             var folderExtraElements = new List<GroupedElement>(); // non-folder, non-deck elements assigned to PlayBladeFolders (e.g. NewDeck, EditDeck)
             var nonFolderElements = new Dictionary<ElementGroup, List<GroupedElement>>(); // standard groups
 
-            foreach (var (obj, label) in elements)
+            foreach (var (obj, label, role) in elements)
             {
                 if (obj == null) continue;
 
@@ -609,6 +610,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         {
                             GameObject = obj,
                             Label = label,
+                            Role = role,
                             Group = group,
                             FolderName = folderName
                         });
@@ -624,6 +626,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     {
                         GameObject = obj,
                         Label = label,
+                        Role = role,
                         Group = group
                     });
                     continue;
@@ -634,6 +637,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 {
                     GameObject = obj,
                     Label = label,
+                    Role = role,
                     Group = group
                 };
 
@@ -1666,7 +1670,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 var group = _groups[0];
                 var firstElem = group.Elements.Count > 0 ? group.Elements[0] : (GroupedElement?)null;
                 string firstLabel = firstElem.HasValue
-                    ? BaseNavigator.RefreshElementLabel(firstElem.Value.GameObject, firstElem.Value.Label)
+                    ? BaseNavigator.RefreshElementLabel(firstElem.Value.GameObject, firstElem.Value.Label, firstElem.Value.Role)
                     : "";
                 return Strings.ScreenItemsSummary(screenName, Strings.ItemCount(group.Count),
                     Strings.ItemPositionOf(1, group.Count, firstLabel));
@@ -1763,7 +1767,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (!element.HasValue) return "";
 
             int count = GetCurrentElementCount();
-            string label = BaseNavigator.RefreshElementLabel(element.Value.GameObject, element.Value.Label);
+            string label = BaseNavigator.RefreshElementLabel(element.Value.GameObject, element.Value.Label, element.Value.Role);
             return Strings.ItemPositionOf(_currentElementIndex + 1, count, label);
         }
 

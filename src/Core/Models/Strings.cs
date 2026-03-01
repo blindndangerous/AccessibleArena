@@ -1116,6 +1116,39 @@ namespace AccessibleArena.Core.Models
         public static string HelpNumberPhaseStops => L.Get("HelpNumberPhaseStops");
 
         // ===========================================
+        // UI ROLE LABELS (for screen reader announcements)
+        // ===========================================
+        public static string RoleButton => L.Get("RoleButton");
+        public static string RoleLink => L.Get("RoleLink");
+        public static string RoleCheckbox => L.Get("RoleCheckbox");
+        public static string RoleChecked => L.Get("RoleChecked");
+        public static string RoleUnchecked => L.Get("RoleUnchecked");
+        public static string RoleDropdown => L.Get("RoleDropdown");
+        public static string RoleSlider => L.Get("RoleSlider");
+        public static string RoleStepper => L.Get("RoleStepper");
+        public static string RoleCarousel => L.Get("RoleCarousel");
+        public static string RoleCard => L.Get("RoleCard");
+        public static string RoleNavigation => L.Get("RoleNavigation");
+        public static string RoleScrollbar => L.Get("RoleScrollbar");
+        public static string RoleProgress => L.Get("RoleProgress");
+        public static string RoleControl => L.Get("RoleControl");
+        public static string HintUseLeftRightArrows => L.Get("HintUseLeftRightArrows");
+
+        /// <summary>Combined checkbox state: "checkbox, checked" or "checkbox, unchecked"</summary>
+        public static string RoleCheckboxState(bool isOn) =>
+            $"{RoleCheckbox}, {(isOn ? RoleChecked : RoleUnchecked)}";
+
+        /// <summary>Combined slider value: "slider, 50 percent, use left and right arrows"</summary>
+        public static string RoleSliderValue(int percent) =>
+            $"{RoleSlider}, {percent} {L.Get("RoleSliderPercent")}, {HintUseLeftRightArrows}";
+
+        /// <summary>Stepper with hint: "stepper, use left and right arrows"</summary>
+        public static string RoleStepperHint => $"{RoleStepper}, {HintUseLeftRightArrows}";
+
+        /// <summary>Carousel with hint: "carousel, use left and right arrows"</summary>
+        public static string RoleCarouselHint => $"{RoleCarousel}, {HintUseLeftRightArrows}";
+
+        // ===========================================
         // FRIEND ACTIONS
         // ===========================================
         public static string FriendActionChat => L.Get("FriendActionChat");

@@ -513,11 +513,11 @@ namespace AccessibleArena.Core.Services
             // For input fields, refresh label with current text content (same as BaseNavigator)
             if (item.Type == PopupItemType.InputField && item.GameObject != null)
             {
-                label = BaseNavigator.RefreshElementLabel(item.GameObject, label);
+                label = BaseNavigator.RefreshElementLabel(item.GameObject, label, UIElementClassifier.ElementRole.TextField);
             }
             else
             {
-                string suffix = item.Type == PopupItemType.Button ? ", button" : "";
+                string suffix = item.Type == PopupItemType.Button ? $", {Models.Strings.RoleButton}" : "";
                 label = $"{label}{suffix}";
             }
 

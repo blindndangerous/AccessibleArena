@@ -2326,7 +2326,7 @@ namespace AccessibleArena.Core.Services
                 {
                     Role = UIElementClassifier.ElementRole.Button,
                     Label = label,
-                    RoleLabel = "button",
+                    RoleLabel = Models.Strings.RoleButton,
                     IsNavigable = true,
                     ShouldAnnounce = true
                 }, sortOrder));
@@ -3533,7 +3533,7 @@ namespace AccessibleArena.Core.Services
 
                 if (isBladeListItem)
                     MelonLogger.Msg($"[{NavigatorId}] Blade_ListItem calling AddElement: announcement={announcement}");
-                AddElement(obj, announcement, carouselInfo, null, attachedActions);
+                AddElement(obj, announcement, carouselInfo, null, attachedActions, classification.Role);
                 if (isBladeListItem)
                     MelonLogger.Msg($"[{NavigatorId}] Blade_ListItem AddElement returned, _elements.Count={_elements.Count}");
             }
@@ -3576,7 +3576,7 @@ namespace AccessibleArena.Core.Services
             // Organize elements into groups for hierarchical navigation
             if (_groupedNavigationEnabled && _elements.Count > 0)
             {
-                var elementsForGrouping = _elements.Select(e => (e.GameObject, e.Label));
+                var elementsForGrouping = _elements.Select(e => (e.GameObject, e.Label, e.Role));
                 _groupedNavigator.OrganizeIntoGroups(elementsForGrouping);
 
                 // Queue type activation may have clicked a real tab — need another rescan

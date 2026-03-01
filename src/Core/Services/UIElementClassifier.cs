@@ -200,7 +200,7 @@ namespace AccessibleArena.Core.Services
             if (!CardDetector.IsCard(obj))
                 return null;
 
-            return CreateResult(ElementRole.Card, CardDetector.GetCardName(obj), "card", true, true);
+            return CreateResult(ElementRole.Card, CardDetector.GetCardName(obj), Models.Strings.RoleCard, true, true);
         }
 
         private static ClassificationResult TryClassifyAsStepperControl(GameObject obj, string objName)
@@ -212,7 +212,7 @@ namespace AccessibleArena.Core.Services
             {
                 Role = ElementRole.Button,
                 Label = !string.IsNullOrEmpty(value) ? $"{label}: {value}" : label,
-                RoleLabel = "stepper, use left and right arrows",
+                RoleLabel = Models.Strings.RoleStepperHint,
                 IsNavigable = true,
                 ShouldAnnounce = true,
                 HasArrowNavigation = true,
@@ -265,7 +265,7 @@ namespace AccessibleArena.Core.Services
             {
                 Role = ElementRole.Button,
                 Label = label,
-                RoleLabel = "stepper, use left and right arrows",
+                RoleLabel = Models.Strings.RoleStepperHint,
                 IsNavigable = true,
                 ShouldAnnounce = true,
                 HasArrowNavigation = true,
@@ -283,7 +283,7 @@ namespace AccessibleArena.Core.Services
             return CreateResult(
                 ElementRole.Dropdown,
                 !string.IsNullOrEmpty(value) ? $"{label}: {value}" : label,
-                "dropdown",
+                Models.Strings.RoleDropdown,
                 true, true);
         }
 
@@ -303,7 +303,7 @@ namespace AccessibleArena.Core.Services
             return CreateResult(
                 ElementRole.Toggle,
                 label,
-                toggle.isOn ? "checkbox, checked" : "checkbox, unchecked",
+                Models.Strings.RoleCheckboxState(toggle.isOn),
                 true, true);
         }
 
@@ -318,7 +318,7 @@ namespace AccessibleArena.Core.Services
             {
                 Role = ElementRole.Slider,
                 Label = GetSliderLabel(obj, objName),
-                RoleLabel = $"slider, {percent} percent, use left and right arrows",
+                RoleLabel = Models.Strings.RoleSliderValue(percent),
                 IsNavigable = true,
                 ShouldAnnounce = true,
                 HasArrowNavigation = true,
@@ -350,7 +350,7 @@ namespace AccessibleArena.Core.Services
                 label = !string.IsNullOrEmpty(selectedValue) ? selectedValue : text;
             }
 
-            return CreateResult(ElementRole.Dropdown, label, "dropdown", true, true);
+            return CreateResult(ElementRole.Dropdown, label, Models.Strings.RoleDropdown, true, true);
         }
 
         private static ClassificationResult TryClassifyAsTextField(GameObject obj, string text)
@@ -366,7 +366,7 @@ namespace AccessibleArena.Core.Services
             if (obj.GetComponent<Scrollbar>() == null)
                 return null;
 
-            return CreateResult(ElementRole.Scrollbar, text, "scrollbar", false, false);
+            return CreateResult(ElementRole.Scrollbar, text, Models.Strings.RoleScrollbar, false, false);
         }
 
         private static ClassificationResult TryClassifyAsProgressIndicator(GameObject obj, string objName, string text)
@@ -374,7 +374,7 @@ namespace AccessibleArena.Core.Services
             if (!IsProgressIndicator(obj, objName, text))
                 return null;
 
-            return CreateResult(ElementRole.ProgressBar, text, "progress", true, true);
+            return CreateResult(ElementRole.ProgressBar, text, Models.Strings.RoleProgress, true, true);
         }
 
         private static ClassificationResult TryClassifyAsNavigationArrow(GameObject obj, string objName, string text)
@@ -382,7 +382,7 @@ namespace AccessibleArena.Core.Services
             if (!IsNavigationArrow(obj, objName, text))
                 return null;
 
-            return CreateResult(ElementRole.Navigation, GetNavigationLabel(objName), "navigation", true, true);
+            return CreateResult(ElementRole.Navigation, GetNavigationLabel(objName), Models.Strings.RoleNavigation, true, true);
         }
 
         private static ClassificationResult TryClassifyAsClickable(GameObject obj, string objName, string text)
@@ -401,7 +401,7 @@ namespace AccessibleArena.Core.Services
                 {
                     Role = ElementRole.Button,
                     Label = GetCleanLabel(text, objName),
-                    RoleLabel = "carousel, use left and right arrows",
+                    RoleLabel = Models.Strings.RoleCarouselHint,
                     IsNavigable = true,
                     ShouldAnnounce = true,
                     HasArrowNavigation = true,
@@ -417,7 +417,7 @@ namespace AccessibleArena.Core.Services
             return CreateResult(
                 isLink ? ElementRole.Link : ElementRole.Button,
                 GetCleanLabel(text, effectiveName),
-                isLink ? "link" : "button",
+                isLink ? Models.Strings.RoleLink : Models.Strings.RoleButton,
                 true, true);
         }
 

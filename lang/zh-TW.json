@@ -771,5 +771,21 @@
   "CurrencyGems": "寶石",
   "CurrencyWildcards": "萬能牌",
 
-  "NumberWords": ""
+  "NumberWords": "",
+  "RoleButton": "按鈕",
+  "RoleLink": "連結",
+  "RoleCheckbox": "核取方塊",
+  "RoleChecked": "已勾選",
+  "RoleUnchecked": "未勾選",
+  "RoleDropdown": "下拉選單",
+  "RoleSlider": "滑桿",
+  "RoleSliderPercent": "百分比",
+  "RoleStepper": "步進器",
+  "RoleCarousel": "輪播",
+  "RoleCard": "卡牌",
+  "RoleNavigation": "導覽",
+  "RoleScrollbar": "捲軸",
+  "RoleProgress": "進度",
+  "RoleControl": "控制項",
+  "HintUseLeftRightArrows": "使用左右方向鍵"
 }

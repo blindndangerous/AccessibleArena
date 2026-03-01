@@ -791,5 +791,21 @@
   "CurrencyGems": "Gemmes",
   "CurrencyWildcards": "Wildcards",
 
-  "NumberWords": "un=1,une=1,deux=2,trois=3,quatre=4,cinq=5,six=6,sept=7,huit=8,neuf=9,dix=10"
+  "NumberWords": "un=1,une=1,deux=2,trois=3,quatre=4,cinq=5,six=6,sept=7,huit=8,neuf=9,dix=10",
+  "RoleButton": "bouton",
+  "RoleLink": "lien",
+  "RoleCheckbox": "case à cocher",
+  "RoleChecked": "cochée",
+  "RoleUnchecked": "décochée",
+  "RoleDropdown": "liste déroulante",
+  "RoleSlider": "curseur",
+  "RoleSliderPercent": "pour cent",
+  "RoleStepper": "sélecteur",
+  "RoleCarousel": "carrousel",
+  "RoleCard": "carte",
+  "RoleNavigation": "navigation",
+  "RoleScrollbar": "barre de défilement",
+  "RoleProgress": "progression",
+  "RoleControl": "contrôle",
+  "HintUseLeftRightArrows": "utiliser les flèches gauche et droite"
 }

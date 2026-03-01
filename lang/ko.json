@@ -770,5 +770,21 @@
   "CurrencyGems": "젬",
   "CurrencyWildcards": "와일드카드",
 
-  "NumberWords": ""
+  "NumberWords": "",
+  "RoleButton": "버튼",
+  "RoleLink": "링크",
+  "RoleCheckbox": "체크박스",
+  "RoleChecked": "선택됨",
+  "RoleUnchecked": "선택 해제됨",
+  "RoleDropdown": "드롭다운",
+  "RoleSlider": "슬라이더",
+  "RoleSliderPercent": "퍼센트",
+  "RoleStepper": "스테퍼",
+  "RoleCarousel": "캐러셀",
+  "RoleCard": "카드",
+  "RoleNavigation": "탐색",
+  "RoleScrollbar": "스크롤바",
+  "RoleProgress": "진행",
+  "RoleControl": "컨트롤",
+  "HintUseLeftRightArrows": "좌우 화살표 키를 사용하세요"
 }

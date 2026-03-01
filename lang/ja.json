@@ -770,5 +770,21 @@
   "CurrencyGems": "ジェム",
   "CurrencyWildcards": "ワイルドカード",
 
-  "NumberWords": ""
+  "NumberWords": "",
+  "RoleButton": "ボタン",
+  "RoleLink": "リンク",
+  "RoleCheckbox": "チェックボックス",
+  "RoleChecked": "オン",
+  "RoleUnchecked": "オフ",
+  "RoleDropdown": "ドロップダウン",
+  "RoleSlider": "スライダー",
+  "RoleSliderPercent": "パーセント",
+  "RoleStepper": "ステッパー",
+  "RoleCarousel": "カルーセル",
+  "RoleCard": "カード",
+  "RoleNavigation": "ナビゲーション",
+  "RoleScrollbar": "スクロールバー",
+  "RoleProgress": "進行状況",
+  "RoleControl": "コントロール",
+  "HintUseLeftRightArrows": "左右の矢印キーを使用"
 }

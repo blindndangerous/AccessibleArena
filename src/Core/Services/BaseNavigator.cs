@@ -68,6 +68,7 @@ namespace AccessibleArena.Core.Services
         {
             public GameObject GameObject { get; set; }
             public string Label { get; set; }
+            public UIElementClassifier.ElementRole Role { get; set; }
             public CarouselInfo Carousel { get; set; }
             /// <summary>Optional alternate action object (e.g., edit button for deck entries, activated with Shift+Enter)</summary>
             public GameObject AlternateActionObject { get; set; }
@@ -154,7 +155,7 @@ namespace AccessibleArena.Core.Services
             if (index < 0 || index >= _elements.Count) return "";
 
             var navElement = _elements[index];
-            string label = RefreshElementLabel(navElement.GameObject, navElement.Label);
+            string label = RefreshElementLabel(navElement.GameObject, navElement.Label, navElement.Role);
 
             return $"{label}, {index + 1} of {_elements.Count}";
         }
@@ -163,19 +164,22 @@ namespace AccessibleArena.Core.Services
         /// Refresh a cached element label with live state (toggle checked, input field content, dropdown value).
         /// Shared by BaseNavigator and GroupedNavigator to avoid duplicated logic.
         /// </summary>
-        public static string RefreshElementLabel(GameObject obj, string label)
+        public static string RefreshElementLabel(GameObject obj, string label,
+            UIElementClassifier.ElementRole role = UIElementClassifier.ElementRole.Unknown)
         {
             if (obj == null) return label;
 
-            // Update state for toggles - replace cached state with current state
+            // Update state for toggles - replace cached checkbox state with current state
             var toggle = obj.GetComponent<Toggle>();
-            if (toggle != null && label.Contains("checkbox"))
+            if (toggle != null && (role == UIElementClassifier.ElementRole.Toggle || role == UIElementClassifier.ElementRole.Unknown))
             {
-                string currentState = toggle.isOn ? "checked" : "unchecked";
-                label = System.Text.RegularExpressions.Regex.Replace(
-                    label,
-                    @"checkbox, (checked|unchecked)",
-                    $"checkbox, {currentState}");
+                // Find the last occurrence of the checkbox role text and replace from there
+                string checkboxRole = Strings.RoleCheckbox;
+                int checkboxIdx = label.LastIndexOf($", {checkboxRole}");
+                if (checkboxIdx >= 0)
+                {
+                    label = label.Substring(0, checkboxIdx) + $", {Strings.RoleCheckboxState(toggle.isOn)}";
+                }
             }
 
             // Update content for input fields - re-read current text with password masking
@@ -232,14 +236,19 @@ namespace AccessibleArena.Core.Services
             }
 
             // Update content for dropdowns - re-read current selected value
-            if (label.EndsWith(", dropdown"))
+            if (role == UIElementClassifier.ElementRole.Dropdown || role == UIElementClassifier.ElementRole.Unknown)
             {
+                string dropdownRole = Strings.RoleDropdown;
+                string dropdownSuffix = $", {dropdownRole}";
                 string currentValue = GetDropdownDisplayValue(obj);
                 if (!string.IsNullOrEmpty(currentValue))
                 {
-                    string baseLabel = label.Substring(0, label.Length - ", dropdown".Length);
+                    // Strip existing dropdown suffix, update value, re-append
+                    string baseLabel = label.EndsWith(dropdownSuffix)
+                        ? label.Substring(0, label.Length - dropdownSuffix.Length)
+                        : label;
                     if (baseLabel != currentValue)
-                        label = $"{baseLabel}: {currentValue}, dropdown";
+                        label = $"{baseLabel}: {currentValue}{dropdownSuffix}";
                 }
             }
 
@@ -1834,7 +1843,7 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>Add an element with label, carousel info, alternate action, and attached actions (prevents duplicates)</summary>
-        protected void AddElement(GameObject element, string label, CarouselInfo carouselInfo, GameObject alternateAction, List<AttachedAction> attachedActions)
+        protected void AddElement(GameObject element, string label, CarouselInfo carouselInfo, GameObject alternateAction, List<AttachedAction> attachedActions, UIElementClassifier.ElementRole role = UIElementClassifier.ElementRole.Unknown)
         {
             if (element == null) return;
 
@@ -1850,6 +1859,7 @@ namespace AccessibleArena.Core.Services
             {
                 GameObject = element,
                 Label = label,
+                Role = role,
                 Carousel = carouselInfo,
                 AlternateActionObject = alternateAction,
                 AttachedActions = attachedActions
@@ -1866,7 +1876,7 @@ namespace AccessibleArena.Core.Services
             if (buttonObj == null) return;
 
             string label = UITextExtractor.GetButtonText(buttonObj, fallbackLabel);
-            AddElement(buttonObj, $"{label}, button");
+            AddElement(buttonObj, $"{label}, {Models.Strings.RoleButton}", default, null, null, UIElementClassifier.ElementRole.Button);
         }
 
         /// <summary>Add a toggle with label (state is added dynamically)</summary>

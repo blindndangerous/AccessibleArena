@@ -363,7 +363,7 @@ namespace AccessibleArena.Core.Services
                     }
                     : default;
 
-                AddElement(obj, announcement, carouselInfo);
+                AddElement(obj, announcement, carouselInfo, null, null, classification.Role);
             }
 
             string searchRootName = _settingsContentPanel?.name ?? _settingsMenuObject?.name ?? "unknown";
