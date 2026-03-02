@@ -23,7 +23,7 @@ namespace AccessibleArena.Core.Services
     {
         #region Types
 
-        private enum PopupItemType { TextBlock, Button, InputField }
+        private enum PopupItemType { TextBlock, Button, InputField, Dropdown }
 
         private struct PopupItem
         {
@@ -39,6 +39,7 @@ namespace AccessibleArena.Core.Services
         private readonly string _navigatorId;
         private readonly IAnnouncementService _announcer;
         private readonly InputFieldEditHelper _inputHelper;
+        private readonly DropdownEditHelper _dropdownHelper;
 
         private GameObject _activePopup;
         private readonly List<PopupItem> _items = new List<PopupItem>();
@@ -61,6 +62,7 @@ namespace AccessibleArena.Core.Services
             _navigatorId = navigatorId;
             _announcer = announcer;
             _inputHelper = new InputFieldEditHelper(announcer);
+            _dropdownHelper = new DropdownEditHelper(announcer, navigatorId);
         }
 
         #endregion
@@ -104,7 +106,7 @@ namespace AccessibleArena.Core.Services
 
             DiscoverItems();
 
-            MelonLogger.Msg($"[{_navigatorId}] PopupHandler: {CountTextBlocks()} text blocks, {CountInputFields()} input fields, {CountButtons()} buttons");
+            MelonLogger.Msg($"[{_navigatorId}] PopupHandler: {CountTextBlocks()} text blocks, {CountInputFields()} input fields, {CountDropdowns()} dropdowns, {CountButtons()} buttons");
 
             AnnouncePopupOpen();
         }
@@ -115,6 +117,7 @@ namespace AccessibleArena.Core.Services
         public void Clear()
         {
             _inputHelper.Clear();
+            _dropdownHelper.Clear();
 
             _activePopup = null;
             _items.Clear();
@@ -148,6 +151,13 @@ namespace AccessibleArena.Core.Services
         public bool HandleInput()
         {
             if (_activePopup == null) return false;
+
+            // Dropdown edit mode intercepts all keys first
+            if (_dropdownHelper.IsEditing)
+            {
+                bool consumed = _dropdownHelper.HandleEditing(dir => NavigateItem(dir));
+                return consumed;
+            }
 
             // Input field edit mode intercepts all keys first
             if (_inputHelper.IsEditing)
@@ -259,16 +269,23 @@ namespace AccessibleArena.Core.Services
             // Phase 2: Discover input fields
             DiscoverInputFields(addedObjects);
 
-            // Phase 3: Discover buttons
+            // Phase 3: Discover dropdowns
+            DiscoverDropdowns(addedObjects);
+
+            // Phase 4: Discover buttons
             DiscoverButtons(addedObjects);
 
-            // Auto-focus first actionable item (input field or button), otherwise first item
-            int firstActionable = _items.FindIndex(i => i.Type == PopupItemType.Button || i.Type == PopupItemType.InputField);
+            // Auto-focus first actionable item (input field, dropdown, or button), otherwise first item
+            int firstActionable = _items.FindIndex(i => i.Type == PopupItemType.Button || i.Type == PopupItemType.InputField || i.Type == PopupItemType.Dropdown);
             _currentIndex = firstActionable >= 0 ? firstActionable : (_items.Count > 0 ? 0 : -1);
         }
 
         private void DiscoverTextBlocks()
         {
+            // Check if popup contains DeckCostsDetails - if so, skip its raw text
+            // and inject structured deck info from DeckInfoProvider instead
+            bool hasDeckCosts = HasComponentInChildren(_activePopup, "DeckCostsDetails");
+
             var seenTexts = new HashSet<string>();
 
             foreach (var tmp in _activePopup.GetComponentsInChildren<TMP_Text>(true))
@@ -281,8 +298,15 @@ namespace AccessibleArena.Core.Services
                 // Skip text inside input fields (placeholder, input text components)
                 if (IsInsideInputField(tmp.transform, _activePopup.transform)) continue;
 
+                // Skip text inside dropdowns (caption text, item labels)
+                if (IsInsideDropdown(tmp.transform, _activePopup.transform)) continue;
+
                 // Skip title/header text — it's already announced in "Popup: {title}"
                 if (IsInsideTitleContainer(tmp.transform, _activePopup.transform)) continue;
+
+                // Skip text inside DeckCostsDetails — replaced by structured deck info
+                if (hasDeckCosts && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckCostsDetails"))
+                    continue;
 
                 string text = UITextExtractor.CleanText(tmp.text);
                 if (string.IsNullOrWhiteSpace(text) || text.Length < 3) continue;
@@ -302,6 +326,27 @@ namespace AccessibleArena.Core.Services
                         GameObject = null,
                         Label = trimmed
                     });
+                    MelonLogger.Msg($"[{_navigatorId}] PopupHandler: found text block: {trimmed}");
+                }
+            }
+
+            // Inject structured deck info if we skipped DeckCostsDetails text
+            if (hasDeckCosts)
+            {
+                var deckInfo = DeckInfoProvider.GetDeckInfoElements();
+                if (deckInfo != null && deckInfo.Count > 0)
+                {
+                    foreach (var (label, text) in deckInfo)
+                    {
+                        string combined = $"{label}: {text}";
+                        _items.Add(new PopupItem
+                        {
+                            Type = PopupItemType.TextBlock,
+                            GameObject = null,
+                            Label = combined
+                        });
+                        MelonLogger.Msg($"[{_navigatorId}] PopupHandler: injected deck info: {combined}");
+                    }
                 }
             }
         }
@@ -334,6 +379,45 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        private void DiscoverDropdowns(HashSet<GameObject> addedObjects)
+        {
+            var discovered = new List<(GameObject obj, string label, float sortOrder)>();
+
+            foreach (var mb in _activePopup.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb == null || !mb.gameObject.activeInHierarchy) continue;
+                if (addedObjects.Contains(mb.gameObject)) continue;
+
+                string typeName = mb.GetType().Name;
+                bool isDropdown = typeName == "cTMP_Dropdown" ||
+                                  mb is TMPro.TMP_Dropdown ||
+                                  mb is Dropdown;
+
+                if (!isDropdown) continue;
+
+                string displayValue = BaseNavigator.GetDropdownDisplayValue(mb.gameObject);
+                string label = !string.IsNullOrEmpty(displayValue)
+                    ? $"{displayValue}, {Strings.RoleDropdown}"
+                    : $"{mb.gameObject.name}, {Strings.RoleDropdown}";
+
+                var pos = mb.gameObject.transform.position;
+                discovered.Add((mb.gameObject, label, -pos.y * 1000 + pos.x));
+                addedObjects.Add(mb.gameObject);
+            }
+
+            foreach (var (obj, label, _) in discovered.OrderBy(x => x.sortOrder))
+            {
+                _items.Add(new PopupItem
+                {
+                    Type = PopupItemType.Dropdown,
+                    GameObject = obj,
+                    Label = label
+                });
+
+                MelonLogger.Msg($"[{_navigatorId}] PopupHandler: found dropdown: {label}");
+            }
+        }
+
         private void DiscoverButtons(HashSet<GameObject> addedObjects)
         {
             var discovered = new List<(GameObject obj, string label, float sortOrder)>();
@@ -344,6 +428,7 @@ namespace AccessibleArena.Core.Services
                 if (mb == null || !mb.gameObject.activeInHierarchy) continue;
                 if (addedObjects.Contains(mb.gameObject)) continue;
                 if (IsInsideInputField(mb.transform, _activePopup.transform)) continue;
+                if (IsInsideDropdown(mb.transform, _activePopup.transform)) continue;
 
                 if (mb.GetType().Name == "SystemMessageButtonView")
                 {
@@ -362,6 +447,7 @@ namespace AccessibleArena.Core.Services
                 if (mb == null || !mb.gameObject.activeInHierarchy) continue;
                 if (addedObjects.Contains(mb.gameObject)) continue;
                 if (IsInsideInputField(mb.transform, _activePopup.transform)) continue;
+                if (IsInsideDropdown(mb.transform, _activePopup.transform)) continue;
                 if (IsInsideButton(mb.transform, _activePopup.transform)) continue;
 
                 string typeName = mb.GetType().Name;
@@ -382,6 +468,7 @@ namespace AccessibleArena.Core.Services
                 if (button == null || !button.gameObject.activeInHierarchy || !button.interactable) continue;
                 if (addedObjects.Contains(button.gameObject)) continue;
                 if (IsInsideInputField(button.transform, _activePopup.transform)) continue;
+                if (IsInsideDropdown(button.transform, _activePopup.transform)) continue;
                 if (IsInsideButton(button.transform, _activePopup.transform)) continue;
 
                 string label = UITextExtractor.GetText(button.gameObject);
@@ -460,6 +547,10 @@ namespace AccessibleArena.Core.Services
             {
                 _inputHelper.EnterEditMode(item.GameObject);
             }
+            else if (item.Type == PopupItemType.Dropdown && item.GameObject != null)
+            {
+                _dropdownHelper.EnterEditMode(item.GameObject);
+            }
             else if (item.Type == PopupItemType.Button && item.GameObject != null)
             {
                 MelonLogger.Msg($"[{_navigatorId}] PopupHandler: activating button: {item.Label}");
@@ -514,6 +605,15 @@ namespace AccessibleArena.Core.Services
             if (item.Type == PopupItemType.InputField && item.GameObject != null)
             {
                 label = BaseNavigator.RefreshElementLabel(item.GameObject, label, UIElementClassifier.ElementRole.TextField);
+            }
+            else if (item.Type == PopupItemType.Dropdown && item.GameObject != null)
+            {
+                // Re-read current dropdown value
+                string currentValue = BaseNavigator.GetDropdownDisplayValue(item.GameObject);
+                if (!string.IsNullOrEmpty(currentValue))
+                    label = $"{currentValue}, {Strings.RoleDropdown}";
+                else
+                    label = $"{label}, {Strings.RoleDropdown}";
             }
             else
             {
@@ -595,6 +695,22 @@ namespace AccessibleArena.Core.Services
                 if (current.GetComponent<Button>() != null)
                     return true;
 
+                current = current.parent;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check if a transform is inside a dropdown component (TMP_Dropdown, Dropdown, or cTMP_Dropdown).
+        /// Walks up from child to stopAt (exclusive).
+        /// </summary>
+        private static bool IsInsideDropdown(Transform child, Transform stopAt)
+        {
+            Transform current = child.parent;
+            while (current != null && current != stopAt)
+            {
+                if (UIFocusTracker.IsDropdown(current.gameObject))
+                    return true;
                 current = current.parent;
             }
             return false;
@@ -739,6 +855,40 @@ namespace AccessibleArena.Core.Services
         private int CountTextBlocks() => _items.Count(i => i.Type == PopupItemType.TextBlock);
         private int CountButtons() => _items.Count(i => i.Type == PopupItemType.Button);
         private int CountInputFields() => _items.Count(i => i.Type == PopupItemType.InputField);
+        private int CountDropdowns() => _items.Count(i => i.Type == PopupItemType.Dropdown);
+
+        /// <summary>
+        /// Check if a GameObject has a child component with the given type name.
+        /// </summary>
+        private static bool HasComponentInChildren(GameObject go, string typeName)
+        {
+            if (go == null) return false;
+            foreach (var mb in go.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb != null && mb.GetType().Name == typeName)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check if a transform is inside a component with the given type name.
+        /// Walks up from child to stopAt (exclusive).
+        /// </summary>
+        private static bool IsInsideComponentByName(Transform child, Transform stopAt, string typeName)
+        {
+            Transform current = child;
+            while (current != null && current != stopAt)
+            {
+                foreach (var mb in current.GetComponents<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == typeName)
+                        return true;
+                }
+                current = current.parent;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Check if a button is a full-screen dismiss overlay (click-outside-to-close).

@@ -692,6 +692,19 @@ namespace AccessibleArena.Core.Services
             {
                 InputManager.ConsumeKey(KeyCode.Return);
                 InputManager.ConsumeKey(KeyCode.KeypadEnter);
+
+                // If _blockEnterFromGame is false, this is the opening Enter leaking through.
+                // Unity's EventSystem opened the dropdown before our Update ran, so the same
+                // Enter keypress arrives here. Register the dropdown and skip selection.
+                if (!DropdownStateManager.ShouldBlockEnterFromGame)
+                {
+                    var active = DropdownStateManager.ActiveDropdown;
+                    if (active != null)
+                        DropdownStateManager.OnDropdownOpened(active);
+                    _announcer.Announce(Strings.DropdownOpened, AnnouncementPriority.Normal);
+                    return;
+                }
+
                 SelectDropdownItem();
                 CloseActiveDropdown(silent: true);
                 return;
@@ -706,7 +719,13 @@ namespace AccessibleArena.Core.Services
         /// Sets the value via reflection to bypass onValueChanged, preventing the game's
         /// chain auto-advance mechanism. The caller is responsible for closing the dropdown.
         /// </summary>
-        private void SelectDropdownItem()
+        private void SelectDropdownItem() => SelectCurrentDropdownItem(NavigatorId);
+
+        /// <summary>
+        /// Select the currently focused dropdown item (static, reusable by DropdownEditHelper).
+        /// Parses item index from EventSystem selection name, sets value silently on the active dropdown.
+        /// </summary>
+        public static void SelectCurrentDropdownItem(string callerId)
         {
             var eventSystem = EventSystem.current;
             if (eventSystem == null) return;
@@ -728,14 +747,14 @@ namespace AccessibleArena.Core.Services
 
             if (itemIndex < 0)
             {
-                MelonLogger.Msg($"[{NavigatorId}] Could not parse dropdown item index from: {itemName}");
+                MelonLogger.Msg($"[{callerId}] Could not parse dropdown item index from: {itemName}");
                 return;
             }
 
             var activeDropdown = DropdownStateManager.ActiveDropdown;
             if (activeDropdown == null)
             {
-                MelonLogger.Msg($"[{NavigatorId}] No active dropdown to select item on");
+                MelonLogger.Msg($"[{callerId}] No active dropdown to select item on");
                 return;
             }
 
@@ -744,7 +763,7 @@ namespace AccessibleArena.Core.Services
             // call AnnounceCurrentElement which re-reads the dropdown's current value.
             if (SetDropdownValueSilent(activeDropdown, itemIndex))
             {
-                MelonLogger.Msg($"[{NavigatorId}] Selected dropdown item {itemIndex}");
+                MelonLogger.Msg($"[{callerId}] Selected dropdown item {itemIndex}");
             }
         }
 
@@ -753,7 +772,7 @@ namespace AccessibleArena.Core.Services
         /// For TMP_Dropdown: uses SetValueWithoutNotify.
         /// For cTMP_Dropdown: uses reflection to set m_Value + RefreshShownValue.
         /// </summary>
-        private static bool SetDropdownValueSilent(GameObject dropdownObj, int itemIndex)
+        public static bool SetDropdownValueSilent(GameObject dropdownObj, int itemIndex)
         {
             // Try standard TMP_Dropdown
             var tmpDropdown = dropdownObj.GetComponent<TMPro.TMP_Dropdown>();
@@ -808,7 +827,7 @@ namespace AccessibleArena.Core.Services
         /// Get the currently displayed text value of a dropdown (works for TMP_Dropdown, Dropdown, and cTMP_Dropdown).
         /// Reads the caption text child component which shows the localized display value.
         /// </summary>
-        private static string GetDropdownDisplayValue(GameObject dropdownObj)
+        public static string GetDropdownDisplayValue(GameObject dropdownObj)
         {
             // Try standard TMP_Dropdown
             var tmpDropdown = dropdownObj.GetComponent<TMPro.TMP_Dropdown>();
@@ -855,7 +874,13 @@ namespace AccessibleArena.Core.Services
         /// Close the currently active dropdown by finding its parent TMP_Dropdown and calling Hide().
         /// </summary>
         /// <param name="silent">If true, skip "dropdown closed" announcement (used when Tab navigates away)</param>
-        private void CloseActiveDropdown(bool silent = false)
+        private void CloseActiveDropdown(bool silent = false) => CloseDropdown(NavigatorId, _announcer, silent);
+
+        /// <summary>
+        /// Close the currently active dropdown (static, reusable by DropdownEditHelper).
+        /// Finds the dropdown via DropdownStateManager.ActiveDropdown or hierarchy walk, calls Hide().
+        /// </summary>
+        public static void CloseDropdown(string callerId, IAnnouncementService announcer, bool silent)
         {
             var eventSystem = EventSystem.current;
             if (eventSystem == null || eventSystem.currentSelectedGameObject == null)
@@ -874,20 +899,20 @@ namespace AccessibleArena.Core.Services
                 var tmpDropdown = activeDropdown.GetComponent<TMPro.TMP_Dropdown>();
                 if (tmpDropdown != null)
                 {
-                    MelonLogger.Msg($"[{NavigatorId}] Closing TMP_Dropdown via ActiveDropdown reference");
+                    MelonLogger.Msg($"[{callerId}] Closing TMP_Dropdown via ActiveDropdown reference");
                     tmpDropdown.Hide();
                     DropdownStateManager.OnDropdownClosed();
-                    if (!silent) _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
+                    if (!silent) announcer?.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
                     return;
                 }
 
                 var legacyDropdown = activeDropdown.GetComponent<Dropdown>();
                 if (legacyDropdown != null)
                 {
-                    MelonLogger.Msg($"[{NavigatorId}] Closing legacy Dropdown via ActiveDropdown reference");
+                    MelonLogger.Msg($"[{callerId}] Closing legacy Dropdown via ActiveDropdown reference");
                     legacyDropdown.Hide();
                     DropdownStateManager.OnDropdownClosed();
-                    if (!silent) _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
+                    if (!silent) announcer?.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
                     return;
                 }
             }
@@ -900,10 +925,10 @@ namespace AccessibleArena.Core.Services
                 var tmpDropdown = transform.GetComponent<TMPro.TMP_Dropdown>();
                 if (tmpDropdown != null)
                 {
-                    MelonLogger.Msg($"[{NavigatorId}] Closing TMP_Dropdown via Escape/Backspace");
+                    MelonLogger.Msg($"[{callerId}] Closing TMP_Dropdown via Escape/Backspace");
                     tmpDropdown.Hide();
                     DropdownStateManager.OnDropdownClosed();
-                    if (!silent) _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
+                    if (!silent) announcer?.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
                     return;
                 }
 
@@ -911,10 +936,10 @@ namespace AccessibleArena.Core.Services
                 var legacyDropdown = transform.GetComponent<Dropdown>();
                 if (legacyDropdown != null)
                 {
-                    MelonLogger.Msg($"[{NavigatorId}] Closing legacy Dropdown via Escape/Backspace");
+                    MelonLogger.Msg($"[{callerId}] Closing legacy Dropdown via Escape/Backspace");
                     legacyDropdown.Hide();
                     DropdownStateManager.OnDropdownClosed();
-                    if (!silent) _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
+                    if (!silent) announcer?.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
                     return;
                 }
 
@@ -928,10 +953,10 @@ namespace AccessibleArena.Core.Services
                             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                         if (hideMethod != null)
                         {
-                            MelonLogger.Msg($"[{NavigatorId}] Closing cTMP_Dropdown via Escape/Backspace");
+                            MelonLogger.Msg($"[{callerId}] Closing cTMP_Dropdown via Escape/Backspace");
                             hideMethod.Invoke(component, null);
                             DropdownStateManager.OnDropdownClosed();
-                            if (!silent) _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
+                            if (!silent) announcer?.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
                             return;
                         }
                     }
@@ -941,7 +966,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Couldn't find dropdown - just exit edit mode
-            MelonLogger.Msg($"[{NavigatorId}] Could not find dropdown to close, exiting edit mode");
+            MelonLogger.Msg($"[{callerId}] Could not find dropdown to close, exiting edit mode");
             DropdownStateManager.OnDropdownClosed();
         }
 
@@ -1817,6 +1842,15 @@ namespace AccessibleArena.Core.Services
 
             // Standard activation
             var result = UIActivator.Activate(element);
+
+            // If a dropdown was just activated, register with DropdownStateManager
+            // so _blockEnterFromGame prevents the opening Enter from also selecting an item
+            if (UIFocusTracker.IsDropdown(element))
+            {
+                DropdownStateManager.OnDropdownOpened(element);
+                _announcer.Announce(Strings.DropdownOpened, AnnouncementPriority.Normal);
+                return;
+            }
 
             // Announce result
             if (result.Type == ActivationType.Toggle)
