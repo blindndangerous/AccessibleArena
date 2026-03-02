@@ -136,6 +136,12 @@ namespace AccessibleArena.Core.Services
 
         public void Activate(uint localPlayerId)
         {
+            // Skip reset if already active (e.g. re-activation after settings menu close).
+            // State (turn count, phase, zone counts) is still valid since Deactivate()
+            // is only called on scene change, not on navigator preemption.
+            if (_isActive && _localPlayerId == localPlayerId)
+                return;
+
             _isActive = true;
             _localPlayerId = localPlayerId;
             _zoneCounts.Clear();
