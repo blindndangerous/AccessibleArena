@@ -24,69 +24,81 @@
     </ItemGroup>
   </Target>
 
+  <!-- Game install path - adjust if your MTGA is installed elsewhere -->
+  <PropertyGroup>
+    <MtgaPath>C:\Program Files\Wizards of the Coast\MTGA</MtgaPath>
+    <MtgaManagedPath>$(MtgaPath)\MTGA_Data\Managed</MtgaManagedPath>
+    <MelonLoaderPath>$(MtgaPath)\MelonLoader\net35</MelonLoaderPath>
+  </PropertyGroup>
+
   <ItemGroup>
+    <!-- MelonLoader / Harmony -->
     <Reference Include="0Harmony">
-      <HintPath>..\libs\0Harmony.dll</HintPath>
+      <HintPath>$(MelonLoaderPath)\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="MelonLoader">
-      <HintPath>..\libs\MelonLoader.dll</HintPath>
+      <HintPath>$(MelonLoaderPath)\MelonLoader.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\libs\Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+
+    <!-- Unity -->
     <Reference Include="UnityEngine">
-      <HintPath>..\libs\UnityEngine.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\UnityEngine.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\libs\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\libs\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\UnityEngine.UI.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\libs\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>..\libs\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\UnityEngine.UIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\libs\Unity.TextMeshPro.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Core">
-      <HintPath>..\libs\Core.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Wizards.Arena.Models">
-      <HintPath>..\libs\Wizards.Arena.Models.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Wizards.Arena.Enums">
-      <HintPath>..\libs\Wizards.Arena.Enums.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Wizards.Mtga.Metadata">
-      <HintPath>..\libs\Wizards.Mtga.Metadata.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Wizards.Mtga.Interfaces">
-      <HintPath>..\libs\Wizards.Mtga.Interfaces.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\Unity.TextMeshPro.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Unity.InputSystem">
-      <HintPath>..\libs\Unity.InputSystem.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- MTGA game assemblies -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(MtgaManagedPath)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Core">
+      <HintPath>$(MtgaManagedPath)\Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Wizards.Arena.Models">
+      <HintPath>$(MtgaManagedPath)\Wizards.Arena.Models.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Wizards.Arena.Enums">
+      <HintPath>$(MtgaManagedPath)\Wizards.Arena.Enums.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Wizards.Mtga.Metadata">
+      <HintPath>$(MtgaManagedPath)\Wizards.Mtga.Metadata.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Wizards.Mtga.Interfaces">
+      <HintPath>$(MtgaManagedPath)\Wizards.Mtga.Interfaces.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="ZFBrowser">
-      <HintPath>..\libs\ZFBrowser.dll</HintPath>
+      <HintPath>$(MtgaManagedPath)\ZFBrowser.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

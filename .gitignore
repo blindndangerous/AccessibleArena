@@ -36,6 +36,9 @@ tmp_*
 C*temp_*
 Usersfabiaarenatemp_*
 
+# Game DLLs (proprietary, reference from game install path)
+libs/
+
 # Tools directory (local utilities, not part of the mod)
 tools/
 
