@@ -469,11 +469,21 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private static string GetDropdownSelectedValue(TMP_Dropdown tmpDropdown, Dropdown unityDropdown, Component customDropdown)
         {
-            if (tmpDropdown != null && tmpDropdown.options != null && tmpDropdown.options.Count > tmpDropdown.value)
-                return tmpDropdown.options[tmpDropdown.value].text;
+            // Read captionText directly - this is what sighted users see.
+            // Do NOT use options[value] as the game may set captionText without updating value.
+            if (tmpDropdown != null && tmpDropdown.captionText != null)
+            {
+                string text = tmpDropdown.captionText.text;
+                if (!string.IsNullOrEmpty(text))
+                    return text;
+            }
 
-            if (unityDropdown != null && unityDropdown.options != null && unityDropdown.options.Count > unityDropdown.value)
-                return unityDropdown.options[unityDropdown.value].text;
+            if (unityDropdown != null && unityDropdown.captionText != null)
+            {
+                string text = unityDropdown.captionText.text;
+                if (!string.IsNullOrEmpty(text))
+                    return text;
+            }
 
             if (customDropdown != null)
                 return GetCustomDropdownSelectedValue(customDropdown);
@@ -1468,21 +1478,29 @@ namespace AccessibleArena.Core.Services
             // Clean up the name
             label = CleanSettingLabel(label);
 
-            // Try to find the current selected value
-            // First check if this object has a TMP_Dropdown - get value from selected option
+            // Try to find the current selected value from captionText (what sighted users see).
+            // Do NOT use options[value] as the game may set captionText without updating value.
             var tmpDropdown = obj.GetComponent<TMP_Dropdown>();
-            if (tmpDropdown != null && tmpDropdown.options != null && tmpDropdown.options.Count > tmpDropdown.value)
+            if (tmpDropdown != null && tmpDropdown.captionText != null)
             {
-                currentValue = tmpDropdown.options[tmpDropdown.value].text;
-                return true;
+                string text = tmpDropdown.captionText.text;
+                if (!string.IsNullOrEmpty(text))
+                {
+                    currentValue = text;
+                    return true;
+                }
             }
 
             // Also check for Unity Dropdown
             var unityDropdown = obj.GetComponent<Dropdown>();
-            if (unityDropdown != null && unityDropdown.options != null && unityDropdown.options.Count > unityDropdown.value)
+            if (unityDropdown != null && unityDropdown.captionText != null)
             {
-                currentValue = unityDropdown.options[unityDropdown.value].text;
-                return true;
+                string text = unityDropdown.captionText.text;
+                if (!string.IsNullOrEmpty(text))
+                {
+                    currentValue = text;
+                    return true;
+                }
             }
 
             // Fallback: Look for "Value" child element (for non-dropdown controls)
@@ -1866,7 +1884,7 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Get the selected value from a cTMP_Dropdown via reflection.
-        /// cTMP_Dropdown inherits from TMP_Dropdown so it has similar properties.
+        /// Reads captionText (what sighted users see) rather than options[value].
         /// </summary>
         private static string GetCustomDropdownSelectedValue(Component dropdown)
         {
@@ -1876,24 +1894,24 @@ namespace AccessibleArena.Core.Services
             {
                 var type = dropdown.GetType();
 
-                // cTMP_Dropdown inherits from TMP_Dropdown, so it has 'value' and 'options' properties
-                var valueProperty = type.GetProperty("value", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                var optionsProperty = type.GetProperty("options", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-                if (valueProperty == null || optionsProperty == null) return null;
-
-                int selectedIndex = (int)valueProperty.GetValue(dropdown);
-                var options = optionsProperty.GetValue(dropdown) as System.Collections.IList;
-
-                if (options != null && selectedIndex >= 0 && selectedIndex < options.Count)
+                // Read captionText - this is what sighted users see
+                var captionField = type.GetField("m_CaptionText",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (captionField != null)
                 {
-                    var option = options[selectedIndex];
-                    // Each option has a 'text' property
-                    var textProperty = option.GetType().GetProperty("text");
-                    if (textProperty != null)
-                    {
-                        return textProperty.GetValue(option) as string;
-                    }
+                    var captionText = captionField.GetValue(dropdown) as TMPro.TMP_Text;
+                    if (captionText != null && !string.IsNullOrEmpty(captionText.text))
+                        return captionText.text;
+                }
+
+                // Fallback: try captionText property
+                var captionProp = type.GetProperty("captionText",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (captionProp != null)
+                {
+                    var captionText = captionProp.GetValue(dropdown) as TMPro.TMP_Text;
+                    if (captionText != null && !string.IsNullOrEmpty(captionText.text))
+                        return captionText.text;
                 }
             }
             catch

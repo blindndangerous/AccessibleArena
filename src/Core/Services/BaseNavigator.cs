@@ -834,22 +834,19 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static string GetDropdownDisplayValue(GameObject dropdownObj)
         {
+            // Read captionText directly - this is what sighted users see.
+            // Do NOT call RefreshShownValue() as it overwrites captionText from m_Value,
+            // which may be stale (game may set captionText directly without updating m_Value).
+
             // Try standard TMP_Dropdown
             var tmpDropdown = dropdownObj.GetComponent<TMPro.TMP_Dropdown>();
             if (tmpDropdown != null && tmpDropdown.captionText != null)
-            {
-                // Force caption sync - game may set value without calling RefreshShownValue
-                tmpDropdown.RefreshShownValue();
                 return tmpDropdown.captionText.text;
-            }
 
             // Try legacy Dropdown
             var legacyDropdown = dropdownObj.GetComponent<Dropdown>();
             if (legacyDropdown != null && legacyDropdown.captionText != null)
-            {
-                legacyDropdown.RefreshShownValue();
                 return legacyDropdown.captionText.text;
-            }
 
             // Try cTMP_Dropdown via reflection
             foreach (var component in dropdownObj.GetComponents<Component>())
@@ -857,11 +854,6 @@ namespace AccessibleArena.Core.Services
                 if (component != null && component.GetType().Name == "cTMP_Dropdown")
                 {
                     var type = component.GetType();
-                    // Force caption sync - game may set m_Value directly without RefreshShownValue
-                    var refreshMethod = type.GetMethod("RefreshShownValue",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                    refreshMethod?.Invoke(component, null);
-
                     // Read m_CaptionText field (TMP_Text reference)
                     var captionField = type.GetField("m_CaptionText",
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
