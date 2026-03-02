@@ -275,6 +275,10 @@ namespace AccessibleArena.Core.Services
             // Phase 4: Discover buttons
             DiscoverButtons(addedObjects);
 
+            // Phase 5: Remove text blocks that duplicate button labels (e.g., cosmetic section
+            // headers like "Avatare" that also appear as clickable buttons)
+            DeduplicateTextBlocksAgainstButtons();
+
             // Auto-focus first actionable item (input field, dropdown, or button), otherwise first item
             int firstActionable = _items.FindIndex(i => i.Type == PopupItemType.Button || i.Type == PopupItemType.InputField || i.Type == PopupItemType.Dropdown);
             _currentIndex = firstActionable >= 0 ? firstActionable : (_items.Count > 0 ? 0 : -1);
@@ -282,11 +286,21 @@ namespace AccessibleArena.Core.Services
 
         private void DiscoverTextBlocks()
         {
-            // Check if popup contains deck/cosmetic components whose raw text should be filtered
+            // Check if popup contains DeckCostsDetails - if so, skip its raw text
+            // and inject structured deck info from DeckInfoProvider instead
             bool hasDeckCosts = HasComponentInChildren(_activePopup, "DeckCostsDetails");
-            bool hasDeckTypes = HasComponentInChildren(_activePopup, "DeckTypesDetails");
-            bool hasDeckColors = HasComponentInChildren(_activePopup, "DeckColorsDetails");
-            bool hasCosmetics = HasComponentInChildren(_activePopup, "CosmeticSelectorController");
+
+            // Collect transforms to skip: widgets that instantiate children under a separate
+            // ItemParent transform (not a descendant of the component itself), so the
+            // walk-up-to-component approach (IsInsideComponentByName) can't find them.
+            // Instead, find each component's content transform and use IsChildOf.
+            var skipTransforms = new List<Transform>();
+            if (hasDeckCosts)
+            {
+                CollectWidgetContentTransforms(_activePopup, "DeckTypesDetails", "ItemParent", skipTransforms);
+                CollectWidgetContentTransforms(_activePopup, "DeckColorsDetails", null, skipTransforms);
+                CollectWidgetContentTransforms(_activePopup, "CosmeticSelectorController", null, skipTransforms);
+            }
 
             var seenTexts = new HashSet<string>();
 
@@ -310,16 +324,9 @@ namespace AccessibleArena.Core.Services
                 if (hasDeckCosts && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckCostsDetails"))
                     continue;
 
-                // Skip text inside DeckTypesDetails — replaced by structured 3rd info row
-                if (hasDeckTypes && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckTypesDetails"))
-                    continue;
-
-                // Skip text inside DeckColorsDetails — removes "100%" and color percentages
-                if (hasDeckColors && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckColorsDetails"))
-                    continue;
-
-                // Skip text inside CosmeticSelectorController — removes duplicate cosmetic labels
-                if (hasCosmetics && IsInsideComponentByName(tmp.transform, _activePopup.transform, "CosmeticSelectorController"))
+                // Skip text inside widget content transforms (DeckTypesDetails ItemParent,
+                // DeckColorsDetails, CosmeticSelectorController)
+                if (skipTransforms.Count > 0 && IsChildOfAny(tmp.transform, skipTransforms))
                     continue;
 
                 string text = UITextExtractor.CleanText(tmp.text);
@@ -519,6 +526,29 @@ namespace AccessibleArena.Core.Services
 
                 MelonLogger.Msg($"[{_navigatorId}] PopupHandler: found button: {label}");
             }
+        }
+
+        /// <summary>
+        /// Remove text blocks whose label exactly matches a button label.
+        /// Handles cases like cosmetic section headers (Avatare, Begleiter, Kartenhüllen)
+        /// that appear as both standalone text and clickable buttons.
+        /// </summary>
+        private void DeduplicateTextBlocksAgainstButtons()
+        {
+            var buttonLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in _items)
+            {
+                if (item.Type == PopupItemType.Button)
+                    buttonLabels.Add(item.Label);
+            }
+
+            if (buttonLabels.Count == 0) return;
+
+            int removed = _items.RemoveAll(item =>
+                item.Type == PopupItemType.TextBlock && buttonLabels.Contains(item.Label));
+
+            if (removed > 0)
+                MelonLogger.Msg($"[{_navigatorId}] PopupHandler: removed {removed} text blocks duplicating button labels");
         }
 
         #endregion
@@ -912,6 +942,49 @@ namespace AccessibleArena.Core.Services
         {
             string name = obj.name.ToLower();
             return name.Contains("background") || name.Contains("overlay") || name.Contains("backdrop") || name.Contains("dismiss");
+        }
+
+        /// <summary>
+        /// Find a component by type name and collect its content transform(s) for text filtering.
+        /// If fieldName is specified, gets that Transform field from the component.
+        /// Otherwise, uses the component's own transform.
+        /// </summary>
+        private static void CollectWidgetContentTransforms(GameObject popup, string componentTypeName,
+            string fieldName, List<Transform> skipTransforms)
+        {
+            foreach (var mb in popup.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb == null || mb.GetType().Name != componentTypeName) continue;
+
+                if (fieldName != null)
+                {
+                    var field = mb.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+                    if (field != null)
+                    {
+                        var transform = field.GetValue(mb) as Transform;
+                        if (transform != null)
+                            skipTransforms.Add(transform);
+                    }
+                }
+                else
+                {
+                    skipTransforms.Add(mb.transform);
+                }
+                break;
+            }
+        }
+
+        /// <summary>
+        /// Check if a transform is a descendant of any transform in the list.
+        /// </summary>
+        private static bool IsChildOfAny(Transform child, List<Transform> parents)
+        {
+            foreach (var parent in parents)
+            {
+                if (child.IsChildOf(parent))
+                    return true;
+            }
+            return false;
         }
 
         #endregion
