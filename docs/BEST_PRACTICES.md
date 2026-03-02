@@ -899,7 +899,14 @@ mode tracking is simpler - we trust the game's highlight system.
 5. PlayerPortraitNavigator  → V key player info zone
 6. BattlefieldNavigator     → A/R/B shortcuts, row navigation
 7. ZoneNavigator            → C/G/X/S/W shortcuts, Left/Right in zones
+8. Enter guard              → Consumes unhandled Enter to prevent base class activation
 ```
+
+**Enter Guard (CRITICAL):**
+After all sub-navigators, DuelNavigator consumes any unhandled Enter/KeypadEnter before
+it can fall through to `BaseNavigator.HandleNavigation()`. Without this, the base class
+activates whatever Selectable is at `_currentIndex` (e.g. the settings button). All
+legitimate Enter actions in duels are handled by sub-navigators above.
 
 **Key Simplification:**
 Old approach required complex auto-detect/auto-exit logic to track targeting mode.

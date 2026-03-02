@@ -150,12 +150,6 @@ Currently mitigated with "1 of N" announcement so the user knows multiple rounds
 
 ---
 
-### London Mulligan With Very Low Card Counts
-
-Mulliganing down to 3 or fewer cards may behave incorrectly. Needs testing whether card selection and bottom placement still works correctly at very low hand sizes.
-
----
-
 ### Jump In: Packet Order Chaotic
 
 The packet tiles in Jump In appear in a chaotic/unpredictable order during navigation. The navigation order does not match the visual layout consistently.
@@ -216,12 +210,6 @@ Opening the settings menu (F2) during the declare attackers phase causes issues.
 ### Adding Cards to Deck Exits Collection Group
 
 Adding cards to a deck reportedly moves the user out of the Collection group to the upper group level. Exact reproduction steps unknown.
-
----
-
-### Enter Opens Settings Menu
-
-Pressing Enter reportedly opens the settings menu in an unexpected context. Exact reproduction steps unknown.
 
 ---
 

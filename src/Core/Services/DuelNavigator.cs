@@ -492,6 +492,13 @@ namespace AccessibleArena.Core.Services
             if (_zoneNavigator.HandleInput())
                 return true;
 
+            // Consume Enter so it never falls through to BaseNavigator.HandleNavigation().
+            // All duel Enter actions are handled by sub-navigators above (browser, combat,
+            // highlight, etc.). Without this guard, unhandled Enter activates whatever
+            // Selectable is at _currentIndex (e.g. the settings button).
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                return true;
+
             return base.HandleCustomInput();
         }
 
