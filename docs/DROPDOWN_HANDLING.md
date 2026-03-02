@@ -1,7 +1,7 @@
 # Dropdown Handling - Unified State Management
 
 **Created:** 2026-02-03
-**Updated:** 2026-02-19 (Enter selects and closes dropdown, dynamic value display)
+**Updated:** 2026-03-02 (PopupHandler dropdown support, captionText reading, stale value correction)
 
 ---
 
@@ -102,13 +102,31 @@ When the user presses Enter on a dropdown item, the mod selects it and closes th
 
 `GetElementAnnouncement()` dynamically re-reads dropdown values (same pattern as toggles and input fields):
 
-- **`GetDropdownDisplayValue()`** reads the caption text from the dropdown component:
+- **`GetDropdownDisplayValue()`** reads `captionText.text` directly — NOT `options[value].text`
   - `TMP_Dropdown` / `Dropdown`: Reads `captionText.text` directly
   - `cTMP_Dropdown`: Reads `m_CaptionText` field via reflection (cTMP_Dropdown extends `Selectable`, NOT `TMP_Dropdown`)
+- **Critical:** Never call `RefreshShownValue()` in read paths — it overwrites `captionText` from `m_Value`, which may be stale (game can set captionText directly without updating m_Value)
 - If the current value differs from the base label, formats as "baseLabel: value, dropdown"
 - If unchanged (value matches label), keeps the original label
 
-This prevents the chain auto-advance problem (Month -> Day -> Year) where `onValueChanged` would trigger the game to auto-open the next dropdown.
+**UIElementClassifier** also reads dropdown values (for settings detection and initial labeling) using the same captionText-first approach via `GetDropdownSelectedValue()`, `IsSettingsDropdownControl()`, and `GetCustomDropdownSelectedValue()`.
+
+### Stale Dropdown Value Correction (UIElementClassifier)
+
+`CorrectStaleDropdownValue()` attempts to fix dropdowns where the game initializes `value=0` but the actual setting is different. It only acts on dropdowns with `value == 0` and tries to match `Screen.width x Screen.height` against option texts.
+
+**Known limitation:** Screen/Camera Unity APIs return the native display resolution, not the game's internal render resolution. The resolution dropdown in Settings > Graphics cannot be corrected — see Known Issues.
+
+### PopupHandler Dropdown Support (DropdownEditHelper)
+
+Popups (e.g., DeckDetailsPopup) can contain dropdowns. `PopupHandler` discovers and handles them via `DropdownEditHelper`, following the same pattern as `InputFieldEditHelper`:
+
+- **Discovery:** `DiscoverDropdowns()` scans popup objects for TMP_Dropdown, Dropdown, and cTMP_Dropdown components. Labels use `GetDropdownDisplayValue()` + role suffix.
+- **Edit mode:** Enter on a dropdown item calls `DropdownEditHelper.EnterEditMode()` which opens the dropdown via `UIActivator.Activate()` and registers with `DropdownStateManager`.
+- **Key handling:** `HandleEditing()` routes Tab (close + navigate), Escape/Backspace (close), Enter (select + close), and passes arrow keys to Unity.
+- **Integration:** `PopupHandler.HandleInput()` checks `_dropdownHelper.IsEditing` before input field editing, ensuring dropdown mode takes priority.
+
+**Files:** `src/Core/Services/DropdownEditHelper.cs`, `src/Core/Services/PopupHandler.cs`
 
 ### Integration Points
 
@@ -126,8 +144,7 @@ if (DropdownStateManager.IsInDropdownMode)
 if (justExitedDropdown)
 {
     SyncIndexToFocusedElement();
-    AnnounceCurrentElement();
-    return;
+    return; // SyncIndexToFocusedElement already announces; no separate announce needed
 }
 ```
 
@@ -383,6 +400,9 @@ Without suppression, this would cause the system to incorrectly enter dropdown m
 
 - `src/Core/Services/DropdownStateManager.cs` - Unified state manager
 - `src/Core/Services/BaseNavigator.cs` - HandleDropdownNavigation, SelectDropdownItem, SetDropdownValueSilent, GetDropdownDisplayValue
+- `src/Core/Services/UIElementClassifier.cs` - GetDropdownSelectedValue, IsSettingsDropdownControl, CorrectStaleDropdownValue
+- `src/Core/Services/DropdownEditHelper.cs` - Popup dropdown edit mode (state + key routing)
+- `src/Core/Services/PopupHandler.cs` - Popup dropdown discovery and integration
 - `src/Patches/EventSystemPatch.cs` - Blocks SendSubmitEventToSelectedObject in dropdown mode
 - `src/Patches/KeyboardManagerPatch.cs` - Blocks Enter from game's KeyboardManager in dropdown mode
 - `src/Core/Services/UIFocusTracker.cs` - Delegates to DropdownStateManager, provides IsAnyDropdownExpanded()

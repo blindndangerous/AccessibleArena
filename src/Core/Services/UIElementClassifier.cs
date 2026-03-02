@@ -473,6 +473,9 @@ namespace AccessibleArena.Core.Services
             // Do NOT use options[value] as the game may set captionText without updating value.
             if (tmpDropdown != null && tmpDropdown.captionText != null)
             {
+                // Fix stale resolution dropdown: game may initialize with value=0 (max res)
+                // while the actual screen resolution is different. Correct once at discovery.
+                CorrectStaleDropdownValue(tmpDropdown);
                 string text = tmpDropdown.captionText.text;
                 if (!string.IsNullOrEmpty(text))
                     return text;
@@ -489,6 +492,37 @@ namespace AccessibleArena.Core.Services
                 return GetCustomDropdownSelectedValue(customDropdown);
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempt to fix stale dropdown values where the game initializes value=0
+        /// but the actual setting is different. Currently limited: Screen/Camera APIs
+        /// return the display resolution, not the game's internal render resolution,
+        /// so the resolution dropdown cannot be corrected (known game bug).
+        /// </summary>
+        private static void CorrectStaleDropdownValue(TMP_Dropdown dropdown)
+        {
+            if (dropdown == null || dropdown.options == null || dropdown.options.Count <= 1)
+                return;
+            if (dropdown.value != 0)
+                return; // Only correct potentially-uninitialized dropdowns
+
+            string currentCaption = dropdown.captionText != null ? dropdown.captionText.text : null;
+
+            // Try Screen resolution - works when the game uses Screen.SetResolution
+            // but fails for borderless fullscreen where Screen.width returns native display res
+            string screenRes = $"{UnityEngine.Screen.width}x{UnityEngine.Screen.height}";
+            if (!string.IsNullOrEmpty(screenRes) && screenRes != currentCaption)
+            {
+                for (int i = 0; i < dropdown.options.Count; i++)
+                {
+                    if (dropdown.options[i].text == screenRes)
+                    {
+                        BaseNavigator.SetDropdownValueSilent(dropdown.gameObject, i);
+                        return;
+                    }
+                }
+            }
         }
 
         #endregion
@@ -1483,6 +1517,7 @@ namespace AccessibleArena.Core.Services
             var tmpDropdown = obj.GetComponent<TMP_Dropdown>();
             if (tmpDropdown != null && tmpDropdown.captionText != null)
             {
+                CorrectStaleDropdownValue(tmpDropdown);
                 string text = tmpDropdown.captionText.text;
                 if (!string.IsNullOrEmpty(text))
                 {

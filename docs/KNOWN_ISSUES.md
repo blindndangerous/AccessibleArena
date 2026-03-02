@@ -6,6 +6,20 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ## Active Bugs
 
+### Resolution Dropdown Shows Native Display Resolution Until Changed (Game Bug)
+
+The resolution dropdown in Settings > Graphics always shows the native display resolution (e.g., "2880x1800") instead of the game's actual render resolution (e.g., "1920x1080") until the user interacts with it and selects a value.
+
+**Root cause:** The game initializes the dropdown with `value=0` (first option = highest resolution) and never updates `m_Value` or `captionText` to reflect the actual internal render resolution. When the dropdown opens, the game internally corrects the focused item (scrolls to the correct option), but this correction is never synced back to the closed dropdown's display.
+
+**Why it can't be fixed by the mod:** All Unity APIs (`Screen.width`, `Screen.height`, `Screen.currentResolution`, `Camera.main.pixelWidth/Height`) return the native display resolution in borderless fullscreen mode. The game's internal render resolution is stored in a game-specific setting not exposed to standard Unity APIs.
+
+**Impact:** Only affects the first announcement of the resolution dropdown before user interaction. All other dropdowns (language, display mode, etc.) work correctly.
+
+**Files:** `UIElementClassifier.cs` (CorrectStaleDropdownValue — attempts Screen.width correction but cannot fix borderless fullscreen case)
+
+---
+
 ### Spell Resolved Announcement Too Early or Repeated
 
 "Spell resolved" announcement sometimes fires too early or multiple times for a single spell.
