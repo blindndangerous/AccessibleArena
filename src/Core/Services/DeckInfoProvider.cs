@@ -27,6 +27,7 @@ namespace AccessibleArena.Core.Services
         // Cached component references (cleared on scene change)
         private static MonoBehaviour _cachedTitlePanel;        // DeckMainTitlePanel
         private static MonoBehaviour _cachedCostsDetails;      // DeckCostsDetails
+        private static MonoBehaviour _cachedTypesDetails;      // DeckTypesDetails
 
         // Cached reflection members for DeckMainTitlePanel
         private static FieldInfo _cardCountLabelField;         // _cardCountLabel (Localize component)
@@ -50,6 +51,19 @@ namespace AccessibleArena.Core.Services
         private static MethodInfo _getFilteredMainDeckMethod;  // DeckBuilderModel.GetFilteredMainDeck()
         private static bool _pantryReflectionInit;
 
+        // Cached reflection members for DeckTypesDetails
+        private static FieldInfo _typesItemParentField;        // ItemParent (Transform)
+        private static MethodInfo _typesSetDeckMethod;         // SetDeck(IReadOnlyList<CardPrintingQuantity>, IGreLocProvider)
+        private static Type _lineItemType;                     // DeckDetailsLineItem
+        private static FieldInfo _lineItemNameField;           // DeckDetailsLineItem.Name (TMP_Text)
+        private static FieldInfo _lineItemQuantityField;       // DeckDetailsLineItem.Quantity (TMP_Text)
+        private static bool _typesDetailsReflectionInit;
+
+        // Cached reflection for Pantry.Get<CardDatabase>().GreLocProvider
+        private static MethodInfo _pantryGetCardDatabaseMethod;
+        private static PropertyInfo _greLocProviderProperty;   // CardDatabase.GreLocProvider
+        private static bool _cardDatabaseReflectionInit;
+
         // Cost bar field names matching DeckCostsDetails fields
         private static readonly string[] CostBarFieldNames = new[]
         {
@@ -69,6 +83,16 @@ namespace AccessibleArena.Core.Services
         {
             "Creatures", "Others", "Lands"
         };
+
+        /// <summary>
+        /// Represents a type group read from DeckTypesDetails (e.g., Kreatur with subtypes).
+        /// </summary>
+        private struct TypeGroup
+        {
+            public string TypeName;
+            public string TypeQuantity;
+            public List<(string name, string quantity)> Subtypes;
+        }
 
         /// <summary>
         /// Get the card count text (e.g., "35 von 60") from DeckMainTitlePanel.
@@ -154,7 +178,16 @@ namespace AccessibleArena.Core.Services
                 PopulateCostsDetails(details);
             }
 
-            var cardEntries = BuildCardInfoEntries(details);
+            // Read type groups for enriched card info entries
+            List<TypeGroup> typeGroups = null;
+            var typesDetails = FindTypesDetails();
+            if (typesDetails != null)
+            {
+                PopulateTypesDetails(typesDetails);
+                typeGroups = ReadTypeGroups(typesDetails);
+            }
+
+            var cardEntries = BuildCardInfoEntries(details, typeGroups);
             if (cardEntries.Count > 0)
                 rows.Add(("Cards", cardEntries));
 
@@ -166,9 +199,13 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Build individual card info entries: ["35 von 60", "20 Creatures (56%)", ...]
+        /// Build individual card info entries with integrated type details.
+        /// Creatures entry includes creature subtypes, Others entry includes individual type
+        /// distribution (Instants, Sorceries, etc.), Lands entry includes land subtypes.
+        /// Game always outputs types in order: Creature, [Instant,Sorcery,Artifact,Enchantment,
+        /// Planeswalker,Battle], Land - so first group = Creature, last = Land, middle = Others.
         /// </summary>
-        private static List<string> BuildCardInfoEntries(MonoBehaviour details)
+        private static List<string> BuildCardInfoEntries(MonoBehaviour details, List<TypeGroup> typeGroups = null)
         {
             var entries = new List<string>();
 
@@ -176,34 +213,117 @@ namespace AccessibleArena.Core.Services
             if (!string.IsNullOrEmpty(cardCount))
                 entries.Add(cardCount);
 
-            if (details != null && _typeLineQuantityField != null)
+            if (details == null || _typeLineQuantityField == null)
+                return entries;
+
+            // Classify type groups into creature/others/land
+            TypeGroup? creatureTypeGroup = null;
+            var othersTypeGroups = new List<TypeGroup>();
+            TypeGroup? landTypeGroup = null;
+
+            if (typeGroups != null && typeGroups.Count > 0)
+                ClassifyTypeGroups(details, typeGroups, out creatureTypeGroup, out othersTypeGroups, out landTypeGroup);
+
+            var typeFields = new FieldInfo[] { _creaturesItemField, _othersItemField, _landsItemField };
+            for (int i = 0; i < typeFields.Length; i++)
             {
-                var typeFields = new FieldInfo[] { _creaturesItemField, _othersItemField, _landsItemField };
-                for (int i = 0; i < typeFields.Length; i++)
+                if (typeFields[i] == null) continue;
+                try
                 {
-                    if (typeFields[i] == null) continue;
-                    try
+                    var typeLineItem = typeFields[i].GetValue(details);
+                    if (typeLineItem == null) continue;
+
+                    string quantity = GetTmpTextValue(_typeLineQuantityField.GetValue(typeLineItem));
+                    if (string.IsNullOrEmpty(quantity) || quantity.Trim() == "0") continue;
+
+                    var sb = new StringBuilder();
+                    sb.Append($"{quantity.Trim()} {TypeLineDisplayNames[i]}");
+
+                    // Enrich with type details
+                    if (i == 0 && creatureTypeGroup.HasValue && creatureTypeGroup.Value.Subtypes.Count > 0)
                     {
-                        var typeLineItem = typeFields[i].GetValue(details);
-                        if (typeLineItem == null) continue;
-
-                        string quantity = GetTmpTextValue(_typeLineQuantityField.GetValue(typeLineItem));
-                        if (string.IsNullOrEmpty(quantity) || quantity.Trim() == "0") continue;
-
-                        string entry = $"{quantity.Trim()} {TypeLineDisplayNames[i]}";
-                        if (_typeLinePercentField != null)
-                        {
-                            string percent = GetTmpTextValue(_typeLinePercentField.GetValue(typeLineItem));
-                            if (!string.IsNullOrEmpty(percent))
-                                entry += $" ({percent.Trim()})";
-                        }
-                        entries.Add(entry);
+                        // Creatures: append subtypes with quantities
+                        foreach (var sub in creatureTypeGroup.Value.Subtypes)
+                            sb.Append($", {sub.quantity} {sub.name}");
                     }
-                    catch { }
+                    else if (i == 1 && othersTypeGroups.Count > 0)
+                    {
+                        // Others: append individual type distribution
+                        foreach (var group in othersTypeGroups)
+                            sb.Append($", {group.TypeQuantity} {group.TypeName}");
+                    }
+                    else if (i == 2 && landTypeGroup.HasValue && landTypeGroup.Value.Subtypes.Count > 0)
+                    {
+                        // Lands: append land subtypes with quantities
+                        foreach (var sub in landTypeGroup.Value.Subtypes)
+                            sb.Append($", {sub.quantity} {sub.name}");
+                    }
+
+                    if (_typeLinePercentField != null)
+                    {
+                        string percent = GetTmpTextValue(_typeLinePercentField.GetValue(typeLineItem));
+                        if (!string.IsNullOrEmpty(percent))
+                            sb.Append($", {percent.Trim()}");
+                    }
+
+                    entries.Add(sb.ToString());
                 }
+                catch { }
             }
 
             return entries;
+        }
+
+        /// <summary>
+        /// Classify type groups into Creature, Others (individual types), and Land.
+        /// Uses display order: Creature is always first, Land is always last,
+        /// everything in between is individual "Others" types.
+        /// </summary>
+        private static void ClassifyTypeGroups(MonoBehaviour costsDetails, List<TypeGroup> typeGroups,
+            out TypeGroup? creatureGroup, out List<TypeGroup> othersGroups, out TypeGroup? landGroup)
+        {
+            creatureGroup = null;
+            othersGroups = new List<TypeGroup>();
+            landGroup = null;
+
+            if (typeGroups.Count == 0) return;
+
+            int creatureCount = ReadTypeLineCount(costsDetails, _creaturesItemField);
+            int landCount = ReadTypeLineCount(costsDetails, _landsItemField);
+
+            int startIdx = 0;
+            int endIdx = typeGroups.Count - 1;
+
+            if (creatureCount > 0)
+            {
+                creatureGroup = typeGroups[0];
+                startIdx = 1;
+            }
+            if (landCount > 0 && endIdx >= startIdx)
+            {
+                landGroup = typeGroups[endIdx];
+                endIdx--;
+            }
+            for (int i = startIdx; i <= endIdx; i++)
+                othersGroups.Add(typeGroups[i]);
+        }
+
+        /// <summary>
+        /// Read the quantity from a TypeLineItem as an integer.
+        /// </summary>
+        private static int ReadTypeLineCount(MonoBehaviour costsDetails, FieldInfo typeLineField)
+        {
+            if (costsDetails == null || typeLineField == null || _typeLineQuantityField == null)
+                return 0;
+            try
+            {
+                var typeLineItem = typeLineField.GetValue(costsDetails);
+                if (typeLineItem == null) return 0;
+                string qty = GetTmpTextValue(_typeLineQuantityField.GetValue(typeLineItem));
+                if (string.IsNullOrEmpty(qty)) return 0;
+                return int.TryParse(qty.Trim(), out int val) ? val : 0;
+            }
+            catch { return 0; }
         }
 
         /// <summary>
@@ -362,6 +482,7 @@ namespace AccessibleArena.Core.Services
         {
             _cachedTitlePanel = null;
             _cachedCostsDetails = null;
+            _cachedTypesDetails = null;
         }
 
         #region Component Discovery
@@ -458,6 +579,191 @@ namespace AccessibleArena.Core.Services
             {
                 MelonLogger.Error($"[DeckInfoProvider] Error populating CostsDetails: {ex.Message}");
             }
+        }
+
+        private static MonoBehaviour FindTypesDetails()
+        {
+            if (IsValidCachedAllowInactive(_cachedTypesDetails))
+                return _cachedTypesDetails;
+            _cachedTypesDetails = null;
+
+            // DeckTypesDetails is inside the same wrapper as DeckCostsDetails
+            var wrapper = GameObject.Find("WrapperDeckBuilder_Desktop_16x9(Clone)");
+            if (wrapper == null)
+            {
+                wrapper = GameObject.Find("DeckListView_Desktop_16x9(Clone)");
+            }
+            if (wrapper == null) return null;
+
+            foreach (var mb in wrapper.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb == null) continue;
+                if (mb.GetType().Name == "DeckTypesDetails")
+                {
+                    _cachedTypesDetails = mb;
+                    if (!_typesDetailsReflectionInit)
+                        InitializeTypesDetailsReflection(mb.GetType());
+                    return _cachedTypesDetails;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Populate DeckTypesDetails by calling SetDeck(deck, locMan).
+        /// Only calls SetDeck if ItemParent has no children (game hasn't populated yet).
+        /// Calling SetDeck when items already exist causes duplicates because Unity
+        /// defers Destroy() to end of frame, so old + new items coexist during the same frame.
+        /// </summary>
+        private static void PopulateTypesDetails(MonoBehaviour typesDetails)
+        {
+            try
+            {
+                if (_typesSetDeckMethod == null) return;
+
+                // Skip if already populated - the game's SetDeck uses Destroy() which is deferred,
+                // so calling it again would create duplicates readable in the same frame
+                if (_typesItemParentField != null)
+                {
+                    var itemParent = _typesItemParentField.GetValue(typesDetails) as Transform;
+                    if (itemParent != null && itemParent.childCount > 0)
+                        return;
+                }
+
+                // Get deck data (reuse existing Pantry reflection)
+                if (!_pantryReflectionInit)
+                    InitializePantryReflection();
+
+                if (_pantryGetModelProviderMethod == null || _modelProperty == null || _getFilteredMainDeckMethod == null)
+                    return;
+
+                var modelProvider = _pantryGetModelProviderMethod.Invoke(null, null);
+                if (modelProvider == null) return;
+
+                var model = _modelProperty.GetValue(modelProvider);
+                if (model == null) return;
+
+                var deckData = _getFilteredMainDeckMethod.Invoke(model, null);
+                if (deckData == null) return;
+
+                // Get IGreLocProvider
+                var locProvider = GetGreLocProvider();
+                if (locProvider == null) return;
+
+                // DeckTypesDetails.SetDeck(deck, locMan)
+                _typesSetDeckMethod.Invoke(typesDetails, new object[] { deckData, locProvider });
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[DeckInfoProvider] Error populating TypesDetails: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Get the IGreLocProvider via Pantry.Get&lt;CardDatabase&gt;().GreLocProvider.
+        /// </summary>
+        private static object GetGreLocProvider()
+        {
+            try
+            {
+                if (!_cardDatabaseReflectionInit)
+                    InitializeCardDatabaseReflection();
+
+                if (_pantryGetCardDatabaseMethod == null || _greLocProviderProperty == null)
+                    return null;
+
+                var cardDatabase = _pantryGetCardDatabaseMethod.Invoke(null, null);
+                if (cardDatabase == null) return null;
+
+                return _greLocProviderProperty.GetValue(cardDatabase);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[DeckInfoProvider] Error getting GreLocProvider: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Read type groups from DeckTypesDetails.ItemParent children.
+        /// Children are either DeckDetailsLineItem components (type/subtype) or spacers (no component).
+        /// First DeckDetailsLineItem after a spacer (or at start) = type header; rest = subtypes.
+        /// </summary>
+        private static List<TypeGroup> ReadTypeGroups(MonoBehaviour typesDetails)
+        {
+            var groups = new List<TypeGroup>();
+
+            if (_typesItemParentField == null || _lineItemNameField == null || _lineItemQuantityField == null)
+                return groups;
+
+            try
+            {
+                var itemParent = _typesItemParentField.GetValue(typesDetails) as Transform;
+                if (itemParent == null) return groups;
+
+                TypeGroup currentGroup = default;
+                bool expectTypeHeader = true; // First item is always a type header
+
+                for (int i = 0; i < itemParent.childCount; i++)
+                {
+                    var child = itemParent.GetChild(i);
+                    if (child == null || !child.gameObject.activeSelf) continue;
+
+                    // Try to find DeckDetailsLineItem component on this child
+                    MonoBehaviour lineItem = null;
+                    if (_lineItemType != null)
+                    {
+                        var comp = child.GetComponent(_lineItemType);
+                        lineItem = comp as MonoBehaviour;
+                    }
+
+                    if (lineItem == null)
+                    {
+                        // This is a spacer - next DeckDetailsLineItem will be a type header
+                        expectTypeHeader = true;
+                        continue;
+                    }
+
+                    // Read Name and Quantity
+                    string name = GetTmpTextValue(_lineItemNameField.GetValue(lineItem));
+                    string quantity = GetTmpTextValue(_lineItemQuantityField.GetValue(lineItem));
+
+                    if (string.IsNullOrEmpty(name)) continue;
+                    name = name.Trim();
+                    quantity = quantity?.Trim() ?? "0";
+
+                    if (expectTypeHeader)
+                    {
+                        // Save previous group if it has content
+                        if (!string.IsNullOrEmpty(currentGroup.TypeName))
+                            groups.Add(currentGroup);
+
+                        currentGroup = new TypeGroup
+                        {
+                            TypeName = name,
+                            TypeQuantity = quantity,
+                            Subtypes = new List<(string name, string quantity)>()
+                        };
+                        expectTypeHeader = false;
+                    }
+                    else
+                    {
+                        // Subtype line
+                        currentGroup.Subtypes.Add((name, quantity));
+                    }
+                }
+
+                // Don't forget the last group
+                if (!string.IsNullOrEmpty(currentGroup.TypeName))
+                    groups.Add(currentGroup);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[DeckInfoProvider] Error reading type groups: {ex.Message}");
+            }
+
+            return groups;
         }
 
         private static bool IsValidCached(MonoBehaviour cached)
@@ -640,6 +946,103 @@ namespace AccessibleArena.Core.Services
             catch (Exception ex)
             {
                 MelonLogger.Error($"[DeckInfoProvider] Pantry reflection failed: {ex.Message}");
+            }
+        }
+
+        private static void InitializeTypesDetailsReflection(Type type)
+        {
+            if (_typesDetailsReflectionInit) return;
+            try
+            {
+                // ItemParent (Transform) - public field
+                _typesItemParentField = type.GetField("ItemParent", PublicInstance);
+
+                // SetDeck(IReadOnlyList<CardPrintingQuantity>, IGreLocProvider) - 2 params
+                foreach (var method in type.GetMethods(PublicInstance))
+                {
+                    if (method.Name == "SetDeck" && method.GetParameters().Length == 2)
+                    {
+                        _typesSetDeckMethod = method;
+                        break;
+                    }
+                }
+
+                // Get DeckDetailsLineItem type from TypePrefab field
+                var typePrefabField = type.GetField("TypePrefab", PublicInstance);
+                if (typePrefabField != null)
+                {
+                    _lineItemType = typePrefabField.FieldType;
+
+                    // DeckDetailsLineItem.Name and .Quantity (public TMP_Text fields)
+                    _lineItemNameField = _lineItemType.GetField("Name", PublicInstance);
+                    _lineItemQuantityField = _lineItemType.GetField("Quantity", PublicInstance);
+                }
+
+                _typesDetailsReflectionInit = true;
+
+                MelonLogger.Msg($"[DeckInfoProvider] TypesDetails reflection: " +
+                    $"itemParent={_typesItemParentField != null}, " +
+                    $"setDeck={_typesSetDeckMethod != null}, " +
+                    $"lineItemType={_lineItemType?.Name ?? "null"}, " +
+                    $"name={_lineItemNameField != null}, " +
+                    $"quantity={_lineItemQuantityField != null}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[DeckInfoProvider] TypesDetails reflection failed: {ex.Message}");
+            }
+        }
+
+        private static void InitializeCardDatabaseReflection()
+        {
+            if (_cardDatabaseReflectionInit) return;
+            _cardDatabaseReflectionInit = true;
+
+            try
+            {
+                // Find Pantry type (may already have it from InitializePantryReflection)
+                Type pantryType = null;
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    pantryType = asm.GetType("Wizards.Mtga.Pantry");
+                    if (pantryType != null) break;
+                }
+                if (pantryType == null)
+                {
+                    MelonLogger.Warning("[DeckInfoProvider] Could not find Pantry type for CardDatabase");
+                    return;
+                }
+
+                // Find CardDatabase type (namespace: Wotc.Mtga.Cards.Database)
+                Type cardDatabaseType = null;
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    cardDatabaseType = asm.GetType("Wotc.Mtga.Cards.Database.CardDatabase");
+                    if (cardDatabaseType != null) break;
+                }
+                if (cardDatabaseType == null)
+                {
+                    MelonLogger.Warning("[DeckInfoProvider] Could not find CardDatabase type");
+                    return;
+                }
+
+                // Pantry.Get<CardDatabase>()
+                var getMethod = pantryType.GetMethod("Get", BindingFlags.Public | BindingFlags.Static);
+                if (getMethod != null && getMethod.IsGenericMethod)
+                {
+                    _pantryGetCardDatabaseMethod = getMethod.MakeGenericMethod(cardDatabaseType);
+                }
+
+                // CardDatabase.GreLocProvider property
+                _greLocProviderProperty = cardDatabaseType.GetProperty("GreLocProvider", PublicInstance);
+
+                MelonLogger.Msg($"[DeckInfoProvider] CardDatabase reflection: " +
+                    $"pantryGetCardDb={_pantryGetCardDatabaseMethod != null}, " +
+                    $"greLocProvider={_greLocProviderProperty != null}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[DeckInfoProvider] CardDatabase reflection failed: {ex.Message}");
             }
         }
 

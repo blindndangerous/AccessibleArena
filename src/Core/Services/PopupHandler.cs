@@ -282,9 +282,11 @@ namespace AccessibleArena.Core.Services
 
         private void DiscoverTextBlocks()
         {
-            // Check if popup contains DeckCostsDetails - if so, skip its raw text
-            // and inject structured deck info from DeckInfoProvider instead
+            // Check if popup contains deck/cosmetic components whose raw text should be filtered
             bool hasDeckCosts = HasComponentInChildren(_activePopup, "DeckCostsDetails");
+            bool hasDeckTypes = HasComponentInChildren(_activePopup, "DeckTypesDetails");
+            bool hasDeckColors = HasComponentInChildren(_activePopup, "DeckColorsDetails");
+            bool hasCosmetics = HasComponentInChildren(_activePopup, "CosmeticSelectorController");
 
             var seenTexts = new HashSet<string>();
 
@@ -306,6 +308,18 @@ namespace AccessibleArena.Core.Services
 
                 // Skip text inside DeckCostsDetails — replaced by structured deck info
                 if (hasDeckCosts && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckCostsDetails"))
+                    continue;
+
+                // Skip text inside DeckTypesDetails — replaced by structured 3rd info row
+                if (hasDeckTypes && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckTypesDetails"))
+                    continue;
+
+                // Skip text inside DeckColorsDetails — removes "100%" and color percentages
+                if (hasDeckColors && IsInsideComponentByName(tmp.transform, _activePopup.transform, "DeckColorsDetails"))
+                    continue;
+
+                // Skip text inside CosmeticSelectorController — removes duplicate cosmetic labels
+                if (hasCosmetics && IsInsideComponentByName(tmp.transform, _activePopup.transform, "CosmeticSelectorController"))
                     continue;
 
                 string text = UITextExtractor.CleanText(tmp.text);
