@@ -16,9 +16,9 @@
     "Welcome_NextButton": "\u4e0b\u4e00\u6b65",
     "Welcome_DownloadTitle": "\u4e0b\u8f7d MTGA",
     "Welcome_DownloadDescription": "\u5982\u679c\u60a8\u8fd8\u672a\u5b89\u88c5 Magic: The Gathering Arena\uff0c\u8bf7\u5148\u4e0b\u8f7d\u5e76\u5b89\u88c5\u3002\n\n\u5426\u5219\uff0c\u8bf7\u70b9\u51fb\u5b89\u88c5\u7ee7\u7eed\u3002",
-    "Welcome_DirectDownload": "\u76f4\u63a5\u4e0b\u8f7d",
-    "Welcome_DownloadPage": "\u4e0b\u8f7d\u9875\u9762",
-    "Welcome_InstallMod": "\u5b89\u88c5\u6a21\u7ec4",
+    "Welcome_DirectDownload": "\u76f4\u63a5\u4e0b\u8f7d MTGA",
+    "Welcome_DownloadPage": "\u6253\u5f00 MTGA \u4e0b\u8f7d\u9875\u9762",
+    "Welcome_InstallMod": "\u5b89\u88c5 Accessible Arena \u6a21\u7ec4",
     "Welcome_BackButton": "\u8fd4\u56de",
 
     "Main_TitleInstaller": "Accessible Arena \u5b89\u88c5\u7a0b\u5e8f",

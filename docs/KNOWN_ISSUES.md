@@ -337,6 +337,7 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 1. Auto version checking and auto update - check for new mod versions on launch and optionally auto-update. May be too problematic to implement reliably.
 2. Pack expansion selection - allow changing which expansion packs are purchased from in the store
 3. Card flipping during pack opening - allow flipping/revealing individual cards during pack opening for a more interactive experience
+4. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
 
 ### Future
 

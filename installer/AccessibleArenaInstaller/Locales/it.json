@@ -16,9 +16,9 @@
     "Welcome_NextButton": "Avanti",
     "Welcome_DownloadTitle": "Scarica MTGA",
     "Welcome_DownloadDescription": "Se non hai ancora installato Magic: The Gathering Arena, scaricalo e installalo prima.\n\nAltrimenti, fai clic su Installa per continuare.",
-    "Welcome_DirectDownload": "Download diretto",
-    "Welcome_DownloadPage": "Pagina di download",
-    "Welcome_InstallMod": "Installa mod",
+    "Welcome_DirectDownload": "Download diretto MTGA",
+    "Welcome_DownloadPage": "Apri pagina di download MTGA",
+    "Welcome_InstallMod": "Installa mod Accessible Arena",
     "Welcome_BackButton": "Indietro",
 
     "Main_TitleInstaller": "Programma di installazione di Accessible Arena",
