@@ -325,8 +325,8 @@ When focused on a card, Up/Down arrows cycle through card information blocks:
 - Collection (collection cards only - "Owned X" or "Owned X, In Deck Y")
 - Mana Cost
 - Type
-- Power/Toughness (if creature)
-- Rules Text
+- Power/Toughness (creatures: "2/3"; planeswalkers: "Loyalty 4"; with counters: "2/3, 3 +1/+1")
+- Rules Text (planeswalker abilities prefixed with loyalty cost: "+2: ability text")
 - Flavor Text
 - Artist
 
@@ -521,6 +521,7 @@ Active gameplay with zones and cards.
 **Info Shortcuts:**
 - T - Announce turn number and active player
 - L - Announce life totals
+- K - Counter info on focused card (loyalty, +1/+1 counters, etc.)
 - M - Your land summary (total count + untapped lands grouped by name)
 - Shift+M - Opponent land summary
 - V - Enter player info zone (portrait navigation)

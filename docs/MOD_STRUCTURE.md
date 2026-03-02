@@ -336,6 +336,18 @@ Cards announce targeting relationships using model data:
 - `TargetedByIds` (field, `List<uint>`) - InstanceIds of what is targeting this card
 - `ResolveInstanceIdToNameExtended()` scans both battlefield and stack for name resolution
 
+**Planeswalker Loyalty & Counter Reading:**
+- Power/Toughness info block expanded to include planeswalker loyalty and counters
+- Creatures: "2/3" (unchanged), with counters: "2/3, 3 +1/+1"
+- Planeswalkers: "Loyalty 4" (from `Loyalty` property on model, or `Counters[Loyalty]` on battlefield)
+- Other permanents with counters: "3 Shield, 2 Lore" etc.
+- Counters read from `Instance.Counters` (IReadOnlyDictionary<CounterType, int>) via reflection
+- Counter type formatting: P1P1→"+1/+1", M1M1→"-1/-1", others use enum name as-is
+- Planeswalker abilities prefixed with loyalty cost: "+2: ability text" (from `LoyaltyCost` StringBackedInt property on ability)
+- K key announces all counters on focused card (checks CardNavigator, BattlefieldNavigator, ZoneNavigator, BrowserNavigator)
+- `GetCountersFromCard(GameObject)` chains: GetDuelSceneCDC → GetCardModel → GetModelInstance → Counters
+- `FormatCounterTypeName(string)` maps enum names to readable strings
+
 **Declare Attackers Phase:**
 - [x] Space key handling - Clicks `PromptButton_Primary` (whatever text: "All Attack", "X Attackers", etc.)
 - [x] Backspace key handling - Clicks `PromptButton_Secondary` (whatever text: "No Attacks", etc.)

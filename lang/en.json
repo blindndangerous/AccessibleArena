@@ -864,5 +864,12 @@
   "CraftConfirm_Title": "Craft Card",
   "CraftConfirm_Body_Format": "Craft {0} using a {1} wildcard?",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "Cancel"
+  "CraftConfirm_Cancel": "Cancel",
+
+  "Duel_NoCounters": "No counters",
+  "Duel_CounterEntry_Format": "{0} {1} counter",
+  "Duel_CounterEntryPlural_Format": "{0} {1} counters",
+  "Duel_Loyalty_Format": "Loyalty {0}",
+
+  "HelpKCounters": "K: Counter info on focused card"
 }

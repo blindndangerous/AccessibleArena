@@ -474,6 +474,40 @@ namespace AccessibleArena.Core.Services
                 return true;
             }
 
+            // K key: Counter info on focused card
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                GameObject card = null;
+                var cardNav = AccessibleArenaMod.Instance?.CardNavigator;
+                if (cardNav != null && cardNav.IsActive && cardNav.CurrentCard != null)
+                    card = cardNav.CurrentCard;
+                else if (_battlefieldNavigator.GetCurrentCard() != null)
+                    card = _battlefieldNavigator.GetCurrentCard();
+                else
+                    card = _zoneNavigator.GetCurrentCard() ?? _browserNavigator.GetCurrentCard();
+
+                if (card != null)
+                {
+                    var counters = CardModelProvider.GetCountersFromCard(card);
+                    if (counters.Count > 0)
+                    {
+                        var parts = new List<string>();
+                        foreach (var (typeName, count) in counters)
+                            parts.Add(Strings.Duel_CounterEntry(count, typeName));
+                        _announcer.AnnounceInterrupt(string.Join(", ", parts));
+                    }
+                    else
+                    {
+                        _announcer.AnnounceInterrupt(Strings.Duel_NoCounters);
+                    }
+                }
+                else
+                {
+                    _announcer.AnnounceInterrupt(Strings.NoCardToInspect);
+                }
+                return true;
+            }
+
             // M key: Land summary (M = your lands, Shift+M = opponent lands)
             if (Input.GetKeyDown(KeyCode.M))
             {

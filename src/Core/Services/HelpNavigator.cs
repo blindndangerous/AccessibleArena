@@ -87,6 +87,7 @@ namespace AccessibleArena.Core.Services
                 Strings.HelpTTurnPhase,
                 Strings.HelpVPlayerInfo,
                 Strings.HelpMLandSummary,
+                Strings.HelpKCounters,
 
                 // Card navigation in zone
                 Strings.HelpCategoryCardNavigation,

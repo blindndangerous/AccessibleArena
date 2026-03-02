@@ -376,6 +376,11 @@ namespace AccessibleArena.Core.Models
                 : (absChange == 1 ? L.Format("Duel_CounterLost_Format", target, absChange, counterType)
                                   : L.Format("Duel_CounterLostPlural_Format", target, absChange, counterType));
         public static string Duel_CounterCreature => L.Get("Duel_CounterCreature");
+        public static string Duel_NoCounters => L.Get("Duel_NoCounters");
+        public static string Duel_CounterEntry(int count, string type) =>
+            count == 1 ? L.Format("Duel_CounterEntry_Format", count, type)
+                       : L.Format("Duel_CounterEntryPlural_Format", count, type);
+        public static string Duel_Loyalty(int value) => L.Format("Duel_Loyalty_Format", value);
 
         // Game end
         public static string Duel_Victory => L.Get("Duel_Victory");
@@ -767,6 +772,7 @@ namespace AccessibleArena.Core.Models
         public static string HelpTTurnPhase => L.Get("HelpTTurnPhase");
         public static string HelpVPlayerInfo => L.Get("HelpVPlayerInfo");
         public static string HelpMLandSummary => L.Get("HelpMLandSummary");
+        public static string HelpKCounters => L.Get("HelpKCounters");
 
         // Card navigation
         public static string HelpLeftRightCards => L.Get("HelpLeftRightCards");

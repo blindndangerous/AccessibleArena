@@ -890,6 +890,36 @@ namespace AccessibleArena.Core.Services
         #region Ability Text
 
         /// <summary>
+        /// Extracts a loyalty cost prefix from an ability object (e.g., "+2: " or "-3: ").
+        /// Returns null if the ability has no LoyaltyCost or it is empty/zero.
+        /// </summary>
+        private static string GetLoyaltyCostPrefix(object ability, Type abilityType)
+        {
+            try
+            {
+                var loyaltyCostProp = abilityType.GetProperty("LoyaltyCost", BindingFlags.Public | BindingFlags.Instance);
+                if (loyaltyCostProp == null) return null;
+
+                var loyaltyCostObj = loyaltyCostProp.GetValue(ability);
+                if (loyaltyCostObj == null) return null;
+
+                // LoyaltyCost is a StringBackedInt - extract the raw text value
+                string costStr = GetStringBackedIntValue(loyaltyCostObj);
+                if (string.IsNullOrEmpty(costStr) || costStr == "0") return null;
+
+                // Ensure positive values get "+" prefix
+                if (costStr[0] != '+' && costStr[0] != '-' && costStr[0] != '0')
+                    costStr = "+" + costStr;
+
+                return costStr + ": ";
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Tries to extract text from an ability object by checking common property/method names.
         /// Returns null if no text could be extracted.
         /// </summary>
@@ -2110,8 +2140,9 @@ namespace AccessibleArena.Core.Services
                         info.TypeLine = typeLineProp.GetValue(dataObj)?.ToString();
                 }
 
-                // Power and Toughness - only for creatures
+                // Power/Toughness, Loyalty, and Counters
                 bool isCreature = false;
+                bool isPlaneswalker = false;
                 if (hasStructuredTypes)
                 {
                     var cardTypesForPT = GetModelPropertyValue(dataObj, objType, "CardTypes");
@@ -2119,19 +2150,22 @@ namespace AccessibleArena.Core.Services
                     {
                         foreach (var ct in cardTypesEnumPT)
                         {
-                            if (ct != null && ct.ToString().Contains("Creature"))
-                            {
-                                isCreature = true;
-                                break;
-                            }
+                            if (ct == null) continue;
+                            string ctStr = ct.ToString();
+                            if (ctStr.Contains("Creature")) isCreature = true;
+                            if (ctStr.Contains("Planeswalker")) isPlaneswalker = true;
                         }
                     }
                 }
                 else if (!string.IsNullOrEmpty(info.TypeLine))
                 {
                     isCreature = info.TypeLine.Contains("Creature");
+                    isPlaneswalker = info.TypeLine.Contains("Planeswalker");
                 }
 
+                var ptParts = new List<string>();
+
+                // Creature P/T
                 if (isCreature)
                 {
                     var power = GetModelPropertyValue(dataObj, objType, "Power");
@@ -2141,11 +2175,68 @@ namespace AccessibleArena.Core.Services
                         string powerStr = GetStringBackedIntValue(power);
                         string toughStr = GetStringBackedIntValue(toughness);
                         if (powerStr != null && toughStr != null)
+                            ptParts.Add($"{powerStr}/{toughStr}");
+                    }
+                }
+
+                // Planeswalker loyalty
+                if (isPlaneswalker)
+                {
+                    var loyaltyVal = GetModelPropertyValue(dataObj, objType, "Loyalty");
+                    if (loyaltyVal != null)
+                    {
+                        // Loyalty might be uint or StringBackedInt
+                        if (loyaltyVal is uint lUint && lUint > 0)
+                            ptParts.Add(Strings.Duel_Loyalty((int)lUint));
+                        else
                         {
-                            info.PowerToughness = $"{powerStr}/{toughStr}";
+                            string lStr = GetStringBackedIntValue(loyaltyVal);
+                            if (!string.IsNullOrEmpty(lStr) && lStr != "0" &&
+                                int.TryParse(lStr, out int lInt) && lInt > 0)
+                                ptParts.Add(Strings.Duel_Loyalty(lInt));
                         }
                     }
                 }
+
+                // Counters (from Instance on battlefield cards)
+                try
+                {
+                    var instance = GetModelInstance(dataObj);
+                    if (instance != null)
+                    {
+                        var instanceType = instance.GetType();
+                        var countersProp = instanceType.GetProperty("Counters", BindingFlags.Public | BindingFlags.Instance);
+                        object countersObj = countersProp?.GetValue(instance);
+                        if (countersObj == null)
+                        {
+                            var countersField = instanceType.GetField("Counters", BindingFlags.Public | BindingFlags.Instance);
+                            countersObj = countersField?.GetValue(instance);
+                        }
+                        if (countersObj is IEnumerable counterEntries)
+                        {
+                            foreach (var entry in counterEntries)
+                            {
+                                if (entry == null) continue;
+                                var entryType = entry.GetType();
+                                var keyProp = entryType.GetProperty("Key");
+                                var valueProp = entryType.GetProperty("Value");
+                                if (keyProp == null || valueProp == null) continue;
+                                var key = keyProp.GetValue(entry);
+                                var value = valueProp.GetValue(entry);
+                                if (key == null || value == null) continue;
+                                int count = 0;
+                                if (value is int ci) count = ci;
+                                else if (int.TryParse(value.ToString(), out int parsed)) count = parsed;
+                                if (count > 0)
+                                    ptParts.Add($"{count} {FormatCounterTypeName(key.ToString())}");
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                if (ptParts.Count > 0)
+                    info.PowerToughness = string.Join(", ", ptParts);
 
                 // Rules Text - parse from Abilities array
                 uint cardTitleId = 0;
@@ -2182,6 +2273,10 @@ namespace AccessibleArena.Core.Services
                         var textValue = GetAbilityText(ability, abilityType, cardGrpId, abilityId, abilityIds, cardTitleId);
                         if (!string.IsNullOrEmpty(textValue))
                         {
+                            // Prefix planeswalker abilities with loyalty cost (e.g., "+2: " or "-3: ")
+                            string loyaltyPrefix = GetLoyaltyCostPrefix(ability, abilityType);
+                            if (loyaltyPrefix != null)
+                                textValue = loyaltyPrefix + textValue;
                             rulesLines.Add(textValue);
                         }
                     }
@@ -2799,6 +2894,100 @@ namespace AccessibleArena.Core.Services
             if (cdc == null) return false;
             var model = GetCardModel(cdc);
             return GetIsBlocking(model);
+        }
+
+        /// <summary>
+        /// Formats a CounterType enum name into a human-readable string.
+        /// E.g., "P1P1" → "+1/+1", "M1M1" → "-1/-1", "Loyalty" → "Loyalty".
+        /// </summary>
+        public static string FormatCounterTypeName(string enumName)
+        {
+            if (string.IsNullOrEmpty(enumName)) return enumName;
+
+            // Match patterns like P1P1, M1M0, P0P1, etc.
+            if (enumName.Length == 4 &&
+                (enumName[0] == 'P' || enumName[0] == 'M') &&
+                char.IsDigit(enumName[1]) &&
+                (enumName[2] == 'P' || enumName[2] == 'M') &&
+                char.IsDigit(enumName[3]))
+            {
+                char sign1 = enumName[0] == 'P' ? '+' : '-';
+                char sign2 = enumName[2] == 'P' ? '+' : '-';
+                return $"{sign1}{enumName[1]}/{sign2}{enumName[3]}";
+            }
+
+            return enumName;
+        }
+
+        /// <summary>
+        /// Gets all counters on a card from its model's Instance.Counters dictionary.
+        /// Returns a list of (typeName, count) tuples for counters with count > 0.
+        /// Chains: GetDuelSceneCDC → GetCardModel → Instance → Counters.
+        /// </summary>
+        public static List<(string typeName, int count)> GetCountersFromCard(GameObject card)
+        {
+            var result = new List<(string, int)>();
+            if (card == null) return result;
+
+            var cdc = GetDuelSceneCDC(card);
+            if (cdc == null) return result;
+            var model = GetCardModel(cdc);
+            if (model == null) return result;
+
+            var instance = GetModelInstance(model);
+            if (instance == null) return result;
+
+            try
+            {
+                var instanceType = instance.GetType();
+                // Counters is IReadOnlyDictionary<CounterType, int> - try as property first, then field
+                var countersProp = instanceType.GetProperty("Counters", BindingFlags.Public | BindingFlags.Instance);
+                object countersObj = null;
+                if (countersProp != null)
+                {
+                    countersObj = countersProp.GetValue(instance);
+                }
+                else
+                {
+                    var countersField = instanceType.GetField("Counters", BindingFlags.Public | BindingFlags.Instance);
+                    if (countersField != null)
+                        countersObj = countersField.GetValue(instance);
+                }
+
+                if (countersObj == null) return result;
+
+                // Iterate via IEnumerable (each entry is KeyValuePair<CounterType, int>)
+                var enumerable = countersObj as IEnumerable;
+                if (enumerable == null) return result;
+
+                foreach (var entry in enumerable)
+                {
+                    if (entry == null) continue;
+                    var entryType = entry.GetType();
+                    var keyProp = entryType.GetProperty("Key");
+                    var valueProp = entryType.GetProperty("Value");
+                    if (keyProp == null || valueProp == null) continue;
+
+                    var key = keyProp.GetValue(entry);
+                    var value = valueProp.GetValue(entry);
+                    if (key == null || value == null) continue;
+
+                    int count = 0;
+                    if (value is int i) count = i;
+                    else if (int.TryParse(value.ToString(), out int parsed)) count = parsed;
+
+                    if (count > 0)
+                    {
+                        result.Add((FormatCounterTypeName(key.ToString()), count));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"Error reading counters: {ex.Message}");
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -4273,7 +4462,8 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
-                // Power/Toughness - use GetStringBackedIntValue (same as MODEL extraction)
+                // Power/Toughness and Loyalty
+                var ptParts2 = new List<string>();
                 var powerProp = cardType.GetProperty("Power");
                 var toughnessProp = cardType.GetProperty("Toughness");
                 if (powerProp != null && toughnessProp != null)
@@ -4282,15 +4472,34 @@ namespace AccessibleArena.Core.Services
                     var toughness = toughnessProp.GetValue(cardData);
                     if (power != null && toughness != null)
                     {
-                        // Use GetStringBackedIntValue to properly extract the value
                         string powerStr = GetStringBackedIntValue(power);
                         string toughStr = GetStringBackedIntValue(toughness);
                         if (!string.IsNullOrEmpty(powerStr) && !string.IsNullOrEmpty(toughStr))
+                            ptParts2.Add($"{powerStr}/{toughStr}");
+                    }
+                }
+
+                // Planeswalker loyalty (from CardPrintingData)
+                var loyaltyProp2 = cardType.GetProperty("Loyalty");
+                if (loyaltyProp2 != null)
+                {
+                    var loyaltyVal = loyaltyProp2.GetValue(cardData);
+                    if (loyaltyVal != null)
+                    {
+                        if (loyaltyVal is uint lUint && lUint > 0)
+                            ptParts2.Add(Strings.Duel_Loyalty((int)lUint));
+                        else
                         {
-                            info.PowerToughness = $"{powerStr}/{toughStr}";
+                            string lStr = GetStringBackedIntValue(loyaltyVal);
+                            if (!string.IsNullOrEmpty(lStr) && lStr != "0" &&
+                                int.TryParse(lStr, out int lInt) && lInt > 0)
+                                ptParts2.Add(Strings.Duel_Loyalty(lInt));
                         }
                     }
                 }
+
+                if (ptParts2.Count > 0)
+                    info.PowerToughness = string.Join(", ", ptParts2);
 
                 // Rules text - try Abilities property
                 var abilitiesProp = cardType.GetProperty("Abilities") ?? cardType.GetProperty("IntrinsicAbilities");
@@ -4313,6 +4522,10 @@ namespace AccessibleArena.Core.Services
                                 var abilityText = GetAbilityTextFromProvider(grpId, abilityId, null, 0);
                                 if (!string.IsNullOrEmpty(abilityText))
                                 {
+                                    // Prefix planeswalker abilities with loyalty cost
+                                    string loyaltyPrefix = GetLoyaltyCostPrefix(ability, abilityType);
+                                    if (loyaltyPrefix != null)
+                                        abilityText = loyaltyPrefix + abilityText;
                                     rulesTexts.Add(abilityText);
                                 }
                             }
