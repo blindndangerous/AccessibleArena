@@ -4,6 +4,14 @@ All notable changes to Accessible Arena.
 
 ## v0.7.4-dev
 
+### Fix: Advanced Filters Navigator Stability
+- Fixed OK button closing the entire deck builder instead of just the filters popup
+- Root cause: UIActivator had blanket special handling for any button named "MainButton", which also matched the filters popup's OK button, triggering `WrapperDeckBuilder.OnDeckbuilderDoneButtonClicked()`
+- Fix: UIActivator now skips the deck builder MainButton shortcut when the button is inside a popup (`IsInsidePopup` check)
+- Fixed false activation on deck builder scene load — the popup GameObject is briefly `activeInHierarchy` during initialization
+- Replaced expensive `FindObjectsOfType<Transform>` per-frame scan with `PanelStateManager.IsPanelActive()` check via AlphaDetector (event-driven, no false positives)
+- Files: AdvancedFiltersNavigator.cs, UIActivator.cs
+
 ### Refactor: PopupHandler Unified into BaseNavigator
 - Popup handling is now built into `BaseNavigator` — the separate `PopupHandler` class has been removed
 - All navigators inherit popup support automatically; just call `EnablePopupDetection()` in `OnActivated()`

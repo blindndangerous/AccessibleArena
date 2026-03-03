@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
+using AccessibleArena.Core.Services.PanelDetection;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -51,7 +52,18 @@ namespace AccessibleArena.Core.Services
 
         protected override bool DetectScreen()
         {
-            bool result = CheckAdvancedFiltersPopupOpen();
+            // Use PanelStateManager - AlphaDetector already tracks this popup's
+            // CanvasGroup visibility, avoiding false positives during scene init
+            bool result = PanelStateManager.Instance?.IsPanelActive("AdvancedFiltersPopup(Clone)") == true;
+
+            if (result && (_popup == null || !_popup.activeInHierarchy))
+            {
+                _popup = GameObject.Find("AdvancedFiltersPopup(Clone)");
+            }
+            else if (!result)
+            {
+                _popup = null;
+            }
 
             // Only log when state changes
             if (result != _lastPopupState)
@@ -61,36 +73,6 @@ namespace AccessibleArena.Core.Services
             }
 
             return result;
-        }
-
-        private bool CheckAdvancedFiltersPopupOpen()
-        {
-            // Look for the popup in the scene
-            _popup = FindAdvancedFiltersPopup();
-            if (_popup == null || !_popup.activeInHierarchy)
-                return false;
-
-            // Also check CanvasGroup alpha - during scene initialization the popup
-            // is briefly activeInHierarchy but invisible (alpha=0)
-            var canvasGroup = _popup.GetComponent<CanvasGroup>();
-            if (canvasGroup != null && canvasGroup.alpha < 0.1f)
-                return false;
-
-            return true;
-        }
-
-        private GameObject FindAdvancedFiltersPopup()
-        {
-            // Try to find AdvancedFiltersPopup(Clone) anywhere in the scene
-            var allTransforms = Object.FindObjectsOfType<Transform>();
-            foreach (var t in allTransforms)
-            {
-                if (t.name == "AdvancedFiltersPopup(Clone)" && t.gameObject.activeInHierarchy)
-                {
-                    return t.gameObject;
-                }
-            }
-            return null;
         }
 
         #endregion

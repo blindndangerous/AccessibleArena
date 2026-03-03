@@ -719,6 +719,8 @@ Dedicated navigator for the Advanced Filters popup in Collection/Deck Builder sc
 3. **Actions row** - Collection filters, Format dropdown, OK button
 
 **Key Implementation Details:**
+- Detection uses `PanelStateManager.IsPanelActive("AdvancedFiltersPopup(Clone)")` via AlphaDetector (event-driven, no per-frame scanning)
+- `GameObject.Find()` called only once when panel becomes active to get the popup reference
 - Stores Toggle component references during discovery for consistent state reading
 - Uses `DropdownStateManager` for dropdown mode detection and blocking navigation while dropdown is open
 - Enter blocked from game in dropdown mode; items selected silently via reflection (dropdown stays open)
