@@ -801,5 +801,52 @@
   "CraftConfirm_Title": "Crea carta",
   "CraftConfirm_Body_Format": "Creare {0} usando una wildcard {1}?",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "Annulla"
+  "CraftConfirm_Cancel": "Annulla",
+
+  "Bo3Toggle": "Migliore di 3",
+  "CardInfoSetAndArtist": "Set e artista",
+  "EventInfoLabel": "Info",
+  "GroupSideboard": "Sideboard",
+  "ZoneChange": "Zona",
+  "NoSearchResults": "Nessun risultato di ricerca",
+
+  "FullControl_On": "Controllo totale attivato",
+  "FullControl_Off": "Controllo totale disattivato",
+  "FullControl_Locked": "Controllo totale bloccato",
+  "FullControl_Unlocked": "Controllo totale sbloccato",
+
+  "PhaseStop_Set_Format": "Stop impostato: {0}",
+  "PhaseStop_Cleared_Format": "Stop rimosso: {0}",
+  "PhaseStop_Upkeep": "Mantenimento",
+  "PhaseStop_Draw": "Pescata",
+  "PhaseStop_FirstMain": "Prima fase principale",
+  "PhaseStop_BeginCombat": "Inizio combattimento",
+  "PhaseStop_DeclareAttackers": "Dichiarazione attaccanti",
+  "PhaseStop_DeclareBlockers": "Dichiarazione bloccanti",
+  "PhaseStop_CombatDamage": "Danni da combattimento",
+  "PhaseStop_EndCombat": "Fine combattimento",
+  "PhaseStop_SecondMain": "Seconda fase principale",
+  "PhaseStop_EndStep": "Sottofase finale",
+
+  "HelpPFullControl": "P: Controllo totale, Maiusc più P: Bloccare controllo totale",
+  "HelpNumberPhaseStops": "1 a 0: Attiva/disattiva stop di fase (mantenimento fino a sottofase finale)",
+  "HelpKCounters": "K: Info segnalini sulla carta focalizzata",
+  "HelpMLandSummary": "M: Riepilogo delle tue terre, Maiusc più M: Riepilogo terre avversarie",
+
+  "Duel_NoCounters": "Nessun segnalino",
+  "Duel_CounterEntry_Format": "{0} segnalino {1}",
+  "Duel_CounterEntryPlural_Format": "{0} segnalini {1}",
+  "Duel_Loyalty_Format": "Fedeltà {0}",
+
+  "LandSummary_Empty_Format": "{0}, nessuna terra",
+  "LandSummary_Total_One": "1 terra",
+  "LandSummary_Total_Format": "{0} terre",
+  "LandSummary_AllTapped_Format": "{0}, tutte tappate",
+  "LandSummary_AllUntapped_Format": "{0}, {1} stappate",
+  "LandSummary_Mixed_Format": "{0}, {1} stappate",
+
+  "DamageAssign_Entry_Format": "Assegna danni. {0}, {1} danni. {2} bloccanti",
+  "DamageAssign_Entry_One_Format": "Assegna danni. {0}, {1} danni. 1 bloccante",
+  "DamageAssign_Assigned_Format": "{0} di {1} assegnati",
+  "DamageAssign_Lethal": "letale"
 }

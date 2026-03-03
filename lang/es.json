@@ -1,4 +1,4 @@
-{
+﻿{
   "ModLoaded_Format": "Accessible Arena v{0} iniciado",
   "Back": "Atrás",
   "NoSelection": "Sin selección",
@@ -801,5 +801,52 @@
   "CraftConfirm_Title": "Fabricar carta",
   "CraftConfirm_Body_Format": "¿Fabricar {0} usando un comodín {1}?",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "Cancelar"
+  "CraftConfirm_Cancel": "Cancelar",
+
+  "Bo3Toggle": "Mejor de 3",
+  "CardInfoSetAndArtist": "Set y artista",
+  "EventInfoLabel": "Info",
+  "GroupSideboard": "Sideboard",
+  "ZoneChange": "Zona",
+  "NoSearchResults": "Sin resultados de búsqueda",
+
+  "FullControl_On": "Control total activado",
+  "FullControl_Off": "Control total desactivado",
+  "FullControl_Locked": "Control total bloqueado",
+  "FullControl_Unlocked": "Control total desbloqueado",
+
+  "PhaseStop_Set_Format": "Parada establecida: {0}",
+  "PhaseStop_Cleared_Format": "Parada eliminada: {0}",
+  "PhaseStop_Upkeep": "Mantenimiento",
+  "PhaseStop_Draw": "Robar",
+  "PhaseStop_FirstMain": "Primera fase principal",
+  "PhaseStop_BeginCombat": "Inicio de combate",
+  "PhaseStop_DeclareAttackers": "Declarar atacantes",
+  "PhaseStop_DeclareBlockers": "Declarar bloqueadores",
+  "PhaseStop_CombatDamage": "Daño de combate",
+  "PhaseStop_EndCombat": "Fin de combate",
+  "PhaseStop_SecondMain": "Segunda fase principal",
+  "PhaseStop_EndStep": "Paso final",
+
+  "HelpPFullControl": "P: Control total, Mayús más P: Bloquear control total",
+  "HelpNumberPhaseStops": "1 a 0: Alternar paradas de fase (mantenimiento hasta paso final)",
+  "HelpKCounters": "K: Info de contadores en carta enfocada",
+  "HelpMLandSummary": "M: Tu resumen de tierras, Mayús más M: Resumen de tierras del oponente",
+
+  "Duel_NoCounters": "Sin contadores",
+  "Duel_CounterEntry_Format": "{0} contador de {1}",
+  "Duel_CounterEntryPlural_Format": "{0} contadores de {1}",
+  "Duel_Loyalty_Format": "Lealtad {0}",
+
+  "LandSummary_Empty_Format": "{0}, sin tierras",
+  "LandSummary_Total_One": "1 tierra",
+  "LandSummary_Total_Format": "{0} tierras",
+  "LandSummary_AllTapped_Format": "{0}, todas giradas",
+  "LandSummary_AllUntapped_Format": "{0}, {1} enderezadas",
+  "LandSummary_Mixed_Format": "{0}, {1} enderezadas",
+
+  "DamageAssign_Entry_Format": "Asignar daño. {0}, {1} daño. {2} bloqueadores",
+  "DamageAssign_Entry_One_Format": "Asignar daño. {0}, {1} daño. 1 bloqueador",
+  "DamageAssign_Assigned_Format": "{0} de {1} asignado",
+  "DamageAssign_Lethal": "letal"
 }

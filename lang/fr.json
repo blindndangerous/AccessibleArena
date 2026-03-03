@@ -1,4 +1,4 @@
-{
+﻿{
   "ModLoaded_Format": "Accessible Arena v{0} lancé",
   "Back": "Retour",
   "NoSelection": "Aucune sélection",
@@ -821,5 +821,52 @@
   "CraftConfirm_Title": "Fabriquer une carte",
   "CraftConfirm_Body_Format": "Fabriquer {0} avec un joker {1} ?",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "Annuler"
+  "CraftConfirm_Cancel": "Annuler",
+
+  "Bo3Toggle": "Meilleur de 3",
+  "CardInfoSetAndArtist": "Set et artiste",
+  "EventInfoLabel": "Info",
+  "GroupSideboard": "RÃ©serve",
+  "ZoneChange": "Zone",
+  "NoSearchResults": "Aucun rÃ©sultat de recherche",
+
+  "FullControl_On": "ContrÃ´le total activÃ©",
+  "FullControl_Off": "ContrÃ´le total dÃ©sactivÃ©",
+  "FullControl_Locked": "ContrÃ´le total verrouillÃ©",
+  "FullControl_Unlocked": "ContrÃ´le total dÃ©verrouillÃ©",
+
+  "PhaseStop_Set_Format": "ArrÃªt dÃ©fini : {0}",
+  "PhaseStop_Cleared_Format": "ArrÃªt supprimÃ© : {0}",
+  "PhaseStop_Upkeep": "Entretien",
+  "PhaseStop_Draw": "Pioche",
+  "PhaseStop_FirstMain": "PremiÃ¨re phase principale",
+  "PhaseStop_BeginCombat": "DÃ©but de combat",
+  "PhaseStop_DeclareAttackers": "DÃ©claration des attaquants",
+  "PhaseStop_DeclareBlockers": "DÃ©claration des bloqueurs",
+  "PhaseStop_CombatDamage": "Blessures de combat",
+  "PhaseStop_EndCombat": "Fin de combat",
+  "PhaseStop_SecondMain": "Seconde phase principale",
+  "PhaseStop_EndStep": "Ã‰tape de fin",
+
+  "HelpPFullControl": "P : ContrÃ´le total, Maj plus P : Verrouiller le contrÃ´le total",
+  "HelpNumberPhaseStops": "1 Ã  0 : Activer/dÃ©sactiver les arrÃªts de phase (entretien jusqu'Ã  l'Ã©tape de fin)",
+  "HelpKCounters": "K : Info des marqueurs sur la carte ciblÃ©e",
+  "HelpMLandSummary": "M : RÃ©sumÃ© de vos terrains, Maj plus M : RÃ©sumÃ© des terrains adverses",
+
+  "Duel_NoCounters": "Aucun marqueur",
+  "Duel_CounterEntry_Format": "{0} marqueur {1}",
+  "Duel_CounterEntryPlural_Format": "{0} marqueurs {1}",
+  "Duel_Loyalty_Format": "LoyautÃ© {0}",
+
+  "LandSummary_Empty_Format": "{0}, aucun terrain",
+  "LandSummary_Total_One": "1 terrain",
+  "LandSummary_Total_Format": "{0} terrains",
+  "LandSummary_AllTapped_Format": "{0}, tous engagÃ©s",
+  "LandSummary_AllUntapped_Format": "{0}, {1} dÃ©gagÃ©s",
+  "LandSummary_Mixed_Format": "{0}, {1} dÃ©gagÃ©s",
+
+  "DamageAssign_Entry_Format": "Assigner les blessures. {0}, {1} blessures. {2} bloqueurs",
+  "DamageAssign_Entry_One_Format": "Assigner les blessures. {0}, {1} blessures. 1 bloqueur",
+  "DamageAssign_Assigned_Format": "{0} de {1} assignÃ©es",
+  "DamageAssign_Lethal": "lÃ©tal"
 }

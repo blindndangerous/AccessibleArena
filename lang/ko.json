@@ -800,5 +800,52 @@
   "CraftConfirm_Title": "카드 제작",
   "CraftConfirm_Body_Format": "{1} 와일드카드를 사용하여 {0}을(를) 제작하시겠습니까?",
   "CraftConfirm_OK": "확인",
-  "CraftConfirm_Cancel": "취소"
+  "CraftConfirm_Cancel": "취소",
+
+  "Bo3Toggle": "3전 2선승",
+  "CardInfoSetAndArtist": "세트 및 아티스트",
+  "EventInfoLabel": "정보",
+  "GroupSideboard": "사이드보드",
+  "ZoneChange": "구역",
+  "NoSearchResults": "검색 결과 없음",
+
+  "FullControl_On": "풀 컨트롤 켜짐",
+  "FullControl_Off": "풀 컨트롤 꺼짐",
+  "FullControl_Locked": "풀 컨트롤 잠금",
+  "FullControl_Unlocked": "풀 컨트롤 잠금 해제",
+
+  "PhaseStop_Set_Format": "정지 설정: {0}",
+  "PhaseStop_Cleared_Format": "정지 해제: {0}",
+  "PhaseStop_Upkeep": "유지단계",
+  "PhaseStop_Draw": "드로우",
+  "PhaseStop_FirstMain": "첫 번째 본단계",
+  "PhaseStop_BeginCombat": "전투 시작",
+  "PhaseStop_DeclareAttackers": "공격자 선언",
+  "PhaseStop_DeclareBlockers": "방어자 선언",
+  "PhaseStop_CombatDamage": "전투 피해",
+  "PhaseStop_EndCombat": "전투 종료",
+  "PhaseStop_SecondMain": "두 번째 본단계",
+  "PhaseStop_EndStep": "종료단계",
+
+  "HelpPFullControl": "P: 풀 컨트롤, Shift+P: 풀 컨트롤 잠금",
+  "HelpNumberPhaseStops": "1~0: 페이즈 정지 전환 (유지단계부터 종료단계까지)",
+  "HelpKCounters": "K: 포커스된 카드의 카운터 정보",
+  "HelpMLandSummary": "M: 내 대지 요약, Shift+M: 상대 대지 요약",
+
+  "Duel_NoCounters": "카운터 없음",
+  "Duel_CounterEntry_Format": "{1} 카운터 {0}개",
+  "Duel_CounterEntryPlural_Format": "{1} 카운터 {0}개",
+  "Duel_Loyalty_Format": "충성도 {0}",
+
+  "LandSummary_Empty_Format": "{0}, 대지 없음",
+  "LandSummary_Total_One": "대지 1장",
+  "LandSummary_Total_Format": "대지 {0}장",
+  "LandSummary_AllTapped_Format": "{0}, 모두 탭됨",
+  "LandSummary_AllUntapped_Format": "{0}, {1}장 언탭",
+  "LandSummary_Mixed_Format": "{0}, {1}장 언탭",
+
+  "DamageAssign_Entry_Format": "피해 배분. {0}, {1} 피해. 방어자 {2}체",
+  "DamageAssign_Entry_One_Format": "피해 배분. {0}, {1} 피해. 방어자 1체",
+  "DamageAssign_Assigned_Format": "{1}중 {0} 배분 완료",
+  "DamageAssign_Lethal": "치명적"
 }

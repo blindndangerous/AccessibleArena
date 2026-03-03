@@ -801,5 +801,52 @@
   "CraftConfirm_Title": "合成卡牌",
   "CraftConfirm_Body_Format": "使用{1}万能牌合成{0}？",
   "CraftConfirm_OK": "确定",
-  "CraftConfirm_Cancel": "取消"
+  "CraftConfirm_Cancel": "取消",
+
+  "Bo3Toggle": "三局两胜",
+  "CardInfoSetAndArtist": "系列和画师",
+  "EventInfoLabel": "信息",
+  "GroupSideboard": "备牌",
+  "ZoneChange": "区域",
+  "NoSearchResults": "没有搜索结果",
+
+  "FullControl_On": "完全控制 开启",
+  "FullControl_Off": "完全控制 关闭",
+  "FullControl_Locked": "完全控制 已锁定",
+  "FullControl_Unlocked": "完全控制 已解锁",
+
+  "PhaseStop_Set_Format": "停止已设置：{0}",
+  "PhaseStop_Cleared_Format": "停止已清除：{0}",
+  "PhaseStop_Upkeep": "维持",
+  "PhaseStop_Draw": "抓牌",
+  "PhaseStop_FirstMain": "第一行动阶段",
+  "PhaseStop_BeginCombat": "战斗开始",
+  "PhaseStop_DeclareAttackers": "宣告攻击者",
+  "PhaseStop_DeclareBlockers": "宣告阻挡者",
+  "PhaseStop_CombatDamage": "战斗伤害",
+  "PhaseStop_EndCombat": "战斗结束",
+  "PhaseStop_SecondMain": "第二行动阶段",
+  "PhaseStop_EndStep": "结束步骤",
+
+  "HelpPFullControl": "P：完全控制，Shift+P：锁定完全控制",
+  "HelpNumberPhaseStops": "1～0：切换阶段停止（维持到结束步骤）",
+  "HelpKCounters": "K：聚焦卡牌的指示物信息",
+  "HelpMLandSummary": "M：你的地牌摘要，Shift+M：对手地牌摘要",
+
+  "Duel_NoCounters": "没有指示物",
+  "Duel_CounterEntry_Format": "{0}个{1}指示物",
+  "Duel_CounterEntryPlural_Format": "{0}个{1}指示物",
+  "Duel_Loyalty_Format": "忠诚度 {0}",
+
+  "LandSummary_Empty_Format": "{0}，没有地牌",
+  "LandSummary_Total_One": "1张地牌",
+  "LandSummary_Total_Format": "{0}张地牌",
+  "LandSummary_AllTapped_Format": "{0}，全部横置",
+  "LandSummary_AllUntapped_Format": "{0}，{1}张未横置",
+  "LandSummary_Mixed_Format": "{0}，{1}张未横置",
+
+  "DamageAssign_Entry_Format": "分配伤害。{0}，{1}点伤害。{2}个阻挡者",
+  "DamageAssign_Entry_One_Format": "分配伤害。{0}，{1}点伤害。1个阻挡者",
+  "DamageAssign_Assigned_Format": "{1}中已分配{0}",
+  "DamageAssign_Lethal": "致命"
 }

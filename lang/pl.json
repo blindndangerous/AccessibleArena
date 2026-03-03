@@ -815,5 +815,51 @@
   "CraftConfirm_Title": "Stwórz kartę",
   "CraftConfirm_Body_Format": "Stworzyć {0} używając dzikiej karty {1}?",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "Anuluj"
+  "CraftConfirm_Cancel": "Anuluj",
+
+  "Bo3Toggle": "Najlepszy z 3",
+  "CardInfoSetAndArtist": "Zestaw i artysta",
+  "EventInfoLabel": "Info",
+  "GroupSideboard": "Sideboard",
+  "ZoneChange": "Strefa",
+
+  "FullControl_On": "Pełna kontrola włączona",
+  "FullControl_Off": "Pełna kontrola wyłączona",
+  "FullControl_Locked": "Pełna kontrola zablokowana",
+  "FullControl_Unlocked": "Pełna kontrola odblokowana",
+
+  "PhaseStop_Set_Format": "Stop ustawiony: {0}",
+  "PhaseStop_Cleared_Format": "Stop usunięty: {0}",
+  "PhaseStop_Upkeep": "Utrzymanie",
+  "PhaseStop_Draw": "Dobieranie",
+  "PhaseStop_FirstMain": "Pierwsza faza główna",
+  "PhaseStop_BeginCombat": "Początek walki",
+  "PhaseStop_DeclareAttackers": "Deklaracja atakujących",
+  "PhaseStop_DeclareBlockers": "Deklaracja blokujących",
+  "PhaseStop_CombatDamage": "Obrażenia bojowe",
+  "PhaseStop_EndCombat": "Koniec walki",
+  "PhaseStop_SecondMain": "Druga faza główna",
+  "PhaseStop_EndStep": "Krok końcowy",
+
+  "HelpPFullControl": "P: Pełna kontrola, Shift+P: Zablokuj pełną kontrolę",
+  "HelpNumberPhaseStops": "1 do 0: Przełącz stopy fazowe (utrzymanie do kroku końcowego)",
+  "HelpKCounters": "K: Info o licznikach na skupionej karcie",
+  "HelpMLandSummary": "M: Podsumowanie twoich ziem, Shift+M: Podsumowanie ziem przeciwnika",
+
+  "Duel_NoCounters": "Brak liczników",
+  "Duel_CounterEntry_Format": "{0} licznik {1}",
+  "Duel_CounterEntryPlural_Format": "{0} liczników {1}",
+  "Duel_Loyalty_Format": "Lojalność {0}",
+
+  "LandSummary_Empty_Format": "{0}, brak ziem",
+  "LandSummary_Total_One": "1 ziemia",
+  "LandSummary_Total_Format": "{0} ziem",
+  "LandSummary_AllTapped_Format": "{0}, wszystkie tappnięte",
+  "LandSummary_AllUntapped_Format": "{0}, {1} odtappniętych",
+  "LandSummary_Mixed_Format": "{0}, {1} odtappniętych",
+
+  "DamageAssign_Entry_Format": "Przypisz obrażenia. {0}, {1} obrażeń. {2} blokujących",
+  "DamageAssign_Entry_One_Format": "Przypisz obrażenia. {0}, {1} obrażeń. 1 blokujący",
+  "DamageAssign_Assigned_Format": "{0} z {1} przypisano",
+  "DamageAssign_Lethal": "śmiertelne"
 }

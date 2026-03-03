@@ -800,5 +800,52 @@
   "CraftConfirm_Title": "カード作成",
   "CraftConfirm_Body_Format": "{1}ワイルドカードを使用して{0}を作成しますか？",
   "CraftConfirm_OK": "OK",
-  "CraftConfirm_Cancel": "キャンセル"
+  "CraftConfirm_Cancel": "キャンセル",
+
+  "Bo3Toggle": "3本勝負",
+  "CardInfoSetAndArtist": "セットとアーティスト",
+  "EventInfoLabel": "情報",
+  "GroupSideboard": "サイドボード",
+  "ZoneChange": "ゾーン",
+  "NoSearchResults": "検索結果なし",
+
+  "FullControl_On": "フルコントロール オン",
+  "FullControl_Off": "フルコントロール オフ",
+  "FullControl_Locked": "フルコントロール ロック",
+  "FullControl_Unlocked": "フルコントロール ロック解除",
+
+  "PhaseStop_Set_Format": "ストップ設定: {0}",
+  "PhaseStop_Cleared_Format": "ストップ解除: {0}",
+  "PhaseStop_Upkeep": "アップキープ",
+  "PhaseStop_Draw": "ドロー",
+  "PhaseStop_FirstMain": "第1メイン",
+  "PhaseStop_BeginCombat": "戦闘開始",
+  "PhaseStop_DeclareAttackers": "攻撃クリーチャー指定",
+  "PhaseStop_DeclareBlockers": "ブロック・クリーチャー指定",
+  "PhaseStop_CombatDamage": "戦闘ダメージ",
+  "PhaseStop_EndCombat": "戦闘終了",
+  "PhaseStop_SecondMain": "第2メイン",
+  "PhaseStop_EndStep": "終了ステップ",
+
+  "HelpPFullControl": "P: フルコントロール、Shift+P: フルコントロールをロック",
+  "HelpNumberPhaseStops": "1～0: フェイズストップの切り替え（アップキープから終了ステップまで）",
+  "HelpKCounters": "K: フォーカス中のカードのカウンター情報",
+  "HelpMLandSummary": "M: 自分の土地サマリー、Shift+M: 対戦相手の土地サマリー",
+
+  "Duel_NoCounters": "カウンターなし",
+  "Duel_CounterEntry_Format": "{1}カウンター{0}個",
+  "Duel_CounterEntryPlural_Format": "{1}カウンター{0}個",
+  "Duel_Loyalty_Format": "忠誠度 {0}",
+
+  "LandSummary_Empty_Format": "{0}、土地なし",
+  "LandSummary_Total_One": "土地1枚",
+  "LandSummary_Total_Format": "土地{0}枚",
+  "LandSummary_AllTapped_Format": "{0}、すべてタップ済み",
+  "LandSummary_AllUntapped_Format": "{0}、{1}枚アンタップ",
+  "LandSummary_Mixed_Format": "{0}、{1}枚アンタップ",
+
+  "DamageAssign_Entry_Format": "ダメージ割り振り。{0}、{1}ダメージ。ブロッカー{2}体",
+  "DamageAssign_Entry_One_Format": "ダメージ割り振り。{0}、{1}ダメージ。ブロッカー1体",
+  "DamageAssign_Assigned_Format": "{1}中{0}割り振り済み",
+  "DamageAssign_Lethal": "致死"
 }
