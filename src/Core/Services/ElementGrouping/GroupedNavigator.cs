@@ -1754,9 +1754,13 @@ namespace AccessibleArena.Core.Services.ElementGrouping
 
             var group = _groups[_currentGroupIndex];
 
-            // Standalone elements show just their label (they're directly activatable)
-            if (group.IsStandaloneElement)
-                return group.DisplayName;
+            // Standalone elements: refresh label from live UI state (e.g., input field text
+            // may have changed while a popup was open). Matches GetElementAnnouncement() pattern.
+            if (group.IsStandaloneElement && group.Elements.Count > 0)
+            {
+                var elem = group.Elements[0];
+                return BaseNavigator.RefreshElementLabel(elem.GameObject, elem.Label, elem.Role);
+            }
 
             return Strings.GroupItemCount(group.DisplayName, Strings.ItemCount(group.Count));
         }
