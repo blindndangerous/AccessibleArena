@@ -546,7 +546,14 @@ namespace AccessibleArena.Core.Services
         {
             // In popup mode, validate the popup GameObject instead of elements
             if (_isInPopupMode)
-                return _popupGameObject != null && _popupGameObject.activeInHierarchy;
+            {
+                if (_popupGameObject != null && _popupGameObject.activeInHierarchy)
+                    return true;
+                // Popup gone - exit properly so OnPopupClosed fires (e.g. craft confirmation)
+                ExitPopupMode();
+                OnPopupClosed();
+                // Fall through to validate the restored underlying elements
+            }
 
             // Check if first element still exists (quick validation)
             // Allow null GameObjects (TextBlock elements) - find first non-null
