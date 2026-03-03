@@ -180,7 +180,8 @@ namespace AccessibleArena.Core.Services
 
                 // Special handling for deck builder MainButton - its onClick listener has NULL target
                 // We need to find the WrapperDeckBuilder component and invoke the method directly
-                if (element.name == "MainButton")
+                // Only apply when the button is NOT inside a popup (e.g. AdvancedFiltersPopup also has a "MainButton")
+                if (element.name == "MainButton" && !IsInsidePopup(element))
                 {
                     var deckBuilderController = FindDeckBuilderController();
                     if (deckBuilderController != null)
@@ -1435,6 +1436,22 @@ namespace AccessibleArena.Core.Services
                 Log($"OnBack method not found on {type.Name}");
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if an element is inside a popup (e.g. AdvancedFiltersPopup).
+        /// Used to prevent MainButton special handling from firing on popup buttons.
+        /// </summary>
+        private static bool IsInsidePopup(GameObject element)
+        {
+            var t = element.transform.parent;
+            while (t != null)
+            {
+                if (t.name.Contains("Popup(Clone)"))
+                    return true;
+                t = t.parent;
+            }
             return false;
         }
 

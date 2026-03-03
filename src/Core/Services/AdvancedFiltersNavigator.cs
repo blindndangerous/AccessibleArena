@@ -67,7 +67,16 @@ namespace AccessibleArena.Core.Services
         {
             // Look for the popup in the scene
             _popup = FindAdvancedFiltersPopup();
-            return _popup != null && _popup.activeInHierarchy;
+            if (_popup == null || !_popup.activeInHierarchy)
+                return false;
+
+            // Also check CanvasGroup alpha - during scene initialization the popup
+            // is briefly activeInHierarchy but invisible (alpha=0)
+            var canvasGroup = _popup.GetComponent<CanvasGroup>();
+            if (canvasGroup != null && canvasGroup.alpha < 0.1f)
+                return false;
+
+            return true;
         }
 
         private GameObject FindAdvancedFiltersPopup()
