@@ -6,48 +6,9 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ## Active Bugs
 
-### Resolution Dropdown Shows Native Display Resolution Until Changed (Game Bug)
-
-The resolution dropdown in Settings > Graphics always shows the native display resolution (e.g., "2880x1800") instead of the game's actual render resolution (e.g., "1920x1080") until the user interacts with it and selects a value.
-
-**Root cause:** The game initializes the dropdown with `value=0` (first option = highest resolution) and never updates `m_Value` or `captionText` to reflect the actual internal render resolution. When the dropdown opens, the game internally corrects the focused item (scrolls to the correct option), but this correction is never synced back to the closed dropdown's display.
-
-**Why it can't be fixed by the mod:** All Unity APIs (`Screen.width`, `Screen.height`, `Screen.currentResolution`, `Camera.main.pixelWidth/Height`) return the native display resolution in borderless fullscreen mode. The game's internal render resolution is stored in a game-specific setting not exposed to standard Unity APIs.
-
-**Impact:** Only affects the first announcement of the resolution dropdown before user interaction. All other dropdowns (language, display mode, etc.) work correctly.
-
-**Files:** `UIElementClassifier.cs` (CorrectStaleDropdownValue — attempts Screen.width correction but cannot fix borderless fullscreen case)
-
----
-
 ### Spell Resolved Announcement Too Early or Repeated
 
 "Spell resolved" announcement sometimes fires too early or multiple times for a single spell.
-
----
-
-### ~~Card Abilities With High IDs Not Resolving~~ (Fixed v0.7.4)
-
-Fixed: The high IDs were ability GrpIds being used as card GrpIds in SelectCards browser CDCs. Parent card context is now cached during normal ability extraction and used for lookup.
-
----
-
-### Token Attack Selection Uses Game's Internal Order (Not a Mod Bug)
-
-When clicking a non-attacking token during declare attackers, the game always selects the first available token in its internal order, regardless of which specific token CDC was clicked. This is game behavior for identical tokens (e.g., Goblin tokens). Clicking an already-attacking token correctly deselects that specific one.
-
-**Confirmed not a position issue:** BattlefieldNavigator now sends each card's actual screen position via `Camera.main.WorldToScreenPoint`, and tokens at different positions (e.g., 127px apart) still exhibit this behavior. The game intentionally ignores which token object receives the click event.
-
-**For sighted users:** Tokens are visually stacked; clicking the stack selects them in order. This is by design.
-
-**Workaround:** Use Space ("All Attack") then deselect specific tokens, or accept that tokens are selected in the game's internal order.
-
-**Investigation history:**
-- Failed fix 1: Setting `pointerCurrentRaycast`/`pointerPressRaycast` in CreatePointerEventData - broke all card plays (incomplete RaycastResult struct)
-- Failed fix 2: `Camera.main.WorldToScreenPoint` in generic `GetScreenPosition` - broke hand card playing (hand cards are also 3D objects)
-- Fix 3 (kept): Battlefield-specific position override in `BattlefieldNavigator.ActivateCurrentCard()` - correct positions but game ignores them for tokens. Kept for potential benefit with non-token overlapping cards.
-
-**Files:** `UIActivator.cs` (SimulatePointerClick overload), `BattlefieldNavigator.cs` (ActivateCurrentCard)
 
 ---
 
@@ -69,12 +30,6 @@ When selecting a different color in Color Challenge, the announced deck name doe
 
 ---
 
-### ~~Deck Renaming Causes Bad Mod State~~ (Fixed v0.7.4)
-
-Fixed: Popup cancel button matching now uses word-boundary detection (`ContainsWord`) and includes "back" pattern, so DeckDetailsPopup closes correctly after editing deck name.
-
----
-
 ### Weekly Progress Enter Locks Mod
 
 Pressing Enter on the Weekly Progress element puts the mod in a locked state requiring screen transition to recover.
@@ -87,11 +42,38 @@ Pressing Enter on specific Progress items for certain modes opens the correspond
 
 ---
 
-### Stack Abilities Missing Rules Text
+## Game Behavior (Not Fixable by Mod)
 
-Sometimes abilities on the stack only show the Name and Type blocks but not the rules text block.
+### Resolution Dropdown Shows Native Display Resolution Until Changed
+
+The resolution dropdown in Settings > Graphics always shows the native display resolution (e.g., "2880x1800") instead of the game's actual render resolution (e.g., "1920x1080") until the user interacts with it and selects a value.
+
+**Root cause:** The game initializes the dropdown with `value=0` (first option = highest resolution) and never updates `m_Value` or `captionText` to reflect the actual internal render resolution. When the dropdown opens, the game internally corrects the focused item (scrolls to the correct option), but this correction is never synced back to the closed dropdown's display.
+
+**Why it can't be fixed by the mod:** All Unity APIs (`Screen.width`, `Screen.height`, `Screen.currentResolution`, `Camera.main.pixelWidth/Height`) return the native display resolution in borderless fullscreen mode. The game's internal render resolution is stored in a game-specific setting not exposed to standard Unity APIs.
+
+**Impact:** Only affects the first announcement of the resolution dropdown before user interaction. All other dropdowns (language, display mode, etc.) work correctly.
+
+**Files:** `UIElementClassifier.cs` (CorrectStaleDropdownValue — attempts Screen.width correction but cannot fix borderless fullscreen case)
 
 ---
+
+### Token Attack Selection Uses Game's Internal Order
+
+When clicking a non-attacking token during declare attackers, the game always selects the first available token in its internal order, regardless of which specific token CDC was clicked. This is game behavior for identical tokens (e.g., Goblin tokens). Clicking an already-attacking token correctly deselects that specific one.
+
+**Confirmed not a position issue:** BattlefieldNavigator now sends each card's actual screen position via `Camera.main.WorldToScreenPoint`, and tokens at different positions (e.g., 127px apart) still exhibit this behavior. The game intentionally ignores which token object receives the click event.
+
+**For sighted users:** Tokens are visually stacked; clicking the stack selects them in order. This is by design.
+
+**Workaround:** Use Space ("All Attack") then deselect specific tokens, or accept that tokens are selected in the game's internal order.
+
+**Investigation history:**
+- Failed fix 1: Setting `pointerCurrentRaycast`/`pointerPressRaycast` in CreatePointerEventData - broke all card plays (incomplete RaycastResult struct)
+- Failed fix 2: `Camera.main.WorldToScreenPoint` in generic `GetScreenPosition` - broke hand card playing (hand cards are also 3D objects)
+- Fix 3 (kept): Battlefield-specific position override in `BattlefieldNavigator.ActivateCurrentCard()` - correct positions but game ignores them for tokens. Kept for potential benefit with non-token overlapping cards.
+
+**Files:** `UIActivator.cs` (SimulatePointerClick overload), `BattlefieldNavigator.cs` (ActivateCurrentCard)
 
 ---
 
@@ -146,19 +128,6 @@ Only tested on Windows 11 with NVDA. Other Windows versions (Windows 10) and oth
 
 ---
 
-### Damage Assignment Browser Opens Twice
-
-The damage assignment browser sometimes opens twice in sequence for the same attacker (same blockers, same TotalDamage). This causes the game to request two separate damage assignments. Observed with a 5/4 creature blocked by 4 creatures — no first strike on any attacker or blocker. A creature with first strike (Halana und Alena) was on the battlefield but not in combat. Unclear whether this is caused by:
-- A first strike damage step being created by a non-combat creature with first strike
-- A game-internal behavior we don't understand yet
-- Something else on the battlefield granting first strike
-
-Currently mitigated with "1 of N" announcement so the user knows multiple rounds are expected.
-
-**Files:** `BrowserNavigator.cs` (GetAssignDamageEntryAnnouncement, EnsureTotalDamageCached)
-
----
-
 ### Jump In: Packet Order Chaotic
 
 The packet tiles in Jump In appear in a chaotic/unpredictable order during navigation. The navigation order does not match the visual layout consistently.
@@ -187,14 +156,6 @@ After completing all 5 NPE tutorial stages, the game shows a deck reward screen 
 - Does Enter open a deck box (clicks `Hitbox_LidOpen`)?
 - Does Backspace activate the Continue button (`NullClaimButton`)?
 - Does `UITextExtractor.GetText()` extract deck names, or does it fall back to "Deck 1", "Deck 2", etc.?
-
-### ~~Zones Not Updating When Cards Enter or Leave~~ (Fixed v0.6.9)
-
-Zone card lists sometimes don't refresh when a card enters or leaves a zone (e.g., playing a card from hand, a creature dying to graveyard). The zone still shows the old card list until manually re-entered.
-
-**Fix:** Event-driven dirty flag. DuelAnnouncer marks ZoneNavigator and BattlefieldNavigator dirty on zone count changes. Next card navigation input refreshes the active zone before navigating.
-
----
 
 ## Not Reproducible Yet
 
@@ -263,6 +224,19 @@ Sometimes the mod plays a different card than the one announced/focused. Root ca
 
 ---
 
+### Damage Assignment Browser Opens Twice
+
+The damage assignment browser sometimes opens twice in sequence for the same attacker (same blockers, same TotalDamage). This causes the game to request two separate damage assignments. Observed with a 5/4 creature blocked by 4 creatures — no first strike on any attacker or blocker. A creature with first strike (Halana und Alena) was on the battlefield but not in combat. Unclear whether this is caused by:
+- A first strike damage step being created by a non-combat creature with first strike
+- A game-internal behavior we don't understand yet
+- Something else on the battlefield granting first strike
+
+Currently mitigated with "1 of N" announcement so the user knows multiple rounds are expected.
+
+**Files:** `BrowserNavigator.cs` (GetAssignDamageEntryAnnouncement, EnsureTotalDamageCached)
+
+---
+
 ## Design Decisions
 
 ### Panel Detection Architecture
@@ -307,37 +281,28 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 ## Planned Features
 
-### Immediate
-
-1. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
-3. X spell support - spells with variable costs (e.g., Fireball, Walking Ballista) require the player to choose a value for X. Currently no accessible way to set the X value. Needs investigation into how the game presents the X cost input and how to make it navigable.
-
----
-
 ### Upcoming
 
-1. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
-2. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
-4. First letter navigation - press a letter key to jump to the next element starting with that letter in menus and lists
+1. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
+2. X spell support - spells with variable costs (e.g., Fireball, Walking Ballista) require the player to choose a value for X. Currently no accessible way to set the X value. Needs investigation into how the game presents the X cost input and how to make it navigable.
+3. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
+4. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
 5. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
 6. Extended tutorial for mod users - explain Space/Backspace behavior (confirm/cancel), the blocking system during combat, and I shortcut for extended card info and keyword descriptions
 7. Better handling of number announcements while tabbing - possibly change how Tab changes focus to reduce noisy or redundant number readouts
 8. Player username announcements
-10. Game wins display (WinPips)
-11. Token state on cards - announce token/copy status when reading card info
-14. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
-16. Browser announcements - shorter, less verbose; only announce when it is the player's browser (not opponent's)
-17. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
-18. Better group announcements - improve how element groups are announced when entering/switching groups
-19. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
-20. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-22. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-23. Card crafting - wildcard crafting workflow accessibility
-25. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
-26. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
-27. Hotkey to jump to attached card - when focused on an aura/equipment, press a key to navigate directly to the card it's attached to (and vice versa)
-28. Vehicle power and toughness - announce power/toughness for vehicle cards when not crewed
-29. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+9. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
+10. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
+11. Better group announcements - improve how element groups are announced when entering/switching groups
+12. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
+13. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
+14. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
+15. Card crafting - wildcard crafting workflow accessibility
+16. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
+17. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
+18. Vehicle power and toughness - announce power/toughness for vehicle cards when not crewed
+19. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+20. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
 
 ### Low Priority / v1.1
 
@@ -345,9 +310,6 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 2. Pack expansion selection - allow changing which expansion packs are purchased from in the store
 3. Card flipping during pack opening - allow flipping/revealing individual cards during pack opening for a more interactive experience
 4. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
+5. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
+6. Achievement screen - accessible navigation and reading of achievement progress and rewards
 
-### Future
-
-1. Verbose "Big Card" announcements (inspired by Hearthstone Access)
-   - Option to include card details inline with action announcements
-   - User preference toggle: brief vs verbose announcements
