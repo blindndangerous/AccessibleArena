@@ -342,11 +342,21 @@ namespace AccessibleArena.Core.Services
         {
             base.OnPopupDetected(panel);
 
-            // Auto-dismiss craft confirmation popup (CardViewerPopup) on next frame
+            // Auto-craft on CardViewerPopup: click _craftButton after opening animation
+            // The user already confirmed via our mod popup, so we just forward to the game's craft
             if (_expectingCraftPopup && panel?.Name?.Contains("CardViewerPopup") == true)
             {
                 _expectingCraftPopup = false;
-                _shouldAutoDismissPopup = true;
+                MelonLogger.Msg($"[{NavigatorId}] Scheduling auto-craft on CardViewerPopup (1.0s delay)");
+                ScheduleAutoAction(1.0f, () =>
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Auto-craft: clicking _craftButton");
+                    if (!TryInvokePopupButtonByFieldName("_craftButton"))
+                    {
+                        MelonLogger.Warning($"[{NavigatorId}] Auto-craft: _craftButton not found, dismissing instead");
+                        DismissPopup();
+                    }
+                });
             }
         }
 

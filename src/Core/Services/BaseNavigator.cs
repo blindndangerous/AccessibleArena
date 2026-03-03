@@ -108,7 +108,8 @@ namespace AccessibleArena.Core.Services
         private int _savedIndex;
         private InputFieldEditHelper _popupInputHelper;
         private DropdownEditHelper _popupDropdownHelper;
-        protected bool _shouldAutoDismissPopup;
+        protected float _autoActionTimer;
+        private Action _autoActionCallback;
 
         #endregion
 
@@ -1099,11 +1100,18 @@ namespace AccessibleArena.Core.Services
 
         protected virtual void HandleInput()
         {
-            // Auto-dismiss popup if flagged (one-frame delay from detection, e.g. craft popup)
-            if (_isInPopupMode && _shouldAutoDismissPopup)
+            // Auto-action on popup after a delay (e.g. auto-craft on CardViewerPopup)
+            if (_isInPopupMode && _autoActionTimer > 0)
             {
-                _shouldAutoDismissPopup = false;
-                DismissPopup();
+                _autoActionTimer -= Time.deltaTime;
+                if (_autoActionTimer <= 0)
+                {
+                    _autoActionTimer = 0;
+                    var callback = _autoActionCallback;
+                    _autoActionCallback = null;
+                    MelonLogger.Msg($"[{NavigatorId}] Auto-action timer expired");
+                    callback?.Invoke();
+                }
                 return;
             }
 
@@ -2128,7 +2136,8 @@ namespace AccessibleArena.Core.Services
             _popupDropdownHelper = null;
 
             _isInPopupMode = false;
-            _shouldAutoDismissPopup = false;
+            _autoActionTimer = 0;
+            _autoActionCallback = null;
 
             // Restore saved elements
             if (_savedElements != null)
@@ -2183,6 +2192,15 @@ namespace AccessibleArena.Core.Services
             {
                 MelonLogger.Msg($"[{NavigatorId}] Popup: clicking cancel button: {cancelButton.name}");
                 _announcer?.Announce(Strings.Cancelled, AnnouncementPriority.High);
+
+                // Try invoking CustomButton.OnClick directly first - bypasses CanvasGroup
+                // interactable checks that block pointer simulation during popup animations
+                if (TryInvokeCustomButtonOnClick(cancelButton))
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Popup: dismissed via CustomButton.OnClick.Invoke()");
+                    return;
+                }
+
                 UIActivator.Activate(cancelButton);
                 return;
             }
@@ -2828,6 +2846,93 @@ namespace AccessibleArena.Core.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Schedule an action to run after a delay while in popup mode.
+        /// Used for auto-crafting on CardViewerPopup after the opening animation completes.
+        /// </summary>
+        protected void ScheduleAutoAction(float delay, Action callback)
+        {
+            _autoActionTimer = delay;
+            _autoActionCallback = callback;
+        }
+
+        /// <summary>
+        /// Find a named button field via reflection on the popup's components and invoke its OnClick.
+        /// Returns true if the button was found and invoked.
+        /// </summary>
+        protected bool TryInvokePopupButtonByFieldName(string fieldName)
+        {
+            if (_popupGameObject == null) return false;
+
+            foreach (var mb in _popupGameObject.GetComponents<MonoBehaviour>())
+            {
+                if (mb == null) continue;
+                var field = mb.GetType().GetField(fieldName,
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                if (field == null) continue;
+
+                if (field.GetValue(mb) is MonoBehaviour buttonMb && buttonMb != null)
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Found {fieldName} via reflection on {mb.GetType().Name}");
+                    if (TryInvokeCustomButtonOnClick(buttonMb.gameObject))
+                    {
+                        MelonLogger.Msg($"[{NavigatorId}] Invoked {fieldName}.OnClick successfully");
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Try to invoke a CustomButton's OnClick event directly via reflection.
+        /// Bypasses CanvasGroup/Selectable interactable checks that block pointer simulation.
+        /// </summary>
+        private bool TryInvokeCustomButtonOnClick(GameObject buttonObj)
+        {
+            if (buttonObj == null) return false;
+
+            foreach (var mb in buttonObj.GetComponents<MonoBehaviour>())
+            {
+                if (mb == null || mb.GetType().Name != "CustomButton") continue;
+
+                // CustomButton.OnClick is a public property returning a UnityEvent-like type
+                var onClickProp = mb.GetType().GetProperty("OnClick",
+                    BindingFlags.Public | BindingFlags.Instance);
+                if (onClickProp == null)
+                {
+                    // Try as field
+                    var onClickField = mb.GetType().GetField("_onClick",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (onClickField == null) continue;
+
+                    var onClickVal = onClickField.GetValue(mb);
+                    if (onClickVal == null) continue;
+
+                    var invokeMethod = onClickVal.GetType().GetMethod("Invoke", Type.EmptyTypes);
+                    if (invokeMethod != null)
+                    {
+                        invokeMethod.Invoke(onClickVal, null);
+                        return true;
+                    }
+                    continue;
+                }
+
+                var onClick = onClickProp.GetValue(mb);
+                if (onClick == null) continue;
+
+                var invoke = onClick.GetType().GetMethod("Invoke", Type.EmptyTypes);
+                if (invoke != null)
+                {
+                    invoke.Invoke(onClick, null);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool MatchesCancelPattern(GameObject obj, string[] patterns)
