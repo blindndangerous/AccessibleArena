@@ -107,6 +107,46 @@ All notable changes to Accessible Arena.
 - Navigation stack preserves position when drilling in and out of categories
 - Files: CodexNavigator.cs
 
+### New: Localized UI Roles
+- Element roles (button, toggle, dropdown, slider, input field) now announced in the game's language
+- Button role suppressed outside tutorial mode to reduce announcement verbosity
+- All role label construction centralized through `BuildLabel` method
+- Files: UIElementClassifier.cs, BaseNavigator.cs, Strings.cs, lang/*.json
+
+### New: Navbar Currency and Wildcard Labels
+- Gold, Gems, and Wildcards buttons in the navigation bar now have accessible labels with current counts
+- Nav_WildCard element shown in deck builder and booster pack screens for quick wildcard count access
+- Files: UIElementClassifier.cs, GeneralMenuNavigator.cs
+
+### New: FallbackLabels for Unlabeled Buttons
+- Centralized fallback label mapping gives consistent names to buttons that have no text or tooltip
+- Covers installer, challenge screen, and other unlabeled UI elements
+- Files: UIElementClassifier.cs
+
+### Fix: Dropdown Display and Caption Reading
+- Dropdown caption text now read directly from `m_CaptionText` field instead of `options[value]` (fixes stale/wrong display)
+- Stale dropdown value correction attempts to match displayed value to actual game state on navigation
+- Transient focus during dropdown label refresh no longer triggers false announcements
+- Files: DropdownStateManager.cs, BaseNavigator.cs, UIElementClassifier.cs
+
+### Fix: Slider and Stepper Value Refresh
+- Slider and stepper values now update correctly when navigating between them
+- Unity handles slider step changes directly instead of mod intercepting
+- Files: BaseNavigator.cs
+
+### Fix: Backspace Not Exiting Collection/Deck Builder
+- Backspace now properly exits collection and deck builder screens when no in-screen back button is found
+- Files: GeneralMenuNavigator.cs
+
+### Fix: Duel Settings Menu Interactions
+- Fixed duel state not resetting correctly after closing the settings menu mid-game
+- Fixed Enter key inadvertently opening the settings menu during duels
+- Files: DuelNavigator.cs, SettingsMenuNavigator.cs
+
+### Improved: Installer Button Labels
+- Installer buttons now have clearer, more descriptive labels
+- Files: Installer
+
 ## v0.7.3-dev
 
 ### New: Invalid Deck Status in Deck Picker
