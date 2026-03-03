@@ -2029,8 +2029,9 @@ namespace AccessibleArena.Core.Services
                     OnPopupDetected(newPanel);
                 }
             }
-            else if (_isInPopupMode && newPanel == null)
+            else if (_isInPopupMode)
             {
+                // Popup closed: active panel reverted to the underlying panel (or null)
                 MelonLogger.Msg($"[{NavigatorId}] Popup closed");
                 ExitPopupMode();
                 OnPopupClosed();
