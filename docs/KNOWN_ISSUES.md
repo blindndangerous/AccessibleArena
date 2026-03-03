@@ -115,7 +115,7 @@ Sometimes abilities on the stack only show the Name and Type blocks but not the 
 Replaced `IsCraftModeActive()` (which checked `filterButton_Craft` toggle) with `_activeContentController == "WrapperDeckBuilder"`. Now intercepts ALL collection card activations on the collection screen, regardless of craft toggle state.
 
 **Resolved - Problem 2 (game's CardViewerPopup):**
-After craft confirmation activates the card, the game opens `CardViewerPopup_Desktop_16x9(Clone)`. This is now auto-dismissed via `AutoDismissPopup()` which looks for Close/Dismiss/Back/Cancel/Background_ClickBlocker buttons, falling back to `SetActive(false)`.
+After craft confirmation activates the card, the game opens `CardViewerPopup_Desktop_16x9(Clone)`. This is now auto-dismissed via BaseNavigator's `_shouldAutoDismissPopup` flag: when the popup is detected via PanelStateManager, `DismissPopup()` is called on the next frame, which looks for Close/Dismiss/Back/Cancel/Background_ClickBlocker buttons, falling back to `SetActive(false)`.
 
 **Remaining - Problem 3 - Unclear if crafting is caused by our activation or game behavior:**
 Our activation path for collection cards:
@@ -331,10 +331,8 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 18. Better group announcements - improve how element groups are announced when entering/switching groups
 19. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
 20. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-21. K hotkey for mark/counter information on cards - announce +1/+1 counters, damage marks, and other markers
 22. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
 23. Card crafting - wildcard crafting workflow accessibility
-24. Planeswalker support - loyalty abilities, activation, and loyalty counter announcements
 25. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
 26. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
 27. Hotkey to jump to attached card - when focused on an aura/equipment, press a key to navigate directly to the card it's attached to (and vice versa)

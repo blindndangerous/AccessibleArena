@@ -28,7 +28,7 @@
         CardPoolAccessor.cs      - Reflection wrapper for CardPoolHolder (collection page API)
         RecentPlayAccessor.cs    - Reflection wrapper for LastPlayedBladeContentView (Recent tab tiles)
         CraftConfirmationPopup.cs - Custom Unity UI popup for wildcard craft confirmation (under investigation)
-        InputFieldEditHelper.cs  - Shared input field edit mode logic (used by BaseNavigator + PopupHandler)
+        InputFieldEditHelper.cs  - Shared input field edit mode logic (used by BaseNavigator for both menu and popup input fields)
         MenuDebugHelper.cs       - UI investigation utilities (DumpGameObjectDetails, LogTooltipTriggerDetails)
 
         # Central Services (held by main mod)
@@ -72,7 +72,7 @@
           old/detector-plugin-system/ - Archived: IPanelDetector, PanelDetectorManager, PanelRegistry
 
         # Navigator Infrastructure
-        BaseNavigator.cs         - Abstract base for screen navigators
+        BaseNavigator.cs         - Abstract base for screen navigators (includes integrated popup handling)
         NavigatorManager.cs      - Manages navigator lifecycle and priority
 
         # Menu Navigation Helpers
@@ -114,7 +114,7 @@
       PanelStatePatch.cs         - Harmony patch for menu panel state changes (partial success)
       KeyboardManagerPatch.cs    - Harmony patch to block consumed keys from game
 
-  libs\                          - Reference assemblies and Tolk DLLs
+  libs\                          - Local reference assemblies (not in git, project references game install path)
   docs\                          - Documentation
   tools\                         - AssemblyAnalyzer and analysis scripts
   archive\                       - Archived files (from Phase 1 cleanup)
@@ -632,7 +632,7 @@ Dedicated navigator for the Store screen. Uses a three-level navigation model (T
 **Architecture:**
 - `StoreNavigator.cs` - Standalone navigator with custom store-specific navigation
 - Priority 85 (above GeneralMenuNavigator at 15)
-- Subscribes to `PanelStateManager.OnPanelChanged` for popup detection
+- Uses BaseNavigator's built-in popup detection via `EnablePopupDetection()`
 
 **Navigation Model:**
 - **Tab level (Up/Down)**: Navigate store tabs (Featured, Packs, Decks, etc.)
@@ -650,9 +650,9 @@ Store items that contain decks or bundles offer a "Details" option as the first 
 - Backspace closes details view, returns to item navigation
 
 **Popup Handling:**
-StoreNavigator uses a reusable popup pattern with dual detection:
-- **PanelStateManager events**: Subscribes to `OnPanelChanged` to detect system popups (SystemMessageView, Dialog, etc.)
-- **Confirmation modal polling**: Polls `_confirmationModalField` on the store controller to detect the store's own confirmation modal
+StoreNavigator uses BaseNavigator's built-in popup mode with dual detection:
+- **PanelStateManager events**: BaseNavigator's `EnablePopupDetection()` auto-detects system popups (SystemMessageView, Dialog, etc.)
+- **Confirmation modal polling**: Polls `_confirmationModalField` on the store controller to detect the store's own confirmation modal (uses `EnterPopupMode()` manually)
 - When popup is active, navigation switches to popup elements (Up/Down navigate, Enter activates, Backspace dismisses)
 - Dismissal tries: modal `Close()` method, cancel button pattern matching, `SystemMessageView.OnBack()`
 
@@ -674,7 +674,7 @@ Dedicated navigator for the Mastery/Rewards screen. Replaces GeneralMenuNavigato
 **Architecture:**
 - `MasteryNavigator.cs` - Standalone navigator with custom level/tier navigation
 - Priority 60 (above StoreNavigator at 55, below LoadingScreenNavigator at 65)
-- Subscribes to `PanelStateManager.OnPanelChanged` for popup detection
+- Uses BaseNavigator's built-in popup detection via `EnablePopupDetection()`
 
 **Navigation Model:**
 - **Virtual status item (index 0)**: XP progress info + action buttons as tiers

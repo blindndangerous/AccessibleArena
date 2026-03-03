@@ -1466,132 +1466,93 @@ follow these guidelines to avoid common pitfalls:
 4. Source navigator to remove duplicate code
 5. `OverlayDetector.cs` to update comments (detection kept for filtering)
 
-### Popup Handling Pattern (February 2026)
+### Popup Handling Pattern (March 2026 - Unified in BaseNavigator)
 
-Navigators that manage screens where popups can appear (confirmation dialogs, system messages, purchase modals) should use the shared `PopupHandler` utility class (`src/Core/Services/PopupHandler.cs`).
+Popup handling is built into `BaseNavigator`. Any navigator that extends BaseNavigator automatically gets popup support via `PanelStateManager.OnPanelChanged` detection. Navigators just need to call `EnablePopupDetection()` in `OnActivated()` and optionally override hooks.
 
 **Key Concepts:**
-- `PopupHandler` is a shared utility - each navigator creates its own instance
-- Popups are detected via `PanelStateManager.OnPanelChanged` events (system popups) or polling (screen-specific modals)
-- When a popup is active, navigation switches to popup elements only
+- Popup handling is integrated into `BaseNavigator` — no separate class needed
+- Popups are detected via `PanelStateManager.OnPanelChanged` events
+- When a popup is active, BaseNavigator saves current elements, discovers popup elements, and routes all input through popup navigation
 - Navigation model: Up/Down through a flat list of text blocks (first) + buttons (after), no wraparound
 - Backspace dismisses the popup via a 3-level fallback chain
+- On popup close, saved elements and index are restored, labels refreshed
 
-**PopupHandler API:**
+**BaseNavigator Popup API:**
 ```csharp
-// Static detection
-PopupHandler.IsPopupPanel(PanelInfo panel)  // PanelType.Popup OR name contains "SystemMessage"/"Popup"/"Dialog"/"Modal"
-
-// Lifecycle
-handler.OnPopupDetected(GameObject popup)   // Discovers items + announces
-handler.Clear()                             // Resets all state
-handler.ValidatePopup()                     // Returns false if popup gone
+// Enable/disable detection (call in OnActivated/OnDeactivating)
+EnablePopupDetection()                     // Subscribes to PanelStateManager.OnPanelChanged
+DisablePopupDetection()                    // Unsubscribes (called automatically in OnDeactivating)
 
 // Properties
-handler.IsActive                            // Whether a popup is currently tracked
-handler.ActivePopup                         // The popup GameObject (null if none)
+IsInPopupMode                              // Whether popup mode is active
+PopupGameObject                            // The popup GameObject (null if none)
 
-// Input (returns true if consumed)
-handler.HandleInput()                       // Up/Down/Tab navigate, Enter/Space activate, Backspace dismiss
-handler.DismissPopup()                      // 3-level dismissal chain
+// Static detection
+BaseNavigator.IsPopupPanel(PanelInfo)      // PanelType.Popup OR name contains "SystemMessage"/"Popup"/"Dialog"/"Modal"
+
+// Manual popup mode control (for screen-specific modals)
+EnterPopupMode(GameObject popup)           // Save elements, discover popup items, announce
+ExitPopupMode()                            // Restore saved elements and index
+DismissPopup()                             // 3-level dismissal chain
+
+// Overridable hooks
+OnPopupDetected(PanelInfo panel)           // Default: calls EnterPopupMode(panel.GameObject)
+OnPopupClosed()                            // Default: empty. Override for custom cleanup
+IsPopupExcluded(PanelInfo panel)           // Default: false. Override to filter benign overlays
 ```
 
-**Setup - Add a PopupHandler field:**
-```csharp
-private readonly PopupHandler _popupHandler;
-private bool _isPopupActive;
-
-public MyNavigator(IAnnouncementService announcer, ...)
-{
-    _popupHandler = new PopupHandler("MyNavigator", announcer);
-}
-```
-
-**Detection - Subscribe to PanelStateManager:**
+**Setup - Enable popup detection:**
 ```csharp
 protected override void OnActivated()
 {
-    if (PanelStateManager.Instance != null)
-        PanelStateManager.Instance.OnPanelChanged += OnPanelChanged;
+    base.OnActivated();
+    EnablePopupDetection();
 }
 
-protected override void OnDeactivating()
-{
-    if (PanelStateManager.Instance != null)
-        PanelStateManager.Instance.OnPanelChanged -= OnPanelChanged;
-    _isPopupActive = false;
-    _popupHandler.Clear();
-}
+// DisablePopupDetection() is called automatically in OnDeactivating
+```
 
-private void OnPanelChanged(PanelInfo oldPanel, PanelInfo newPanel)
+**Screen-specific exclusions (override IsPopupExcluded):**
+```csharp
+protected override bool IsPopupExcluded(PanelInfo panel)
 {
-    if (!_isActive) return;
-
-    if (newPanel != null && PopupHandler.IsPopupPanel(newPanel))
-    {
-        _isPopupActive = true;
-        _popupHandler.OnPopupDetected(newPanel.GameObject);
-    }
-    else if (_isPopupActive && newPanel == null)
-    {
-        _isPopupActive = false;
-        _popupHandler.Clear();
-        // Re-announce current position
-    }
+    var name = panel.Name ?? "";
+    return name.Contains("ObjectivePopup") ||
+           name.Contains("FullscreenZFBrowser") ||
+           name.Contains("RewardPopup3DIcon");
 }
 ```
 
-**Detection - Polling for screen-specific modals:**
+**Polling for screen-specific modals (manual popup mode):**
 ```csharp
-// In Update(), track modal state transitions
+// In HandleCustomInput() or Update(), track modal state transitions
 bool modalOpen = IsMyModalOpen();
 if (modalOpen && !_wasModalOpen)
 {
     _wasModalOpen = true;
-    _isPopupActive = true;
-    _popupHandler.OnPopupDetected(modalGameObject);
+    EnterPopupMode(modalGameObject);
 }
 else if (!modalOpen && _wasModalOpen)
 {
     _wasModalOpen = false;
-    _isPopupActive = false;
-    _popupHandler.Clear();
+    ExitPopupMode();
+    OnPopupClosed();
 }
 ```
 
-**Input Switching via HandleEarlyInput (CRITICAL):**
+**Input Routing (automatic):**
 
-Popup input **must** be routed through `HandleEarlyInput()`, not `HandleCustomInput()` or `HandleInput()`. This is because `BaseNavigator.HandleInput()` processes auto-focused input fields (via `UIFocusTracker`) *before* calling `HandleCustomInput()`. If a popup contains an input field that has focus, BaseNavigator would intercept arrow keys and other input before the popup handler ever sees them.
+BaseNavigator's `HandleInput()` automatically routes input to popup navigation when in popup mode. The popup input handler runs before any BaseNavigator logic, so popups with input fields or dropdowns work correctly. No `HandleEarlyInput()` override needed.
 
-`HandleEarlyInput()` runs at the very top of `HandleInput()`, before any BaseNavigator logic:
-
-```csharp
-protected override bool HandleEarlyInput()
-{
-    if (_isPopupActive)
-    {
-        // Validate popup still exists (game may destroy it without panel event)
-        if (!_popupHandler.ValidatePopup())
-        {
-            _isPopupActive = false;
-            _popupHandler.Clear();
-            return false;  // Fall through to normal navigation
-        }
-        _popupHandler.HandleInput();
-        return true;  // Consumed - skip all BaseNavigator processing
-    }
-    return false;
-}
-```
-
-**Popup Validation:** Always call `ValidatePopup()` in `HandleEarlyInput()`. When the game destroys a popup externally (e.g., after clicking a button that triggers a server action), the `PanelStateManager` may not fire a close event. Without validation, `_isPopupActive` stays true and all input is consumed forever, leaving the user stuck on an empty screen.
+**Popup Validation:** BaseNavigator automatically validates the popup GameObject each frame. When the game destroys a popup externally (e.g., after clicking a button that triggers a server action), popup mode exits cleanly and `OnPopupClosed()` fires.
 
 **Popup Dismissal (3-level fallback chain):**
 1. Find and click a cancel/close button by word-boundary pattern matching ("cancel", "close", "no", "back", "abbrechen", "nein", "zuruck") — uses `ContainsWord()` to avoid false positives (e.g., "no" inside "butto-no-utline")
 2. Invoke `SystemMessageView.OnBack(null)` via reflection
 3. `SetActive(false)` as last resort
 
-**Element Discovery (handled internally by PopupHandler):**
+**Element Discovery (handled internally by BaseNavigator):**
 - Title: Extracted from title/header containers, announced in "Popup: {title}" header
 - Text blocks: All active `TMP_Text` not inside buttons, input fields, title containers, or widget content transforms; cleaned, split on newlines, deduplicated, then deduplicated against button labels
 - Input fields: Active, interactable `TMP_InputField` components, labeled via `UITextExtractor.GetInputFieldLabel()`
@@ -1612,32 +1573,32 @@ Additionally, `DeduplicateTextBlocksAgainstButtons()` removes text blocks whose 
 
 **Input Field Edit Mode (via InputFieldEditHelper):**
 
-Input field editing is handled by the shared `InputFieldEditHelper` class (`src/Core/Services/InputFieldEditHelper.cs`), used by both `BaseNavigator` (for menu input fields) and `PopupHandler` (for popup input fields). This eliminates code duplication and ensures consistent behavior:
+Input field editing is handled by the shared `InputFieldEditHelper` class (`src/Core/Services/InputFieldEditHelper.cs`), used by `BaseNavigator` for both menu input fields and popup input fields. This eliminates code duplication and ensures consistent behavior:
 
 - Enter on an input field activates edit mode (typing passes through to field)
 - Escape exits edit mode, Tab exits and navigates to next/prev item
 - Up/Down reads field content, Left/Right reads character at cursor
 - Backspace announces deleted character (passes through for deletion)
 - Supports both `TMP_InputField` and legacy Unity `InputField`
-- Edit state cleaned up on popup close via `Clear()`
+- Edit state cleaned up on popup close
 
-PopupHandler uses the helper internally - navigators don't interact with it directly for popup input fields. BaseNavigator uses its own instance for scene-wide auto-focused input field handling.
+BaseNavigator creates separate InputFieldEditHelper and DropdownEditHelper instances for popup mode, independent of the main menu helpers. These are created on popup entry and cleared on popup exit.
 
 **Rescan Suppression:**
-Navigators using PopupHandler must skip their own element rescan while a popup is active. Otherwise the delayed rescan (e.g., GeneralMenuNavigator's 0.5s `PerformRescan()`) overwrites PopupHandler's items with the navigator's full element list. Add a guard at the top of the rescan method:
+Navigators must skip their own element rescan while popup mode is active. Otherwise the delayed rescan (e.g., GeneralMenuNavigator's 0.5s `PerformRescan()`) overwrites popup items with the navigator's full element list. Add a guard at the top of the rescan method:
 ```csharp
-if (_isPopupActive) return;
+if (IsInPopupMode) return;
 ```
 
-**Screen-specific exclusions:**
-Some navigators need to exclude certain panels from popup handling (e.g., MasteryNavigator excludes ObjectivePopup, FullscreenZFBrowser, RewardPopup3DIcon). Add an exclusion check before calling `PopupHandler.IsPopupPanel()`.
+**Label Refresh on Popup Close:**
+When exiting popup mode, BaseNavigator refreshes labels of restored elements via `RefreshElementLabels()`. This picks up changes made while the popup was open (e.g., deck name edited in DeckDetailsPopup).
 
 **Special cases:**
-- StoreNavigator keeps separate confirmation modal handling (card-containing modals with their own Close() method) alongside PopupHandler for generic popups
-- GeneralMenuNavigator uses PopupHandler for popups, skips `PerformRescan()` while popup is active
+- StoreNavigator keeps separate confirmation modal handling (card-containing modals with their own Close() method) alongside BaseNavigator popup mode for generic popups
+- GeneralMenuNavigator skips `PerformRescan()` while popup is active
 - RewardPopupNavigator is a dedicated navigator (not generic popup handling)
 
-**Current integrations:** SettingsMenuNavigator, DraftNavigator, MasteryNavigator, StoreNavigator, GeneralMenuNavigator
+**Current integrations:** All navigators that call `EnablePopupDetection()`: SettingsMenuNavigator, DraftNavigator, MasteryNavigator, StoreNavigator, GeneralMenuNavigator
 
 ### Adding Support for New Screens
 

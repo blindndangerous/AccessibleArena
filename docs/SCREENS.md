@@ -811,7 +811,7 @@ The list begins with a virtual **Status item** (position 0) containing XP info a
 Visual page automatically syncs when navigating past page boundaries. Announces "Page X of Y" on page change.
 
 **Popup Handling:**
-Subscribes to `PanelStateManager.OnPanelChanged` for popup detection (same pattern as StoreNavigator). Filters benign overlays: ObjectivePopup, FullscreenZFBrowser, RewardPopup3DIcon.
+Uses BaseNavigator's built-in popup detection via `EnablePopupDetection()`. Filters benign overlays via `IsPopupExcluded()` override: ObjectivePopup, FullscreenZFBrowser, RewardPopup3DIcon.
 
 **Technical Notes:**
 - Detected via `ProgressionTracksContentController` MonoBehaviour with `IsOpen` property

@@ -1,7 +1,7 @@
 # Dropdown Handling - Unified State Management
 
 **Created:** 2026-02-03
-**Updated:** 2026-03-02 (deferred value notification, PopupHandler dropdown support, captionText reading, stale value correction)
+**Updated:** 2026-03-03 (PopupHandler unified into BaseNavigator, deferred value notification, captionText reading, stale value correction)
 
 ---
 
@@ -120,16 +120,16 @@ When the user presses Enter on a dropdown item, the mod selects it and closes th
 
 **Known limitation:** Screen/Camera Unity APIs return the native display resolution, not the game's internal render resolution. The resolution dropdown in Settings > Graphics cannot be corrected — see Known Issues.
 
-### PopupHandler Dropdown Support (DropdownEditHelper)
+### Popup Dropdown Support (DropdownEditHelper)
 
-Popups (e.g., DeckDetailsPopup) can contain dropdowns. `PopupHandler` discovers and handles them via `DropdownEditHelper`, following the same pattern as `InputFieldEditHelper`:
+Popups (e.g., DeckDetailsPopup) can contain dropdowns. `BaseNavigator`'s popup mode discovers and handles them via `DropdownEditHelper`, following the same pattern as `InputFieldEditHelper`:
 
-- **Discovery:** `DiscoverDropdowns()` scans popup objects for TMP_Dropdown, Dropdown, and cTMP_Dropdown components. Labels use `GetDropdownDisplayValue()` + role suffix.
+- **Discovery:** `DiscoverPopupElements()` scans popup objects for TMP_Dropdown, Dropdown, and cTMP_Dropdown components. Labels use `GetDropdownDisplayValue()` + role suffix.
 - **Edit mode:** Enter on a dropdown item calls `DropdownEditHelper.EnterEditMode()` which opens the dropdown via `UIActivator.Activate()` and registers with `DropdownStateManager`.
 - **Key handling:** `HandleEditing()` routes Tab (close + navigate), Escape/Backspace (close), Enter (select + close), and passes arrow keys to Unity.
-- **Integration:** `PopupHandler.HandleInput()` checks `_dropdownHelper.IsEditing` before input field editing, ensuring dropdown mode takes priority.
+- **Integration:** `BaseNavigator.HandlePopupInput()` checks `_popupDropdownHelper.IsEditing` before input field editing, ensuring dropdown mode takes priority.
 
-**Files:** `src/Core/Services/DropdownEditHelper.cs`, `src/Core/Services/PopupHandler.cs`
+**Files:** `src/Core/Services/DropdownEditHelper.cs`, `src/Core/Services/BaseNavigator.cs`
 
 ### Integration Points
 
@@ -407,7 +407,7 @@ Without suppression, this would cause the system to incorrectly enter dropdown m
 - `src/Core/Services/BaseNavigator.cs` - HandleDropdownNavigation, SelectDropdownItem, SetDropdownValueSilent, GetDropdownDisplayValue
 - `src/Core/Services/UIElementClassifier.cs` - GetDropdownSelectedValue, IsSettingsDropdownControl, CorrectStaleDropdownValue
 - `src/Core/Services/DropdownEditHelper.cs` - Popup dropdown edit mode (state + key routing)
-- `src/Core/Services/PopupHandler.cs` - Popup dropdown discovery and integration
+- `src/Core/Services/BaseNavigator.cs` - Popup dropdown discovery and integration (popup mode region)
 - `src/Patches/EventSystemPatch.cs` - Blocks SendSubmitEventToSelectedObject in dropdown mode
 - `src/Patches/KeyboardManagerPatch.cs` - Blocks Enter from game's KeyboardManager in dropdown mode
 - `src/Core/Services/UIFocusTracker.cs` - Delegates to DropdownStateManager, provides IsAnyDropdownExpanded()

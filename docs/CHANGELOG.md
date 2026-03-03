@@ -4,6 +4,28 @@ All notable changes to Accessible Arena.
 
 ## v0.7.4-dev
 
+### Refactor: PopupHandler Unified into BaseNavigator
+- Popup handling is now built into `BaseNavigator` — the separate `PopupHandler` class has been removed
+- All navigators inherit popup support automatically; just call `EnablePopupDetection()` in `OnActivated()`
+- Overridable hooks: `OnPopupDetected()`, `OnPopupClosed()`, `IsPopupExcluded()` for custom behavior
+- Popup mode saves/restores navigator elements and index, creates dedicated InputFieldEditHelper and DropdownEditHelper instances for popup content
+- On popup close, restored element labels are refreshed to pick up changes made while popup was open
+- Navigators simplified: SettingsMenuNavigator, DraftNavigator, MasteryNavigator, StoreNavigator, GeneralMenuNavigator all reduced by removing per-navigator popup boilerplate
+- Files: BaseNavigator.cs (popup mode region added), PopupHandler.cs (deleted), GeneralMenuNavigator.cs, SettingsMenuNavigator.cs, MasteryNavigator.cs, StoreNavigator.cs, DraftNavigator.cs
+
+### Fix: Craft Confirmation Popup Rework
+- Craft confirmation popup now properly dismisses after activation, buttons are in correct order, wildcard type is announced
+- Uses screen detection (`WrapperDeckBuilder`) and auto-dismisses game's CardViewerPopup after craft
+- Cancel buttons found via reflection for reliable popup dismissal
+- Files: CraftConfirmationPopup.cs, GeneralMenuNavigator.cs
+
+### Fix: Popup Mode Stability (Multiple Fixes)
+- Fixed popup close detection: exit popup mode on any non-popup panel change, not just when panel becomes null
+- Fixed GeneralMenuNavigator popup mode not restoring correctly after navigator reactivation
+- Fixed stale labels in grouped navigator after popup close: labels now refresh from live UI text
+- Fixed Enter key blocked on popup buttons when previous element was a toggle (toggle submit blocking cleared on popup entry)
+- Files: BaseNavigator.cs, GeneralMenuNavigator.cs, GroupedNavigator.cs
+
 ### Fix: Planeswalker Ability Text in Activation Browser
 - Activating a planeswalker opens a SelectCards browser with one card per ability — all three now show their specific ability text instead of just the card name
 - Root cause: ability CDCs use the ability ID as their GrpId with empty AbilityIds/Abilities arrays
@@ -34,12 +56,12 @@ All notable changes to Accessible Arena.
 - DeckTypesDetails, DeckColorsDetails, and CosmeticSelectorController raw text filtered from DeckDetailsPopup
 - Uses `CollectWidgetContentTransforms()` to find widget content Transforms and `IsChildOfAny()` with `Transform.IsChildOf()` — necessary because DeckTypesDetails items live under a separate ItemParent, not under the widget's own GameObject
 - Text blocks matching button labels (e.g., "Avatare") deduplicated via `DeduplicateTextBlocksAgainstButtons()`
-- Files: PopupHandler.cs
+- Files: BaseNavigator.cs
 
 ### Fix: Popup Cancel Button False Positive
 - Cancel button pattern matching now uses word-boundary `ContainsWord()` instead of `Contains()` — prevents "no" matching inside "butto-no-utline"
 - Added "back" to cancel patterns so "BackButton" is correctly found
-- Files: PopupHandler.cs
+- Files: BaseNavigator.cs
 
 ### Fix: Dropdown Value Persistence in Popups
 - Dropdown value changes in DeckDetailsPopup (and similar destroyed/recreated UI) now persist across close/reopen
