@@ -199,7 +199,7 @@ namespace AccessibleArena.Core.Services
         private CraftConfirmationPopup _craftPopup;
         private GameObject _pendingCraftElement;
         private bool _craftConfirmPending;
-        private Toggle _craftToggle;
+        private bool _expectingCraftPopup;
 
         #endregion
 
@@ -373,6 +373,15 @@ namespace AccessibleArena.Core.Services
             // Detect popup transitions
             if (newPanel != null && PopupHandler.IsPopupPanel(newPanel))
             {
+                // Auto-dismiss the game's CardViewerPopup after our craft confirmation
+                if (_expectingCraftPopup && newPanel.Name != null && newPanel.Name.Contains("CardViewerPopup"))
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Auto-dismissing game's CardViewerPopup after craft");
+                    _expectingCraftPopup = false;
+                    AutoDismissPopup(newPanel.GameObject);
+                    return;
+                }
+
                 if (!_isPopupActive)
                 {
                     MelonLogger.Msg($"[{NavigatorId}] Popup detected: {newPanel.Name}");
@@ -907,7 +916,7 @@ namespace AccessibleArena.Core.Services
             _hasLoggedUIOnce = false;
             _activationDelay = ActivationDelaySeconds;
             _isDeckBuilderReadOnly = false;
-            _craftToggle = null;
+            _expectingCraftPopup = false;
 
             // Reset NPE button tracking for new scene
             _npeButtonCheckTimer = NPEButtonCheckInterval;
@@ -5088,12 +5097,12 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Intercept collection card activation when craft toggle is ON.
+        /// Intercept collection card activation on the collection screen.
         /// Shows a confirmation popup instead of immediately crafting.
         /// </summary>
         protected override bool OnCollectionCardActivating(GameObject element)
         {
-            if (!IsCraftModeActive())
+            if (_activeContentController != "WrapperDeckBuilder")
                 return false;
 
             var cardInfo = CardModelProvider.ExtractCardInfoFromModel(element);
@@ -5136,28 +5145,6 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Check if the craft toggle (filterButton_Craft) is currently ON.
-        /// </summary>
-        private bool IsCraftModeActive()
-        {
-            // Re-find if cached toggle is destroyed (e.g., scene change)
-            if (_craftToggle == null || !_craftToggle.gameObject.activeInHierarchy)
-            {
-                _craftToggle = null;
-                foreach (var toggle in GameObject.FindObjectsOfType<Toggle>())
-                {
-                    if (toggle != null && toggle.gameObject.name == "filterButton_Craft")
-                    {
-                        _craftToggle = toggle;
-                        break;
-                    }
-                }
-            }
-
-            return _craftToggle != null && _craftToggle.isOn;
-        }
-
-        /// <summary>
         /// After the craft confirmation popup closes, check if user confirmed.
         /// If so, activate the card (perform the craft) and trigger rescan.
         /// </summary>
@@ -5166,6 +5153,7 @@ namespace AccessibleArena.Core.Services
             if (_craftConfirmPending && _pendingCraftElement != null && _pendingCraftElement.activeInHierarchy)
             {
                 MelonLogger.Msg($"[{NavigatorId}] Craft confirmed - activating card");
+                _expectingCraftPopup = true;
                 var result = UIActivator.Activate(_pendingCraftElement);
                 _announcer.Announce(result.Message, AnnouncementPriority.Normal);
                 OnDeckBuilderCardActivated();
@@ -5173,6 +5161,38 @@ namespace AccessibleArena.Core.Services
 
             _craftConfirmPending = false;
             _pendingCraftElement = null;
+        }
+
+        /// <summary>
+        /// Auto-dismiss a game popup by finding a close/cancel button or deactivating it.
+        /// Used to dismiss the game's CardViewerPopup after craft confirmation.
+        /// </summary>
+        private void AutoDismissPopup(GameObject popup)
+        {
+            if (popup == null) return;
+
+            // Try to find a close/cancel/dismiss button
+            foreach (var child in popup.GetComponentsInChildren<Transform>(true))
+            {
+                if (!child.gameObject.activeInHierarchy) continue;
+                string name = child.name;
+                if (name.Contains("Close") || name.Contains("Dismiss") || name.Contains("Back") ||
+                    name.Contains("Cancel") || name.Contains("Background_ClickBlocker"))
+                {
+                    // Check if it has a clickable component
+                    if (child.GetComponent<Button>() != null ||
+                        child.GetComponent<UnityEngine.EventSystems.IPointerClickHandler>() != null)
+                    {
+                        MelonLogger.Msg($"[{NavigatorId}] Auto-dismiss: clicking '{name}'");
+                        UIActivator.Activate(child.gameObject);
+                        return;
+                    }
+                }
+            }
+
+            // Fallback: deactivate the popup
+            MelonLogger.Warning($"[{NavigatorId}] Auto-dismiss: no button found, using SetActive(false)");
+            popup.SetActive(false);
         }
 
         /// <summary>
