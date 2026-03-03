@@ -2075,6 +2075,11 @@ namespace AccessibleArena.Core.Services
             _elements.Clear();
             _currentIndex = -1;
 
+            // Clear toggle submit blocking - popup elements are independent of the underlying screen.
+            // The previous element might have been a toggle, leaving BlockSubmitForToggle=true,
+            // which would block Enter on popup buttons via EventSystemPatch.
+            InputManager.BlockSubmitForToggle = false;
+
             // Create helpers for popup input fields and dropdowns
             _popupInputHelper = new InputFieldEditHelper(_announcer);
             _popupDropdownHelper = new DropdownEditHelper(_announcer, NavigatorId);
@@ -2233,11 +2238,11 @@ namespace AccessibleArena.Core.Services
             }
 
             // Enter/Space: activate current item
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ||
-                Input.GetKeyDown(KeyCode.Space))
+            // Use GetEnterAndConsume which also checks EnterPressedWhileBlocked
+            // (defensive: in case BlockSubmitForToggle becomes stale)
+            if (InputManager.GetEnterAndConsume() || Input.GetKeyDown(KeyCode.Space))
             {
-                InputManager.ConsumeKey(KeyCode.Return);
-                InputManager.ConsumeKey(KeyCode.KeypadEnter);
+                InputManager.ConsumeKey(KeyCode.Space);
                 ActivatePopupItem();
                 return;
             }
