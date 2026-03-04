@@ -5,6 +5,7 @@ using UnityEngine;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -453,7 +454,7 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[ManaColorPicker] Found ManaColorSelector: {_selectorType.FullName}");
 
                 // IsOpen property (public)
-                _isOpenProp = _selectorType.GetProperty("IsOpen", BindingFlags.Public | BindingFlags.Instance);
+                _isOpenProp = _selectorType.GetProperty("IsOpen", PublicInstance);
                 if (_isOpenProp == null)
                 {
                     MelonLogger.Warning("[ManaColorPicker] IsOpen property not found");
@@ -463,12 +464,12 @@ namespace AccessibleArena.Core.Services
 
                 // _selectionProvider field (protected)
                 _selectionProviderField = _selectorType.GetField("_selectionProvider",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
+                    PrivateInstance);
                 if (_selectionProviderField == null)
                 {
                     // Try base class
                     _selectionProviderField = _selectorType.BaseType?.GetField("_selectionProvider",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                        PrivateInstance);
                 }
                 if (_selectionProviderField == null)
                 {
@@ -479,12 +480,12 @@ namespace AccessibleArena.Core.Services
 
                 // SelectColor method (protected)
                 _selectColorMethod = _selectorType.GetMethod("SelectColor",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
+                    PrivateInstance);
                 if (_selectColorMethod == null)
                 {
                     // Try base class
                     _selectColorMethod = _selectorType.BaseType?.GetMethod("SelectColor",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                        PrivateInstance);
                 }
                 if (_selectColorMethod == null)
                 {
@@ -495,7 +496,7 @@ namespace AccessibleArena.Core.Services
 
                 // TryCloseSelector method (public)
                 _tryCloseSelectorMethod = _selectorType.GetMethod("TryCloseSelector",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (_tryCloseSelectorMethod == null)
                 {
                     MelonLogger.Warning("[ManaColorPicker] TryCloseSelector method not found");
@@ -578,12 +579,12 @@ namespace AccessibleArena.Core.Services
         private static PropertyInfo FindProperty(Type type, string name)
         {
             // Search type itself, then all interfaces
-            var prop = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            var prop = type.GetProperty(name, PublicInstance);
             if (prop != null) return prop;
 
             foreach (var iface in type.GetInterfaces())
             {
-                prop = iface.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+                prop = iface.GetProperty(name, PublicInstance);
                 if (prop != null)
                 {
                     // Get the implementation via interface map
@@ -604,12 +605,12 @@ namespace AccessibleArena.Core.Services
 
         private static MethodInfo FindMethod(Type type, string name)
         {
-            var method = type.GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+            var method = type.GetMethod(name, PublicInstance);
             if (method != null) return method;
 
             foreach (var iface in type.GetInterfaces())
             {
-                method = iface.GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+                method = iface.GetMethod(name, PublicInstance);
                 if (method != null) return method;
             }
 

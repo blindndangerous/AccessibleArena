@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -44,7 +45,7 @@ namespace AccessibleArena.Core.Services
         private bool _totalDamageCached;
         private int _assignerIndex;   // 1-based index of current assigner
         private int _assignerTotal;   // total number of damage assigners in this combat
-        private static readonly BindingFlags ReflFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+        private const BindingFlags ReflFlags = AllInstanceFlags;
 
         // Post-confirm rescan: force re-entry when scaffold is reused for a new interaction
         private bool _pendingRescan;
@@ -1497,7 +1498,7 @@ namespace AccessibleArena.Core.Services
         /// <returns>True if workflow was successfully submitted</returns>
         private bool TrySubmitWorkflowViaReflection()
         {
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             try
             {
@@ -2090,7 +2091,7 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[BrowserNavigator] EnsureTotalDamageCached: damageAssigner type: {damageAssigner.GetType().Name}");
 
                 // TotalDamage is a public readonly field on the MtgDamageAssigner struct
-                var tdField = damageAssigner.GetType().GetField("TotalDamage", BindingFlags.Public | BindingFlags.Instance);
+                var tdField = damageAssigner.GetType().GetField("TotalDamage", PublicInstance);
                 if (tdField != null)
                 {
                     _totalDamage = (uint)tdField.GetValue(damageAssigner);

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using MelonLoader;
 using TMPro;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -245,7 +246,7 @@ namespace AccessibleArena.Core.Services
                 }
                 if (widget == null) return (null, null);
 
-                var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                var flags = AllInstanceFlags;
                 var widgetType = widget.GetType();
 
                 // Read _socialManager.LocalPlayer.FullName
@@ -293,7 +294,7 @@ namespace AccessibleArena.Core.Services
                 {
                     if (mb != null && mb.GetType().Name == "FriendsWidget")
                     {
-                        var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                        var flags = AllInstanceFlags;
                         var statusField = mb.GetType().GetField("StatusButton", flags);
                         var statusButton = statusField?.GetValue(mb);
                         if (statusButton is Component comp)
@@ -340,7 +341,7 @@ namespace AccessibleArena.Core.Services
             if (_caches.TryGetValue(type, out var cached))
                 return cached;
 
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             var cache = new TileReflectionCache
             {
                 LabelName = type.GetField("_labelName", flags),
@@ -520,7 +521,7 @@ namespace AccessibleArena.Core.Services
         private static bool TryInvokeMethod(Component tile, string actionId)
         {
             // Try common button field names based on action
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             string[] fieldPatterns;
 
             switch (actionId)

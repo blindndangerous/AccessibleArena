@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -316,7 +317,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private static string GetWildcardTooltipText(GameObject gameObject)
         {
-            var pubFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            var pubFlags = PublicInstance;
 
             foreach (var comp in gameObject.GetComponents<MonoBehaviour>())
             {
@@ -473,7 +474,7 @@ namespace AccessibleArena.Core.Services
                 if (typeName == "SealedBoosterView")
                 {
                     var mbType = mb.GetType();
-                    var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+                    var flags = AllInstanceFlags;
 
                     // Get SetCode field
                     var setCodeField = mbType.GetField("SetCode", flags);
@@ -1368,7 +1369,7 @@ namespace AccessibleArena.Core.Services
                 if (comp == null || comp.GetType().Name != "TooltipTrigger") continue;
 
                 var locStringField = comp.GetType().GetField("LocString",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    PublicInstance);
                 if (locStringField == null) continue;
 
                 var locString = locStringField.GetValue(comp);
@@ -1526,7 +1527,7 @@ namespace AccessibleArena.Core.Services
 
             if (storeItemBase == null) return null;
 
-            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             var itemType = storeItemBase.GetType();
 
             // Try 1: Get label from _label OptionalObject -> GameObject -> TMPro text

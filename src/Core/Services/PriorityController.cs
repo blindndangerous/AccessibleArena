@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using MelonLoader;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -116,7 +117,7 @@ namespace AccessibleArena.Core.Services
             if (gm == null) return null;
 
             var type = gm.GetType();
-            var prop = type.GetProperty("AutoRespManager", BindingFlags.Public | BindingFlags.Instance);
+            var prop = type.GetProperty("AutoRespManager", PublicInstance);
             if (prop == null)
             {
                 MelonLogger.Warning("[PriorityController] AutoRespManager property not found on GameManager");
@@ -132,10 +133,10 @@ namespace AccessibleArena.Core.Services
 
             // Cache methods and properties
             var armType = _autoRespManager.GetType();
-            _toggleFullControl = armType.GetMethod("ToggleFullControl", BindingFlags.Public | BindingFlags.Instance);
-            _toggleLockedFullControl = armType.GetMethod("ToggleLockedFullControl", BindingFlags.Public | BindingFlags.Instance);
-            _fullControlEnabled = armType.GetProperty("FullControlEnabled", BindingFlags.Public | BindingFlags.Instance);
-            _fullControlLocked = armType.GetProperty("FullControlLocked", BindingFlags.Public | BindingFlags.Instance);
+            _toggleFullControl = armType.GetMethod("ToggleFullControl", PublicInstance);
+            _toggleLockedFullControl = armType.GetMethod("ToggleLockedFullControl", PublicInstance);
+            _fullControlEnabled = armType.GetProperty("FullControlEnabled", PublicInstance);
+            _fullControlLocked = armType.GetProperty("FullControlLocked", PublicInstance);
 
             MelonLogger.Msg($"[PriorityController] Cached AutoRespManager " +
                 $"(ToggleFC={_toggleFullControl != null}, ToggleLocked={_toggleLockedFullControl != null}, " +
@@ -246,10 +247,10 @@ namespace AccessibleArena.Core.Services
                     var type = mb.GetType();
 
                     // PhaseIcons is a public field (List<PhaseLadderButton>) on ButtonPhaseLadder
-                    _phaseIconsField = type.GetField("PhaseIcons", BindingFlags.Public | BindingFlags.Instance);
+                    _phaseIconsField = type.GetField("PhaseIcons", PublicInstance);
 
                     // ToggleTransientStop(PhaseLadderButton) is public on ButtonPhaseLadder
-                    _toggleTransientStop = type.GetMethod("ToggleTransientStop", BindingFlags.Public | BindingFlags.Instance);
+                    _toggleTransientStop = type.GetMethod("ToggleTransientStop", PublicInstance);
 
                     MelonLogger.Msg($"[PriorityController] Found ButtonPhaseLadder " +
                         $"(PhaseIcons={_phaseIconsField != null}, ToggleTransientStop={_toggleTransientStop != null})");
@@ -268,7 +269,7 @@ namespace AccessibleArena.Core.Services
             while (type != null)
             {
                 var field = type.GetField(name,
-                    BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    AllInstanceFlags | BindingFlags.DeclaredOnly);
                 if (field != null) return field;
                 type = type.BaseType;
             }
@@ -309,7 +310,7 @@ namespace AccessibleArena.Core.Services
                     // _playerStopTypes is private on base class PhaseLadderButton
                     _playerStopTypesField = GetFieldInHierarchy(btnType, "_playerStopTypes");
                     // StopState is public on PhaseLadderButton
-                    _stopStateProp = btnType.GetProperty("StopState", BindingFlags.Public | BindingFlags.Instance);
+                    _stopStateProp = btnType.GetProperty("StopState", PublicInstance);
 
                     MelonLogger.Msg($"[PriorityController] Cached button reflection: " +
                         $"_playerStopTypes={_playerStopTypesField != null}, " +

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using MelonLoader;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -583,7 +584,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private static void DumpWorkflowBrowserDebug(GameObject wb, string actionText)
         {
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             MelonLogger.Msg($"[BrowserDetector] ========== WorkflowBrowser FULL DEBUG ==========");
             MelonLogger.Msg($"[BrowserDetector] GameObject: {wb.name}");

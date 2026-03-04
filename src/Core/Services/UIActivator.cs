@@ -6,6 +6,7 @@ using MelonLoader;
 using System.Collections;
 using System.Linq;
 using System.Text.RegularExpressions;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 namespace AccessibleArena.Core.Services
 {
     /// <summary>
@@ -365,7 +366,7 @@ namespace AccessibleArena.Core.Services
 
             string methodName = isNext ? "OnNextValue" : "OnPreviousValue";
             var method = spinner.GetType().GetMethod(methodName,
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                PrivateInstance);
 
             if (method != null)
             {
@@ -447,9 +448,7 @@ namespace AccessibleArena.Core.Services
 
                     var type = mb.GetType();
                     var onClickField = type.GetField("onClick",
-                        System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
 
                     if (onClickField != null)
                     {
@@ -609,9 +608,7 @@ namespace AccessibleArena.Core.Services
             // Invoke MailboxButton_OnClick()
             var type = navBarController.GetType();
             var method = type.GetMethod("MailboxButton_OnClick",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (method != null)
             {
@@ -677,9 +674,7 @@ namespace AccessibleArena.Core.Services
                 // Invoke OnClaimClicked_Unity
                 var type = behaviour.GetType();
                 var method = type.GetMethod("OnClaimClicked_Unity",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (method != null)
                 {
@@ -732,9 +727,7 @@ namespace AccessibleArena.Core.Services
                 if (comp.GetType().Name != "UpdatePoliciesPanel") continue;
 
                 var onAcceptMethod = comp.GetType().GetMethod("OnAccept",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (onAcceptMethod != null)
                 {
@@ -770,9 +763,7 @@ namespace AccessibleArena.Core.Services
 
                 // Try to find _onClick field (CustomButton uses underscore prefix)
                 var onClickField = type.GetField("_onClick",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (onClickField != null)
                 {
@@ -997,7 +988,7 @@ namespace AccessibleArena.Core.Services
             if (systemMsgButton == null) return false;
 
             var type = systemMsgButton.GetType();
-            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = PrivateInstance;
 
             // Look for private fields that might store the callback
             string[] possibleCallbackFields = { "_handleOnClick", "_callback", "_onClick", "handleOnClick", "callback", "m_handleOnClick" };
@@ -1092,7 +1083,7 @@ namespace AccessibleArena.Core.Services
                 if (mb == null || mb.GetType().Name != "CustomButton") continue;
 
                 var type = mb.GetType();
-                var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+                var flags = AllInstanceFlags;
 
                 // Look for OnClickedReturnSource field
                 var field = type.GetField("OnClickedReturnSource", flags);
@@ -1193,7 +1184,7 @@ namespace AccessibleArena.Core.Services
             if (instance == null) return false;
 
             // Try ClearMessageQueue() - this dismisses the current popup
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             var clearMethod = managerType.GetMethod("ClearMessageQueue", flags, null, System.Type.EmptyTypes, null);
             if (clearMethod != null)
             {
@@ -1266,7 +1257,7 @@ namespace AccessibleArena.Core.Services
             Log($"Found PopupManager instance: {instance}");
 
             // Try to find close/dismiss methods
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             string[] methodNames = { "Close", "ClosePopup", "Dismiss", "DismissPopup", "Hide", "HidePopup", "OnBack", "CloseCurrentPopup" };
             foreach (var methodName in methodNames)
@@ -1322,7 +1313,7 @@ namespace AccessibleArena.Core.Services
             if (component == null) return false;
 
             var type = component.GetType();
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Find HandleKeyDown method
             foreach (var method in type.GetMethods(flags))
@@ -1392,9 +1383,7 @@ namespace AccessibleArena.Core.Services
 
             // Try OnBack(ActionContext) first - pass null for context
             var onBackMethod = type.GetMethod("OnBack",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance,
+                AllInstanceFlags,
                 null,
                 new System.Type[] { typeof(object) }, // ActionContext
                 null);
@@ -1402,9 +1391,7 @@ namespace AccessibleArena.Core.Services
             if (onBackMethod == null)
             {
                 // Try to find the method with any parameter type
-                foreach (var method in type.GetMethods(System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance))
+                foreach (var method in type.GetMethods(AllInstanceFlags))
                 {
                     if (method.Name == "OnBack")
                     {
@@ -1491,9 +1478,7 @@ namespace AccessibleArena.Core.Services
 
             var type = component.GetType();
             var method = type.GetMethod(methodName,
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance,
+                AllInstanceFlags,
                 null,
                 System.Type.EmptyTypes,
                 null);
@@ -1674,9 +1659,7 @@ namespace AccessibleArena.Core.Services
                 Log($"  - {comp.GetType().FullName}");
             }
 
-            var flags = System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Inspect CustomButton
             foreach (var mb in element.GetComponents<MonoBehaviour>())
@@ -1875,13 +1858,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Also check m_Calls for runtime listeners
-            var callsField = eventType.GetField("m_Calls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var callsField = eventType.GetField("m_Calls", PrivateInstance);
             if (callsField != null)
             {
                 var calls = callsField.GetValue(unityEvent);
                 if (calls != null)
                 {
-                    var runtimeCallsField = calls.GetType().GetField("m_RuntimeCalls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var runtimeCallsField = calls.GetType().GetField("m_RuntimeCalls", PrivateInstance);
                     if (runtimeCallsField != null)
                     {
                         var runtimeCalls = runtimeCallsField.GetValue(calls) as System.Collections.IList;
@@ -1897,7 +1880,7 @@ namespace AccessibleArena.Core.Services
                                 var callType = call.GetType();
 
                                 // Try to get the delegate from the call
-                                var delegateField = callType.GetField("Delegate", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                var delegateField = callType.GetField("Delegate", AllInstanceFlags);
                                 if (delegateField != null)
                                 {
                                     var del = delegateField.GetValue(call) as System.Delegate;
@@ -2130,7 +2113,7 @@ namespace AccessibleArena.Core.Services
 
                 // Find OpenCardViewer method with 3 params (MetaCardView, ICardRolloverZoom, int)
                 var openMethod = actionsHandlerType.GetMethod("OpenCardViewer",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    PublicInstance);
 
                 if (openMethod == null)
                 {
@@ -2212,9 +2195,7 @@ namespace AccessibleArena.Core.Services
             // Invoke OnDeckClick() on the DeckView component
             var deckViewType = deckView.GetType();
             var onDeckClickMethod = deckViewType.GetMethod("OnDeckClick",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (onDeckClickMethod != null && onDeckClickMethod.GetParameters().Length == 0)
             {
@@ -2317,7 +2298,7 @@ namespace AccessibleArena.Core.Services
             if (deckView == null) return null;
 
             var type = deckView.GetType();
-            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = PrivateInstance;
 
             bool animateInvalid = GetFieldValue<bool>(type, deckView, "_animateInvalid", flags);
             int invalidCardCount = GetFieldValue<int>(type, deckView, "_invalidCardCount", flags);
@@ -2351,8 +2332,8 @@ namespace AccessibleArena.Core.Services
             var deckView = FindDeckViewInParents(deckElement);
             if (deckView == null) return null;
 
-            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
-            var pubFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            var flags = PrivateInstance;
+            var pubFlags = PublicInstance;
 
             // Read _tooltipTrigger field from DeckView
             var triggerField = deckView.GetType().GetField("_tooltipTrigger", flags);
@@ -2422,8 +2403,7 @@ namespace AccessibleArena.Core.Services
             try
             {
                 var field = selector.GetType().GetField("_selectedDeckView",
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
 
                 if (field != null)
                 {
@@ -2455,7 +2435,7 @@ namespace AccessibleArena.Core.Services
 
             // List all properties
             MelonLogger.Msg("[DeckView DEBUG] Properties:");
-            foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+            foreach (var prop in type.GetProperties(AllInstanceFlags))
             {
                 try
                 {
@@ -2470,7 +2450,7 @@ namespace AccessibleArena.Core.Services
 
             // List all fields
             MelonLogger.Msg("[DeckView DEBUG] Fields:");
-            foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+            foreach (var field in type.GetFields(AllInstanceFlags))
             {
                 try
                 {

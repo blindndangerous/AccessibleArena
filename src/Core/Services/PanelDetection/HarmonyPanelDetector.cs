@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MelonLoader;
 using UnityEngine;
 using AccessibleArena.Patches;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services.PanelDetection
 {
@@ -199,7 +200,7 @@ namespace AccessibleArena.Core.Services.PanelDetection
             // Try to get gameObject via reflection
             var type = controller.GetType();
             var gameObjectProp = type.GetProperty("gameObject",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                PublicInstance);
 
             if (gameObjectProp != null)
             {

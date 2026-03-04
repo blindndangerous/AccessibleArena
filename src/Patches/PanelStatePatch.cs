@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using AccessibleArena.Core.Services;
 using AccessibleArena.Core.Services.ElementGrouping;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Patches
 {
@@ -107,7 +108,7 @@ namespace AccessibleArena.Patches
 
             // Patch FinishOpen - called when panel finishes opening
             var finishOpenMethod = controllerType.GetMethod("FinishOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (finishOpenMethod != null)
             {
@@ -123,7 +124,7 @@ namespace AccessibleArena.Patches
 
             // Patch FinishClose - called when panel finishes closing
             var finishCloseMethod = controllerType.GetMethod("FinishClose",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (finishCloseMethod != null)
             {
@@ -139,7 +140,7 @@ namespace AccessibleArena.Patches
 
             // Also patch BeginOpen/BeginClose for earlier notification
             var beginOpenMethod = controllerType.GetMethod("BeginOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (beginOpenMethod != null)
             {
@@ -150,7 +151,7 @@ namespace AccessibleArena.Patches
             }
 
             var beginCloseMethod = controllerType.GetMethod("BeginClose",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (beginCloseMethod != null)
             {
@@ -162,7 +163,7 @@ namespace AccessibleArena.Patches
 
             // Keep IsOpen setter patch as backup
             var isOpenSetter = controllerType.GetProperty("IsOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
 
             if (isOpenSetter != null)
             {
@@ -207,9 +208,9 @@ namespace AccessibleArena.Patches
                         if (!hasKeyword) continue;
 
                         // Check if type has IsOpen, Show, or Hide
-                        var hasIsOpen = type.GetProperty("IsOpen", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) != null;
-                        var hasShow = type.GetMethod("Show", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) != null;
-                        var hasHide = type.GetMethod("Hide", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) != null;
+                        var hasIsOpen = type.GetProperty("IsOpen", AllInstanceFlags) != null;
+                        var hasShow = type.GetMethod("Show", AllInstanceFlags) != null;
+                        var hasHide = type.GetMethod("Hide", AllInstanceFlags) != null;
 
                         if (hasIsOpen || hasShow || hasHide)
                         {
@@ -246,7 +247,7 @@ namespace AccessibleArena.Patches
             LogTypeMembers(settingsType);
 
             // Try various Show/Open methods - search without parameter constraint first
-            var showMethods = settingsType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            var showMethods = settingsType.GetMethods(AllInstanceFlags)
                 .Where(m => m.Name == "Show" || m.Name == "Open" || m.Name == "FinishOpen" || m.Name == "BeginOpen")
                 .ToArray();
 
@@ -266,7 +267,7 @@ namespace AccessibleArena.Patches
             }
 
             // Try various Hide/Close methods
-            var hideMethods = settingsType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            var hideMethods = settingsType.GetMethods(AllInstanceFlags)
                 .Where(m => m.Name == "Hide" || m.Name == "Close" || m.Name == "FinishClose" || m.Name == "BeginClose")
                 .ToArray();
 
@@ -287,7 +288,7 @@ namespace AccessibleArena.Patches
 
             // Also try IsOpen/IsMainPanelActive setters
             var isOpenSetter = settingsType.GetProperty("IsOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
             if (isOpenSetter != null)
             {
                 try
@@ -304,7 +305,7 @@ namespace AccessibleArena.Patches
             }
 
             var isMainPanelActiveSetter = settingsType.GetProperty("IsMainPanelActive",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
             if (isMainPanelActiveSetter != null)
             {
                 try
@@ -337,7 +338,7 @@ namespace AccessibleArena.Patches
             LogTypeMembers(deckBladeType);
 
             // Find all Show methods (may have parameters like Show(EventContext, DeckFormat, Action))
-            var showMethods = deckBladeType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            var showMethods = deckBladeType.GetMethods(AllInstanceFlags)
                 .Where(m => m.Name == "Show")
                 .ToArray();
 
@@ -359,7 +360,7 @@ namespace AccessibleArena.Patches
 
             // Patch the Hide method
             var hideMethod = deckBladeType.GetMethod("Hide",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (hideMethod != null)
             {
@@ -382,7 +383,7 @@ namespace AccessibleArena.Patches
 
             // Also patch IsShowing setter if available
             var isShowingSetter = deckBladeType.GetProperty("IsShowing",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
             if (isShowingSetter != null)
             {
                 try
@@ -412,7 +413,7 @@ namespace AccessibleArena.Patches
 
             // Patch PlayBladeVisualState setter - this changes when play blade opens/closes
             var visualStateSetter = playBladeType.GetProperty("PlayBladeVisualState",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
 
             if (visualStateSetter != null)
             {
@@ -450,7 +451,7 @@ namespace AccessibleArena.Patches
 
             // Patch IsEventBladeActive setter
             var isEventBladeActiveSetter = homePageType.GetProperty("IsEventBladeActive",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
 
             if (isEventBladeActiveSetter != null)
             {
@@ -473,7 +474,7 @@ namespace AccessibleArena.Patches
 
             // Patch IsDirectChallengeBladeActive setter
             var isDirectChallengeBladeActiveSetter = homePageType.GetProperty("IsDirectChallengeBladeActive",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetSetMethod(true);
+                AllInstanceFlags)?.GetSetMethod(true);
 
             if (isDirectChallengeBladeActiveSetter != null)
             {
@@ -505,7 +506,7 @@ namespace AccessibleArena.Patches
             }
 
             var joinMethod = homePageType.GetMethod("JoinMatchMaking",
-                BindingFlags.NonPublic | BindingFlags.Instance);
+                PrivateInstance);
 
             if (joinMethod == null)
             {
@@ -555,7 +556,7 @@ namespace AccessibleArena.Patches
                 DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Found BladeContentView: {bladeContentViewType.FullName}");
 
                 var showMethod = bladeContentViewType.GetMethod("Show",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (showMethod != null)
                 {
@@ -573,7 +574,7 @@ namespace AccessibleArena.Patches
                 }
 
                 var hideMethod = bladeContentViewType.GetMethod("Hide",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (hideMethod != null)
                 {
@@ -607,7 +608,7 @@ namespace AccessibleArena.Patches
                 DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Found EventBladeContentView: {eventBladeType.FullName}");
 
                 var showMethod = eventBladeType.GetMethod("Show",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (showMethod != null)
                 {
@@ -625,7 +626,7 @@ namespace AccessibleArena.Patches
                 }
 
                 var hideMethod = eventBladeType.GetMethod("Hide",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (hideMethod != null)
                 {
@@ -662,7 +663,7 @@ namespace AccessibleArena.Patches
             // Patch ShowSocialEntitiesList - called when friends list opens
             // Use both prefix (to block Tab-triggered opens) and postfix (for notifications)
             var showMethod = socialUIType.GetMethod("ShowSocialEntitiesList",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (showMethod != null)
             {
@@ -684,7 +685,7 @@ namespace AccessibleArena.Patches
             // Patch CloseFriendsWidget - called when friends list closes
             // Add prefix to block closing when Tab is pressed (our mod uses Tab for navigation)
             var closeMethod = socialUIType.GetMethod("CloseFriendsWidget",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (closeMethod != null)
             {
@@ -706,7 +707,7 @@ namespace AccessibleArena.Patches
             // Also patch Minimize - another way to close
             // Add prefix to block minimizing when Tab is pressed
             var minimizeMethod = socialUIType.GetMethod("Minimize",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (minimizeMethod != null)
             {
@@ -727,7 +728,7 @@ namespace AccessibleArena.Patches
 
             // Patch SetVisible - general visibility control (with Tab blocking)
             var setVisibleMethod = socialUIType.GetMethod("SetVisible",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (setVisibleMethod != null)
             {
@@ -748,7 +749,7 @@ namespace AccessibleArena.Patches
 
             // Patch HandleKeyDown - block Tab from toggling social panel
             var handleKeyDownMethod = socialUIType.GetMethod("HandleKeyDown",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (handleKeyDownMethod != null)
             {
@@ -781,7 +782,7 @@ namespace AccessibleArena.Patches
 
             // Patch MailboxButton_OnClick - called when mailbox opens
             var openMethod = navBarType.GetMethod("MailboxButton_OnClick",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
             if (openMethod != null)
             {
                 try
@@ -803,7 +804,7 @@ namespace AccessibleArena.Patches
 
             // Patch HideInboxIfActive - called when mailbox closes
             var closeMethod = navBarType.GetMethod("HideInboxIfActive",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
             if (closeMethod != null)
             {
                 try
@@ -840,7 +841,7 @@ namespace AccessibleArena.Patches
 
             // OnLetterSelected(PlayerInboxBladeItemDisplay selectedLetter, Boolean isRead, Guid selectedLetterId)
             var onLetterSelectedMethod = inboxType.GetMethod("OnLetterSelected",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (onLetterSelectedMethod != null)
             {
@@ -911,7 +912,7 @@ namespace AccessibleArena.Patches
 
                     // Try to get the view model field (it's a field, not a property)
                     var viewModelField = selectedLetterType.GetField("_clientBladeItemViewModel",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
 
                     if (viewModelField != null)
                     {
@@ -921,17 +922,17 @@ namespace AccessibleArena.Patches
                             var vmType = viewModel.GetType();
 
                             // Get Title field
-                            var titleField = vmType.GetField("Title", BindingFlags.Public | BindingFlags.Instance);
+                            var titleField = vmType.GetField("Title", PublicInstance);
                             if (titleField != null)
                                 title = titleField.GetValue(viewModel) as string ?? "";
 
                             // Get Body field
-                            var bodyField = vmType.GetField("Body", BindingFlags.Public | BindingFlags.Instance);
+                            var bodyField = vmType.GetField("Body", PublicInstance);
                             if (bodyField != null)
                                 body = bodyField.GetValue(viewModel) as string ?? "";
 
                             // Get Attachments field (List)
-                            var attachmentsField = vmType.GetField("Attachments", BindingFlags.Public | BindingFlags.Instance);
+                            var attachmentsField = vmType.GetField("Attachments", PublicInstance);
                             if (attachmentsField != null)
                             {
                                 var attachments = attachmentsField.GetValue(viewModel) as System.Collections.IList;
@@ -939,7 +940,7 @@ namespace AccessibleArena.Patches
                             }
 
                             // Get IsClaimed field
-                            var isClaimedField = vmType.GetField("IsClaimed", BindingFlags.Public | BindingFlags.Instance);
+                            var isClaimedField = vmType.GetField("IsClaimed", PublicInstance);
                             if (isClaimedField != null)
                                 isClaimed = (bool)isClaimedField.GetValue(viewModel);
 
@@ -967,7 +968,7 @@ namespace AccessibleArena.Patches
         private static void LogTypeMembers(Type type)
         {
             DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Methods on {type.Name}:");
-            foreach (var m in type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
+            foreach (var m in type.GetMethods(AllInstanceFlags))
             {
                 if (m.Name.Contains("Show") || m.Name.Contains("Hide") || m.Name.Contains("Open") || m.Name.Contains("Close"))
                 {
@@ -976,7 +977,7 @@ namespace AccessibleArena.Patches
             }
 
             DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Properties on {type.Name}:");
-            foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
+            foreach (var p in type.GetProperties(AllInstanceFlags))
             {
                 if (p.Name.Contains("Open") || p.Name.Contains("Ready") || p.Name.Contains("Visible"))
                 {
@@ -985,33 +986,7 @@ namespace AccessibleArena.Patches
             }
         }
 
-        /// <summary>
-        /// Finds a type by full name across all loaded assemblies.
-        /// </summary>
-        private static Type FindType(string fullName)
-        {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
-                {
-                    var type = assembly.GetType(fullName);
-                    if (type != null)
-                        return type;
-
-                    // Also try to find by name only (without namespace)
-                    foreach (var t in assembly.GetTypes())
-                    {
-                        if (t.Name == fullName || t.FullName == fullName)
-                            return t;
-                    }
-                }
-                catch
-                {
-                    // Ignore assembly load errors
-                }
-            }
-            return null;
-        }
+        // FindType provided by ReflectionUtils via using static
 
         // === Postfix Methods ===
 

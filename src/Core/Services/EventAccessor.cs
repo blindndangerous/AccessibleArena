@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -14,10 +15,6 @@ namespace AccessibleArena.Core.Services
     /// </summary>
     public static class EventAccessor
     {
-        private static readonly BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-        private static readonly BindingFlags PublicInstance =
-            BindingFlags.Public | BindingFlags.Instance;
 
         // --- PlayBladeEventTile reflection cache ---
         private static bool _tileReflectionInit;
@@ -727,7 +724,7 @@ namespace AccessibleArena.Core.Services
 
                 // Invoke OnClick() which fires Clicked?.Invoke(_pack)
                 var onClickMethod = packetInput.GetType().GetMethod("OnClick",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 if (onClickMethod != null)
                 {
                     onClickMethod.Invoke(packetInput, null);
@@ -763,7 +760,7 @@ namespace AccessibleArena.Core.Services
 
                 // SubmissionCount() returns uint
                 var submissionCountMethod = state.GetType().GetMethod("SubmissionCount",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (submissionCountMethod != null)
                 {
                     object result = submissionCountMethod.Invoke(state, null);

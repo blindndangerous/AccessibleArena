@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -14,8 +15,6 @@ namespace AccessibleArena.Core.Services
     /// </summary>
     public static class RecentPlayAccessor
     {
-        private static readonly BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
 
         // Cached component reference (invalidated on scene change via ClearCache)
         private static MonoBehaviour _cachedContentView;

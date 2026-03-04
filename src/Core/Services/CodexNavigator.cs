@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -188,7 +189,7 @@ namespace AccessibleArena.Core.Services
             if (_reflectionInitialized && _controllerType == controllerType) return;
 
             _controllerType = controllerType;
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // NavContentController base: IsOpen
             _isOpenProp = controllerType.GetProperty("IsOpen", flags | BindingFlags.FlattenHierarchy);
@@ -226,7 +227,7 @@ namespace AccessibleArena.Core.Services
             if (_learnMoreSectionType != null)
             {
                 _sectionTitleField = _learnMoreSectionType.GetField("_title", flags);
-                _sectionIdField = _learnMoreSectionType.GetField("Id", BindingFlags.Public | BindingFlags.Instance);
+                _sectionIdField = _learnMoreSectionType.GetField("Id", PublicInstance);
             }
 
             _reflectionInitialized = true;
@@ -338,7 +339,7 @@ namespace AccessibleArena.Core.Services
         private void CacheTocSectionType(Type type)
         {
             _tocSectionType = type;
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             _tocButtonField = type.GetField("button", flags);
             _tocIntentField = type.GetField("buttonClickIntent", flags);
             _tocChildAnchorField = type.GetField("childAnchor", flags);
@@ -353,7 +354,7 @@ namespace AccessibleArena.Core.Services
             {
                 _learnMoreSectionType = _tocSectionField.FieldType;
                 _sectionTitleField = _learnMoreSectionType.GetField("_title", flags);
-                _sectionIdField = _learnMoreSectionType.GetField("Id", BindingFlags.Public | BindingFlags.Instance);
+                _sectionIdField = _learnMoreSectionType.GetField("Id", PublicInstance);
                 MelonLogger.Msg($"[Codex] Cached LearnMoreSection type: Title={_sectionTitleField != null}, Id={_sectionIdField != null}");
             }
         }
@@ -404,7 +405,7 @@ namespace AccessibleArena.Core.Services
                 // Cache _childSections field on first use
                 if (_childSectionsField == null)
                 {
-                    var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+                    var flags = AllInstanceFlags;
                     _childSectionsField = learnMoreSection.GetType().GetField("_childSections", flags);
                 }
 
@@ -1182,7 +1183,7 @@ namespace AccessibleArena.Core.Services
 
                     // Get backButton field from LearnToPlayContents
                     var backButtonField = mb.GetType().GetField("backButton",
-                        BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (backButtonField != null)
                     {
                         try

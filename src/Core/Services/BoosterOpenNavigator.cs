@@ -5,6 +5,7 @@ using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -595,9 +596,7 @@ namespace AccessibleArena.Core.Services
                 {
                     // Try to get GrpId field/property
                     var grpIdField = mb.GetType().GetField("GrpId",
-                        System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (grpIdField != null)
                     {
                         var value = grpIdField.GetValue(mb);
@@ -605,9 +604,7 @@ namespace AccessibleArena.Core.Services
                     }
 
                     var grpIdProp = mb.GetType().GetProperty("GrpId",
-                        System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (grpIdProp != null)
                     {
                         var value = grpIdProp.GetValue(mb);
@@ -862,10 +859,7 @@ namespace AccessibleArena.Core.Services
             var controllerType = controller.GetType();
 
             // Iterate through all methods to find skip-related ones (IL2CPP compatible)
-            var allMethods = controllerType.GetMethods(
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+            var allMethods = controllerType.GetMethods(AllInstanceFlags);
 
             System.Reflection.MethodInfo setSkipActive = null;
             System.Reflection.MethodInfo onSkipToggle = null;
@@ -947,10 +941,7 @@ namespace AccessibleArena.Core.Services
                 var controllerType = controller.GetType();
 
                 // Iterate through all methods to find close-related ones (IL2CPP compatible)
-                var allMethods = controllerType.GetMethods(
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                var allMethods = controllerType.GetMethods(AllInstanceFlags);
 
                 System.Reflection.MethodInfo dismissCards = null;
                 System.Reflection.MethodInfo closeMethod = null;

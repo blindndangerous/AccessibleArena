@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -55,10 +56,6 @@ namespace AccessibleArena.Core.Services
         private int _lastDiagBattlefieldHighlighted = -1;
 
         // Avatar targeting reflection cache
-        private static readonly BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-        private static readonly BindingFlags PublicInstance =
-            BindingFlags.Public | BindingFlags.Instance;
         private static Type _avatarViewType;
         private static FieldInfo _highlightSystemField;    // DuelScene_AvatarView._highlightSystem
         private static FieldInfo _currentHighlightField;   // HighlightSystem._currentHighlightType

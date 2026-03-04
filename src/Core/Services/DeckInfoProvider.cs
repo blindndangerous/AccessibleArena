@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -19,10 +20,6 @@ namespace AccessibleArena.Core.Services
     /// </summary>
     public static class DeckInfoProvider
     {
-        private static readonly BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-        private static readonly BindingFlags PublicInstance =
-            BindingFlags.Public | BindingFlags.Instance;
 
         // Cached component references (cleared on scene change)
         private static MonoBehaviour _cachedTitlePanel;        // DeckMainTitlePanel

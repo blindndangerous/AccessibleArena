@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -357,7 +358,7 @@ namespace AccessibleArena.Core.Services
                 }
 
                 // Check for lifecycle methods
-                var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                var flags = AllInstanceFlags;
 
                 if (type.GetMethod("FinishOpen", flags) != null)
                     panel.HasFinishOpen = true;

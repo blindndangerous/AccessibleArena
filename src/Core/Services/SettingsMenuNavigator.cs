@@ -6,6 +6,7 @@ using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Services.PanelDetection;
 using System.Collections.Generic;
 using System.Linq;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -564,9 +565,7 @@ namespace AccessibleArena.Core.Services
                     continue;
 
                 var closeMethod = mb.GetType().GetMethod("Close",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (closeMethod != null)
                 {

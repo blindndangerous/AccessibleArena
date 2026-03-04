@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -863,7 +864,7 @@ namespace AccessibleArena.Core.Services
 
                     // Set m_Value field directly (bypasses onValueChanged)
                     var valueField = type.GetField("m_Value",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        PrivateInstance);
                     if (valueField != null)
                     {
                         valueField.SetValue(component, itemIndex);
@@ -871,8 +872,7 @@ namespace AccessibleArena.Core.Services
 
                     // Update the displayed text
                     var refreshMethod = type.GetMethod("RefreshShownValue",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (refreshMethod != null)
                     {
                         refreshMethod.Invoke(component, null);
@@ -915,7 +915,7 @@ namespace AccessibleArena.Core.Services
                     var type = component.GetType();
                     // Read m_CaptionText field (TMP_Text reference)
                     var captionField = type.GetField("m_CaptionText",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        PrivateInstance);
                     if (captionField != null)
                     {
                         var captionText = captionField.GetValue(component) as TMPro.TMP_Text;
@@ -924,7 +924,7 @@ namespace AccessibleArena.Core.Services
                     }
                     // Fallback: try captionText property
                     var captionProp = type.GetProperty("captionText",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                     if (captionProp != null)
                     {
                         var captionText = captionProp.GetValue(component) as TMPro.TMP_Text;
@@ -961,17 +961,17 @@ namespace AccessibleArena.Core.Services
                 {
                     var type = component.GetType();
                     var valueProp = type.GetProperty("value",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                     int value = valueProp != null ? (int)valueProp.GetValue(component) : 0;
                     if (value >= 0) break;
 
                     var optionsProp = type.GetProperty("options",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                     var options = optionsProp?.GetValue(component) as System.Collections.IList;
                     if (options != null && options.Count > 0)
                     {
                         var textProp = options[0]?.GetType().GetProperty("text",
-                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            PublicInstance);
                         return textProp?.GetValue(options[0]) as string;
                     }
                     break;
@@ -1061,7 +1061,7 @@ namespace AccessibleArena.Core.Services
                     {
                         // Try to call Hide() via reflection
                         var hideMethod = component.GetType().GetMethod("Hide",
-                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            PublicInstance);
                         if (hideMethod != null)
                         {
                             MelonLogger.Msg($"[{callerId}] Closing cTMP_Dropdown via Escape/Backspace");
@@ -1812,7 +1812,7 @@ namespace AccessibleArena.Core.Services
                     if (component != null && component.GetType().Name == "cTMP_Dropdown")
                     {
                         var hideMethod = component.GetType().GetMethod("Hide",
-                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            PublicInstance);
                         if (hideMethod != null)
                         {
                             hideMethod.Invoke(component, null);
@@ -2730,7 +2730,7 @@ namespace AccessibleArena.Core.Services
 
                 // Get pip objects (shared between stepper and no-stepper paths)
                 var pipsField = type.GetField("_CraftPips",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 var pipObjects = new HashSet<GameObject>();
                 if (pipsField != null)
                 {
@@ -2748,7 +2748,7 @@ namespace AccessibleArena.Core.Services
                 // Read actual owned count from controller (not pip count which is always 4)
                 int ownedCount = 0;
                 var collectedQtyField = type.GetField("_collectedQuantity",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 if (collectedQtyField != null)
                 {
                     ownedCount = (int)collectedQtyField.GetValue(mb);
@@ -2756,7 +2756,7 @@ namespace AccessibleArena.Core.Services
 
                 // Find the craft count label
                 var countLabelField = type.GetField("_craftCountLabel",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 var countLabel = countLabelField?.GetValue(mb) as TMP_Text;
 
                 bool hasStepper = countLabel != null && countLabel.gameObject.activeInHierarchy;
@@ -2765,9 +2765,9 @@ namespace AccessibleArena.Core.Services
                 {
                     // Find increment/decrement methods
                     var increaseMethod = type.GetMethod("Unity_OnCraftIncrease",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                     var decreaseMethod = type.GetMethod("Unity_OnCraftDecrease",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                     if (increaseMethod == null || decreaseMethod == null) continue;
 
                     string countText = UITextExtractor.CleanText(countLabel.text);
@@ -2993,7 +2993,7 @@ namespace AccessibleArena.Core.Services
 
                 if (fieldName != null)
                 {
-                    var field = mb.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+                    var field = mb.GetType().GetField(fieldName, PublicInstance);
                     if (field != null)
                     {
                         var transform = field.GetValue(mb) as Transform;
@@ -3049,7 +3049,7 @@ namespace AccessibleArena.Core.Services
             {
                 if (mb == null) continue;
                 var field = mb.GetType().GetField("_cancelButton",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
+                    PrivateInstance);
                 if (field == null) continue;
 
                 if (field.GetValue(mb) is MonoBehaviour cancelMb && cancelMb != null && cancelMb.gameObject != null)
@@ -3074,7 +3074,7 @@ namespace AccessibleArena.Core.Services
             {
                 if (mb == null) continue;
                 var field = mb.GetType().GetField(fieldName,
-                    BindingFlags.NonPublic | BindingFlags.Instance);
+                    PrivateInstance);
                 if (field == null) continue;
 
                 if (field.GetValue(mb) is MonoBehaviour buttonMb && buttonMb != null)
@@ -3105,12 +3105,12 @@ namespace AccessibleArena.Core.Services
 
                 // CustomButton.OnClick is a public property returning a UnityEvent-like type
                 var onClickProp = mb.GetType().GetProperty("OnClick",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (onClickProp == null)
                 {
                     // Try as field
                     var onClickField = mb.GetType().GetField("_onClick",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                        PrivateInstance);
                     if (onClickField == null) continue;
 
                     var onClickVal = onClickField.GetValue(mb);
@@ -3204,7 +3204,7 @@ namespace AccessibleArena.Core.Services
             if (component == null) return false;
 
             var type = component.GetType();
-            foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            foreach (var method in type.GetMethods(AllInstanceFlags))
             {
                 if (method.Name == "OnBack" && method.GetParameters().Length == 1)
                 {

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -81,19 +82,19 @@ namespace AccessibleArena.Core.Services
                 var cdcType = cdc.GetType();
 
                 // Get Model (ICardDataAdapter) from CDC
-                var modelProp = cdcType.GetProperty("Model", BindingFlags.Public | BindingFlags.Instance);
+                var modelProp = cdcType.GetProperty("Model", PublicInstance);
                 if (modelProp == null)
                 {
                     // Try base type
-                    modelProp = cdcType.BaseType?.GetProperty("Model", BindingFlags.Public | BindingFlags.Instance);
+                    modelProp = cdcType.BaseType?.GetProperty("Model", PublicInstance);
                 }
                 if (modelProp == null) return result;
                 var model = modelProp.GetValue(cdc);
                 if (model == null) return result;
 
                 // Get HolderType (CardHolderType enum) from CDC
-                var holderTypeProp = cdcType.GetProperty("HolderType", BindingFlags.Public | BindingFlags.Instance)
-                    ?? cdcType.BaseType?.GetProperty("HolderType", BindingFlags.Public | BindingFlags.Instance);
+                var holderTypeProp = cdcType.GetProperty("HolderType", PublicInstance)
+                    ?? cdcType.BaseType?.GetProperty("HolderType", PublicInstance);
                 object holderType = null;
                 if (holderTypeProp != null)
                     holderType = holderTypeProp.GetValue(cdc);
@@ -225,7 +226,7 @@ namespace AccessibleArena.Core.Services
                         var abilityType = ability.GetType();
 
                         uint abilityId = 0;
-                        var idProp = abilityType.GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
+                        var idProp = abilityType.GetProperty("Id", PublicInstance);
                         if (idProp != null)
                         {
                             var idVal = idProp.GetValue(ability);
@@ -338,7 +339,7 @@ namespace AccessibleArena.Core.Services
 
                 // Look for _abilityHangerProvider field (protected in AbilityHangerBase)
                 var field = type.GetField("_abilityHangerProvider",
-                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    PrivateInstance | BindingFlags.FlattenHierarchy);
                 if (field == null) continue;
 
                 var provider = field.GetValue(obj);
@@ -445,7 +446,7 @@ namespace AccessibleArena.Core.Services
                 if (!_linkedFaceTypePropSearched)
                 {
                     _linkedFaceTypePropSearched = true;
-                    _linkedFaceTypeProp = objType.GetProperty("LinkedFaceType", BindingFlags.Public | BindingFlags.Instance);
+                    _linkedFaceTypeProp = objType.GetProperty("LinkedFaceType", PublicInstance);
                 }
                 if (_linkedFaceTypeProp == null) return null;
 
@@ -459,7 +460,7 @@ namespace AccessibleArena.Core.Services
                 if (!_linkedFaceGrpIdsPropSearched)
                 {
                     _linkedFaceGrpIdsPropSearched = true;
-                    _linkedFaceGrpIdsProp = objType.GetProperty("LinkedFaceGrpIds", BindingFlags.Public | BindingFlags.Instance);
+                    _linkedFaceGrpIdsProp = objType.GetProperty("LinkedFaceGrpIds", PublicInstance);
                 }
                 if (_linkedFaceGrpIdsProp == null) return null;
 

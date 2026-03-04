@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -299,7 +300,7 @@ namespace AccessibleArena.Core.Services
                     var model = CardModelProvider.GetCardModel(cdc);
                     if (model == null) continue;
 
-                    var grpIdProp = model.GetType().GetProperty("GrpId", BindingFlags.Public | BindingFlags.Instance);
+                    var grpIdProp = model.GetType().GetProperty("GrpId", PublicInstance);
                     if (grpIdProp != null)
                     {
                         var val = grpIdProp.GetValue(model);
@@ -411,7 +412,7 @@ namespace AccessibleArena.Core.Services
             {
                 var type = uxEvent.GetType();
 
-                var activePlayerField = type.GetField("_activePlayer", BindingFlags.NonPublic | BindingFlags.Instance);
+                var activePlayerField = type.GetField("_activePlayer", PrivateInstance);
                 bool isYourTurn = false;
                 if (activePlayerField != null)
                 {
@@ -450,7 +451,7 @@ namespace AccessibleArena.Core.Services
 
         private string HandleUpdateZoneEvent(object uxEvent)
         {
-            var zoneField = uxEvent.GetType().GetField("_zone", BindingFlags.NonPublic | BindingFlags.Instance);
+            var zoneField = uxEvent.GetType().GetField("_zone", PrivateInstance);
             if (zoneField == null) return null;
 
             var zoneObj = zoneField.GetValue(uxEvent);
@@ -685,7 +686,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"=== {label} TYPE: {type.FullName} ===");
 
             // Log all fields
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var fields = type.GetFields(AllInstanceFlags);
             foreach (var field in fields)
             {
                 try
@@ -702,7 +703,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Log all properties
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var props = type.GetProperties(AllInstanceFlags);
             foreach (var prop in props)
             {
                 try
@@ -730,7 +731,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"=== DAMAGE EVENT TYPE: {type.FullName} ===");
 
             // Log all fields
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var fields = type.GetFields(AllInstanceFlags);
             foreach (var field in fields)
             {
                 try
@@ -747,7 +748,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Log all properties
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var props = type.GetProperties(AllInstanceFlags);
             foreach (var prop in props)
             {
                 try
@@ -890,10 +891,10 @@ namespace AccessibleArena.Core.Services
             {
                 var type = uxEvent.GetType();
 
-                var phaseField = type.GetField("<Phase>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+                var phaseField = type.GetField("<Phase>k__BackingField", PrivateInstance);
                 string phase = phaseField?.GetValue(uxEvent)?.ToString();
 
-                var stepField = type.GetField("<Step>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+                var stepField = type.GetField("<Step>k__BackingField", PrivateInstance);
                 string step = stepField?.GetValue(uxEvent)?.ToString();
 
                 // Check if we're leaving Declare Attackers phase - announce attacker count and details
@@ -1048,7 +1049,7 @@ namespace AccessibleArena.Core.Services
 
                 if (typeName == "ToggleCombatUXEvent")
                 {
-                    var combatModeField = type.GetField("_CombatMode", BindingFlags.NonPublic | BindingFlags.Instance);
+                    var combatModeField = type.GetField("_CombatMode", PrivateInstance);
                     var modeValue = combatModeField?.GetValue(uxEvent)?.ToString();
                     if (modeValue == "CombatBegun") return Strings.Duel_CombatBegins;
                     return null;
@@ -2333,7 +2334,7 @@ namespace AccessibleArena.Core.Services
             {
                 // Get _newManaPool field (List<MtgMana>)
                 var poolField = uxEvent.GetType().GetField("_newManaPool",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 if (poolField == null) return null;
 
                 var poolObj = poolField.GetValue(uxEvent);
@@ -2351,8 +2352,8 @@ namespace AccessibleArena.Core.Services
 
                     // Try to get Color from property or field
                     var colorProp = mana.GetType().GetProperty("Color");
-                    var colorField = mana.GetType().GetField("Color", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                                  ?? mana.GetType().GetField("_color", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var colorField = mana.GetType().GetField("Color", AllInstanceFlags)
+                                  ?? mana.GetType().GetField("_color", AllInstanceFlags);
 
                     if (colorProp == null && colorField == null) continue;
 
@@ -2481,8 +2482,7 @@ namespace AccessibleArena.Core.Services
         private static readonly ConcurrentDictionary<(Type, string), MemberInfo> _reflectionCache
             = new ConcurrentDictionary<(Type, string), MemberInfo>();
 
-        private const BindingFlags AllInstanceFlags =
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        // AllInstanceFlags provided by ReflectionUtils via using static
 
         // Basic land names in all supported languages (static to avoid per-call allocation)
         private static readonly HashSet<string> BasicLandNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

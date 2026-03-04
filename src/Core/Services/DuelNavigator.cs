@@ -8,6 +8,7 @@ using AccessibleArena.Core.Services.PanelDetection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -804,7 +805,7 @@ namespace AccessibleArena.Core.Services
                     MelonLogger.Msg($"[{NavigatorId}] [Life] Found GameManager: {mb.gameObject.name}");
 
                     // Log all properties
-                    foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    foreach (var prop in type.GetProperties(PublicInstance))
                     {
                         try
                         {
@@ -823,7 +824,7 @@ namespace AccessibleArena.Core.Services
                     }
 
                     // Also check fields
-                    foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                    foreach (var field in type.GetFields(AllInstanceFlags))
                     {
                         if (field.Name.Contains("player") || field.Name.Contains("Player") ||
                             field.Name.Contains("life") || field.Name.Contains("Life"))
@@ -865,7 +866,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Look for life-related properties
-            foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            foreach (var prop in type.GetProperties(PublicInstance))
             {
                 if (prop.Name.Contains("Life") || prop.Name.Contains("Health") ||
                     prop.Name.Contains("Player") || prop.Name.Contains("Id") ||

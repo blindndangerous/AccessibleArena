@@ -6,6 +6,7 @@ using AccessibleArena.Core.Models;
 using AccessibleArena.Core.Services.ElementGrouping;
 using System.Collections.Generic;
 using System.Linq;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -483,7 +484,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private string TryGetPackNameFromReward(GameObject rewardPrefab)
         {
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             foreach (var mb in rewardPrefab.GetComponents<MonoBehaviour>())
             {

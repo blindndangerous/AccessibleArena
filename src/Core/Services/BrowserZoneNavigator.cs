@@ -6,6 +6,7 @@ using UnityEngine;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -529,7 +530,7 @@ namespace AccessibleArena.Core.Services
 
             // Read the ordered CardViews list from the holder
             var cardViewsProp = holderComp.GetType().GetProperty("CardViews",
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                PublicInstance | BindingFlags.FlattenHierarchy);
             var cardViewsList = cardViewsProp?.GetValue(holderComp) as System.Collections.IList;
 
             if (cardViewsList == null || cardViewsList.Count == 0)
@@ -547,7 +548,7 @@ namespace AccessibleArena.Core.Services
 
                 // Check if this is the placeholder
                 var instanceIdProp = cdc.GetType().GetProperty("InstanceId",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (instanceIdProp != null)
                 {
                     var id = instanceIdProp.GetValue(cdc);
@@ -595,7 +596,7 @@ namespace AccessibleArena.Core.Services
 
                 // Get hand cards (keep pile) -> _topCards
                 var getHandCardsMethod = londonBrowser.GetType().GetMethod("GetHandCards",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (getHandCardsMethod != null)
                 {
                     var handCards = getHandCardsMethod.Invoke(londonBrowser, null) as System.Collections.IList;
@@ -628,7 +629,7 @@ namespace AccessibleArena.Core.Services
 
                 // Get library cards (bottom pile) -> _bottomCards
                 var getLibraryCardsMethod = londonBrowser.GetType().GetMethod("GetLibraryCards",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (getLibraryCardsMethod != null)
                 {
                     var libraryCards = getLibraryCardsMethod.Invoke(londonBrowser, null) as System.Collections.IList;
@@ -714,7 +715,7 @@ namespace AccessibleArena.Core.Services
             }
 
             var browserType = browser.GetType();
-            var handleDragMethod = browserType.GetMethod("HandleDrag", BindingFlags.Public | BindingFlags.Instance);
+            var handleDragMethod = browserType.GetMethod("HandleDrag", PublicInstance);
             if (handleDragMethod == null)
             {
                 MelonLogger.Warning("[BrowserZoneNavigator] HandleDrag method not found");
@@ -722,7 +723,7 @@ namespace AccessibleArena.Core.Services
             }
             handleDragMethod.Invoke(browser, new object[] { cardCDC });
 
-            var onDragReleaseMethod = browserType.GetMethod("OnDragRelease", BindingFlags.Public | BindingFlags.Instance);
+            var onDragReleaseMethod = browserType.GetMethod("OnDragRelease", PublicInstance);
             if (onDragReleaseMethod == null)
             {
                 MelonLogger.Warning("[BrowserZoneNavigator] OnDragRelease method not found");
@@ -761,7 +762,7 @@ namespace AccessibleArena.Core.Services
 
             // Get CardViews list from the holder
             var cardViewsProp = holderComp.GetType().GetProperty("CardViews",
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                PublicInstance | BindingFlags.FlattenHierarchy);
             if (cardViewsProp == null)
             {
                 MelonLogger.Warning("[BrowserZoneNavigator] CardViews property not found");
@@ -791,7 +792,7 @@ namespace AccessibleArena.Core.Services
 
                 // Check InstanceId for placeholder
                 var instanceIdProp = cdc.GetType().GetProperty("InstanceId",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (instanceIdProp != null)
                 {
                     var id = instanceIdProp.GetValue(cdc);
@@ -822,7 +823,7 @@ namespace AccessibleArena.Core.Services
 
             // ShiftCards moves card to placeholder position, pushing placeholder aside
             var shiftMethod = holderComp.GetType().GetMethod("ShiftCards",
-                BindingFlags.Public | BindingFlags.Instance);
+                PublicInstance);
             if (shiftMethod == null)
             {
                 MelonLogger.Warning("[BrowserZoneNavigator] ShiftCards method not found");
@@ -866,7 +867,7 @@ namespace AccessibleArena.Core.Services
                 }
 
                 var bmProp = gameManager.GetType().GetProperty("BrowserManager",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 var browserManager = bmProp?.GetValue(gameManager);
                 if (browserManager == null)
                 {
@@ -875,7 +876,7 @@ namespace AccessibleArena.Core.Services
                 }
 
                 var currentBrowserProp = browserManager.GetType().GetProperty("CurrentBrowser",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 var currentBrowser = currentBrowserProp?.GetValue(browserManager);
                 if (currentBrowser == null)
                 {
@@ -885,7 +886,7 @@ namespace AccessibleArena.Core.Services
 
                 // Call OnDragRelease to sync: cardViews = new List(cardHolder.CardViews)
                 var onDragRelease = currentBrowser.GetType().GetMethod("OnDragRelease",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (onDragRelease != null)
                 {
                     onDragRelease.Invoke(currentBrowser, new object[] { cardCDC });
@@ -911,11 +912,11 @@ namespace AccessibleArena.Core.Services
             if (BrowserDetector.IsLondonBrowser(_browserType))
             {
                 // London uses screen-space position properties
-                var isInHandMethod = browserType.GetMethod("IsInHand", BindingFlags.Public | BindingFlags.Instance);
+                var isInHandMethod = browserType.GetMethod("IsInHand", PublicInstance);
                 bool isInHand = isInHandMethod != null && (bool)isInHandMethod.Invoke(browser, new object[] { cardCDC });
 
                 string targetPropName = isInHand ? "LibraryScreenSpace" : "HandScreenSpace";
-                var targetPosProp = browserType.GetProperty(targetPropName, BindingFlags.Public | BindingFlags.Instance);
+                var targetPosProp = browserType.GetProperty(targetPropName, PublicInstance);
                 if (targetPosProp == null)
                 {
                     MelonLogger.Warning($"[BrowserZoneNavigator] {targetPropName} property not found on LondonBrowser");
@@ -936,7 +937,7 @@ namespace AccessibleArena.Core.Services
                     ? "_graveyardCenterPoint"
                     : "_libraryCenterPoint";
 
-                var centerField = browserType.GetField(targetFieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+                var centerField = browserType.GetField(targetFieldName, PrivateInstance);
                 if (centerField == null)
                 {
                     MelonLogger.Warning($"[BrowserZoneNavigator] {targetFieldName} field not found on SurveilBrowser");
@@ -947,7 +948,7 @@ namespace AccessibleArena.Core.Services
 
                 // Convert local-space center to world-space using the card's Root.parent
                 // (same transform chain the game's HandleDrag uses internally)
-                var rootProp = cardCDC.GetType().GetProperty("Root", BindingFlags.Public | BindingFlags.Instance);
+                var rootProp = cardCDC.GetType().GetProperty("Root", PublicInstance);
                 if (rootProp != null)
                 {
                     var root = rootProp.GetValue(cardCDC) as Transform;
@@ -986,7 +987,7 @@ namespace AccessibleArena.Core.Services
             if (cardBrowserHolder == null) return null;
 
             var providerProp = cardBrowserHolder.GetType().GetProperty("CardGroupProvider",
-                BindingFlags.Public | BindingFlags.Instance);
+                PublicInstance);
             return providerProp?.GetValue(cardBrowserHolder);
         }
 
@@ -1128,7 +1129,7 @@ namespace AccessibleArena.Core.Services
 
                 // Check IsInHand (keep pile = Top)
                 var isInHandMethod = londonBrowser.GetType().GetMethod("IsInHand",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (isInHandMethod != null)
                 {
                     bool isInHand = (bool)isInHandMethod.Invoke(londonBrowser, new object[] { cardCDC });
@@ -1137,7 +1138,7 @@ namespace AccessibleArena.Core.Services
 
                 // Check IsInLibrary (bottom pile = Bottom)
                 var isInLibraryMethod = londonBrowser.GetType().GetMethod("IsInLibrary",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 if (isInLibraryMethod != null)
                 {
                     bool isInLibrary = (bool)isInLibraryMethod.Invoke(londonBrowser, new object[] { cardCDC });

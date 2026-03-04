@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -229,7 +230,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"=== METACARDVIEW TYPE: {viewType.FullName} ===");
 
             // Log properties
-            var properties = viewType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var properties = viewType.GetProperties(PublicInstance);
             foreach (var prop in properties)
             {
                 try
@@ -257,7 +258,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"GameObject: {holder.gameObject.name}");
 
             // Log all properties
-            var properties = holderType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            var properties = holderType.GetProperties(AllInstanceFlags);
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"--- Properties ({properties.Length}) ---");
             foreach (var prop in properties)
             {
@@ -302,7 +303,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Log interesting methods that might return card data
-            var methods = holderType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            var methods = holderType.GetMethods(PublicInstance);
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"--- Methods (filtered) ---");
             foreach (var method in methods)
             {
@@ -321,7 +322,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Log fields as well (sometimes data is stored in fields)
-            var fields = holderType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            var fields = holderType.GetFields(AllInstanceFlags);
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"--- Fields (filtered) ---");
             foreach (var field in fields)
             {
@@ -414,7 +415,7 @@ namespace AccessibleArena.Core.Services
                             if (index == 0)
                             {
                                 DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"    [{index}] Item properties:");
-                                foreach (var prop in itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                                foreach (var prop in itemType.GetProperties(PublicInstance))
                                 {
                                     try
                                     {
@@ -483,7 +484,7 @@ namespace AccessibleArena.Core.Services
                                         DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"CardTitleProvider type: {providerType.FullName}");
 
                                         // List methods on the provider
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
                                             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"CardTitleProvider.{m.Name}({string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name))}) -> {m.ReturnType.Name}");
@@ -513,7 +514,7 @@ namespace AccessibleArena.Core.Services
                                         DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"CardNameTextProvider type: {providerType.FullName}");
 
                                         // List methods on the provider
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
                                             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"CardNameTextProvider.{m.Name}({string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name))}) -> {m.ReturnType.Name}");
@@ -551,7 +552,7 @@ namespace AccessibleArena.Core.Services
                                 if (getTextMethod == null)
                                 {
                                     // Try with array parameter - pass empty array
-                                    var allMethods = locType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+                                    var allMethods = locType.GetMethods(PublicInstance);
                                     foreach (var m in allMethods)
                                     {
                                         if (m.Name == "GetLocalizedText" && m.GetParameters().Length >= 1)
@@ -779,7 +780,7 @@ namespace AccessibleArena.Core.Services
             var modelType = model.GetType();
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"=== MODEL TYPE: {modelType.FullName} ===");
 
-            var properties = modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var properties = modelType.GetProperties(PublicInstance);
             foreach (var prop in properties)
             {
                 try
@@ -810,7 +811,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"=== ABILITY TYPE: {abilityType.FullName} ===");
 
             // Log properties
-            var properties = abilityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var properties = abilityType.GetProperties(PublicInstance);
             foreach (var prop in properties)
             {
                 try
@@ -827,7 +828,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Also log methods that might return text
-            var methods = abilityType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            var methods = abilityType.GetMethods(PublicInstance);
             foreach (var method in methods)
             {
                 // Only log parameterless methods that return string
@@ -867,7 +868,7 @@ namespace AccessibleArena.Core.Services
 
             if (!_modelPropertyCache.TryGetValue(propertyName, out var prop))
             {
-                prop = modelType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+                prop = modelType.GetProperty(propertyName, PublicInstance);
                 _modelPropertyCache[propertyName] = prop;
             }
             return prop;
@@ -1061,7 +1062,7 @@ namespace AccessibleArena.Core.Services
                 var mqType = mq.GetType();
 
                 // Get the Count field (how many mana of this type)
-                var countField = mqType.GetField("Count", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var countField = mqType.GetField("Count", AllInstanceFlags);
 
                 // Get properties: Color, IsGeneric, IsPhyrexian, Hybrid, AltColor
                 var colorProp = mqType.GetProperty("Color");
@@ -1180,7 +1181,7 @@ namespace AccessibleArena.Core.Services
             var type = stringBackedInt.GetType();
 
             // First try RawText - this handles variable P/T like "*"
-            var rawTextProp = type.GetProperty("RawText", BindingFlags.Public | BindingFlags.Instance);
+            var rawTextProp = type.GetProperty("RawText", PublicInstance);
             if (rawTextProp != null)
             {
                 try
@@ -1193,7 +1194,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Then try Value - the numeric value
-            var valueProp = type.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
+            var valueProp = type.GetProperty("Value", PublicInstance);
             if (valueProp != null)
             {
                 try
@@ -1240,7 +1241,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _lastDisplayInfoFieldSearched = true;
                     _lastDisplayInfoField = metaCardView.GetType().GetField("_lastDisplayInfo",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                        PrivateInstance);
                 }
 
                 if (_lastDisplayInfoField == null) return;
@@ -1584,11 +1585,11 @@ namespace AccessibleArena.Core.Services
                     if (instance != null)
                     {
                         var instanceType = instance.GetType();
-                        var countersProp = instanceType.GetProperty("Counters", BindingFlags.Public | BindingFlags.Instance);
+                        var countersProp = instanceType.GetProperty("Counters", PublicInstance);
                         object countersObj = countersProp?.GetValue(instance);
                         if (countersObj == null)
                         {
-                            var countersField = instanceType.GetField("Counters", BindingFlags.Public | BindingFlags.Instance);
+                            var countersField = instanceType.GetField("Counters", PublicInstance);
                             countersObj = countersField?.GetValue(instance);
                         }
                         if (countersObj is IEnumerable counterEntries)
@@ -1645,7 +1646,7 @@ namespace AccessibleArena.Core.Services
                         var abilityType = ability.GetType();
 
                         uint abilityId = 0;
-                        var abilityIdProp = abilityType.GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
+                        var abilityIdProp = abilityType.GetProperty("Id", PublicInstance);
                         if (abilityIdProp != null)
                         {
                             var idVal = abilityIdProp.GetValue(ability);

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AccessibleArena.Core.Models;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -101,7 +102,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _attachedToIdFieldSearched = true;
                     _attachedToIdField = instance.GetType().GetField("AttachedToId",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 }
 
                 if (_attachedToIdField != null)
@@ -354,7 +355,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _isAttackingPropSearched = true;
                     _isAttackingProp = instance.GetType().GetProperty("IsAttacking",
-                        BindingFlags.Public | BindingFlags.Instance);
+                        PublicInstance);
                 }
                 if (_isAttackingProp != null)
                 {
@@ -379,7 +380,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _isBlockingPropSearched = true;
                     _isBlockingProp = instance.GetType().GetProperty("IsBlocking",
-                        BindingFlags.Public | BindingFlags.Instance);
+                        PublicInstance);
                 }
                 if (_isBlockingProp != null)
                 {
@@ -406,7 +407,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _blockingIdsFieldSearched = true;
                     _blockingIdsField = instance.GetType().GetField("BlockingIds",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 }
                 if (_blockingIdsField != null)
                 {
@@ -439,7 +440,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _blockedByIdsFieldSearched = true;
                     _blockedByIdsField = instance.GetType().GetField("BlockedByIds",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 }
                 if (_blockedByIdsField != null)
                 {
@@ -493,7 +494,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _isTappedFieldSearched = true;
                     _isTappedField = instance.GetType().GetField("IsTapped",
-                        BindingFlags.Public | BindingFlags.Instance);
+                        PublicInstance);
                 }
                 if (_isTappedField != null)
                 {
@@ -532,7 +533,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _hasSummoningSicknessFieldSearched = true;
                     _hasSummoningSicknessField = instance.GetType().GetField("HasSummoningSickness",
-                        BindingFlags.Public | BindingFlags.Instance);
+                        PublicInstance);
                 }
                 if (_hasSummoningSicknessField != null)
                 {
@@ -628,7 +629,7 @@ namespace AccessibleArena.Core.Services
             {
                 var instanceType = instance.GetType();
                 // Counters is IReadOnlyDictionary<CounterType, int> - try as property first, then field
-                var countersProp = instanceType.GetProperty("Counters", BindingFlags.Public | BindingFlags.Instance);
+                var countersProp = instanceType.GetProperty("Counters", PublicInstance);
                 object countersObj = null;
                 if (countersProp != null)
                 {
@@ -636,7 +637,7 @@ namespace AccessibleArena.Core.Services
                 }
                 else
                 {
-                    var countersField = instanceType.GetField("Counters", BindingFlags.Public | BindingFlags.Instance);
+                    var countersField = instanceType.GetField("Counters", PublicInstance);
                     if (countersField != null)
                         countersObj = countersField.GetValue(instance);
                 }
@@ -691,12 +692,12 @@ namespace AccessibleArena.Core.Services
                 {
                     _zoneTypePropSearched = true;
                     _zoneTypePropCached = model.GetType().GetProperty("ZoneType",
-                        BindingFlags.Public | BindingFlags.Instance);
+                        PublicInstance);
                 }
 
                 PropertyInfo prop = _zoneTypePropCached;
                 if (prop != null && !prop.DeclaringType.IsAssignableFrom(model.GetType()))
-                    prop = model.GetType().GetProperty("ZoneType", BindingFlags.Public | BindingFlags.Instance);
+                    prop = model.GetType().GetProperty("ZoneType", PublicInstance);
 
                 if (prop != null)
                 {
@@ -740,7 +741,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _targetIdsFieldSearched = true;
                     _targetIdsField = instance.GetType().GetField("TargetIds",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 }
                 if (_targetIdsField != null)
                 {
@@ -773,7 +774,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _targetedByIdsFieldSearched = true;
                     _targetedByIdsField = instance.GetType().GetField("TargetedByIds",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 }
                 if (_targetedByIdsField != null)
                 {

@@ -4,6 +4,7 @@ using AccessibleArena.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -206,9 +207,7 @@ namespace AccessibleArena.Core.Services
 
             // Try IsOpen property
             var isOpenProp = type.GetProperty("IsOpen",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                AllInstanceFlags);
             if (isOpenProp != null && isOpenProp.PropertyType == typeof(bool))
             {
                 try
@@ -225,9 +224,7 @@ namespace AccessibleArena.Core.Services
             if (!isOpen)
             {
                 var isOpenMethod = type.GetMethod("IsOpen",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance,
+                    AllInstanceFlags,
                     null, new System.Type[0], null);
                 if (isOpenMethod != null && isOpenMethod.ReturnType == typeof(bool))
                 {
@@ -246,9 +243,7 @@ namespace AccessibleArena.Core.Services
 
             // Check if animation is complete (IsReadyToShow for NavContentController)
             var isReadyProp = type.GetProperty("IsReadyToShow",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                AllInstanceFlags);
             if (isReadyProp != null && isReadyProp.PropertyType == typeof(bool))
             {
                 try
@@ -267,9 +262,7 @@ namespace AccessibleArena.Core.Services
 
             // Check IsMainPanelActive for SettingsMenu
             var isMainPanelActiveProp = type.GetProperty("IsMainPanelActive",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                AllInstanceFlags);
             if (isMainPanelActiveProp != null && isMainPanelActiveProp.PropertyType == typeof(bool))
             {
                 try

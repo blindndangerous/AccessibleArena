@@ -6,6 +6,7 @@ using TMPro;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MelonLoader;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -578,7 +579,7 @@ namespace AccessibleArena.Core.Services
 
             // Check Interactable property
             var interactableProp = type.GetProperty("Interactable",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                PublicInstance);
             if (interactableProp != null)
             {
                 try
@@ -594,7 +595,7 @@ namespace AccessibleArena.Core.Services
 
             // Check IsHidden() method (for CustomButtonWithTooltip)
             var isHiddenMethod = type.GetMethod("IsHidden",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+                PublicInstance,
                 null, new System.Type[0], null);
             if (isHiddenMethod != null)
             {
@@ -1932,7 +1933,7 @@ namespace AccessibleArena.Core.Services
 
                 // Read captionText - this is what sighted users see
                 var captionField = type.GetField("m_CaptionText",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    PrivateInstance);
                 if (captionField != null)
                 {
                     var captionText = captionField.GetValue(dropdown) as TMPro.TMP_Text;
@@ -1942,7 +1943,7 @@ namespace AccessibleArena.Core.Services
 
                 // Fallback: try captionText property
                 var captionProp = type.GetProperty("captionText",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    PublicInstance);
                 if (captionProp != null)
                 {
                     var captionText = captionProp.GetValue(dropdown) as TMPro.TMP_Text;

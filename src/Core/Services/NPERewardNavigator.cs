@@ -4,6 +4,7 @@ using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -480,7 +481,7 @@ namespace AccessibleArena.Core.Services
             if (customButton == null) return;
 
             var type = customButton.GetType();
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             Log($"      CustomButton fields:");
             foreach (var field in type.GetFields(flags))

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -386,7 +387,7 @@ namespace AccessibleArena.Core.Services
             if (_reflectionInitialized && _controllerType == controllerType) return;
 
             _controllerType = controllerType;
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Controller properties
             _isOpenProp = controllerType.GetProperty("IsOpen", flags);
@@ -405,7 +406,7 @@ namespace AccessibleArena.Core.Services
             _dropRatesLinkField = controllerType.GetField("_dropRatesLink", flags);
 
             // Controller utility methods
-            _onButtonPaymentSetupMethod = controllerType.GetMethod("OnButton_PaymentSetup", BindingFlags.Public | BindingFlags.Instance);
+            _onButtonPaymentSetupMethod = controllerType.GetMethod("OnButton_PaymentSetup", PublicInstance);
 
             // Tab fields
             _tabFields = new FieldInfo[TabFieldNames.Length];
@@ -419,7 +420,7 @@ namespace AccessibleArena.Core.Services
             {
                 _tabType = _currentTabField.FieldType;
                 _tabTextField = _tabType.GetField("_text", flags);
-                _tabOnClickedMethod = _tabType.GetMethod("OnClicked", BindingFlags.Public | BindingFlags.Instance);
+                _tabOnClickedMethod = _tabType.GetMethod("OnClicked", PublicInstance);
             }
 
             // StoreItemBase type
@@ -453,7 +454,7 @@ namespace AccessibleArena.Core.Services
             if (_storeItemField != null)
             {
                 _storeItemType = _storeItemField.FieldType;
-                _storeItemIdProp = _storeItemType.GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
+                _storeItemIdProp = _storeItemType.GetProperty("Id", PublicInstance);
             }
 
             // StoreConfirmationModal type
@@ -470,7 +471,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _modalButtonFields[i] = _confirmationModalType.GetField(ModalPurchaseButtonFields[i], flags);
                 }
-                _modalCloseMethod = _confirmationModalType.GetMethod("Close", BindingFlags.Public | BindingFlags.Instance);
+                _modalCloseMethod = _confirmationModalType.GetMethod("Close", PublicInstance);
 
                 // Modal's PurchaseButton struct (different from StoreItemBase's PurchaseCostUtils.PurchaseButton)
                 if (_modalButtonFields[0] != null)
@@ -513,31 +514,31 @@ namespace AccessibleArena.Core.Services
             if (_storeDisplayPreconDeckType != null)
             {
                 _preconCardDataProp = _storeDisplayPreconDeckType.GetProperty("CardData",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
             }
 
             if (_storeDisplayCardViewBundleType != null)
             {
                 _bundleCardViewsProp = _storeDisplayCardViewBundleType.GetProperty("BundleCardViews",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
             }
 
             if (_cardDataForTileType != null)
             {
                 _cardDataForTileCardProp = _cardDataForTileType.GetProperty("Card",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 _cardDataForTileQuantityProp = _cardDataForTileType.GetProperty("Quantity",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
             }
 
             if (_cardDataType != null)
             {
                 _cardDataGrpIdProp = _cardDataType.GetProperty("GrpId",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 _cardDataTitleIdProp = _cardDataType.GetProperty("TitleId",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 _cardDataManaTextProp = _cardDataType.GetProperty("OldSchoolManaText",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
             }
 
             // TooltipTrigger fields: LocString is a public LocalizedString field
@@ -545,15 +546,15 @@ namespace AccessibleArena.Core.Services
             {
                 var ttType = _tooltipTriggerField.FieldType;
                 _locStringField = ttType.GetField("LocString",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
             }
 
             if (_localizedStringType != null)
             {
                 _locStringMTermField = _localizedStringType.GetField("mTerm",
-                    BindingFlags.Public | BindingFlags.Instance);
+                    PublicInstance);
                 _locStringToStringMethod = _localizedStringType.GetMethod("ToString",
-                    BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+                    PublicInstance, null, Type.EmptyTypes, null);
             }
 
             _reflectionInitialized = true;
@@ -1851,7 +1852,7 @@ namespace AccessibleArena.Core.Services
                     if (viewMb == null || !viewMb.gameObject.activeInHierarchy) continue;
 
                     var viewType = viewMb.GetType();
-                    var cardProp = viewType.GetProperty("Card", BindingFlags.Public | BindingFlags.Instance);
+                    var cardProp = viewType.GetProperty("Card", PublicInstance);
                     if (cardProp == null) continue;
 
                     var cardData = cardProp.GetValue(viewMb);
@@ -2181,7 +2182,7 @@ namespace AccessibleArena.Core.Services
 
             MelonLogger.Msg($"[Store] Discovering confirmation modal elements");
 
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Get the modal's own purchase buttons (not the reparented item widget's)
             foreach (var field in _modalButtonFields)
@@ -2231,7 +2232,7 @@ namespace AccessibleArena.Core.Services
 
             if (_confirmationModalMb != null)
             {
-                var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+                var flags = AllInstanceFlags;
 
                 // Get _label (Localize) -> TMP_Text
                 var labelField = _confirmationModalType?.GetField("_label", flags);

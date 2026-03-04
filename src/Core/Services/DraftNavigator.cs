@@ -5,6 +5,7 @@ using AccessibleArena.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -54,9 +55,7 @@ namespace AccessibleArena.Core.Services
 
                 // Check IsOpen property
                 var isOpenProp = type.GetProperty("IsOpen",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                    AllInstanceFlags);
 
                 if (isOpenProp != null && isOpenProp.PropertyType == typeof(bool))
                 {

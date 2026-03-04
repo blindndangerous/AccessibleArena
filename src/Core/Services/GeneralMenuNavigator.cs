@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -1790,9 +1791,7 @@ namespace AccessibleArena.Core.Services
                     if (mb != null && mb.GetType().Name == "NavBarController")
                     {
                         var method = mb.GetType().GetMethod("HideInboxIfActive",
-                            System.Reflection.BindingFlags.Public |
-                            System.Reflection.BindingFlags.NonPublic |
-                            System.Reflection.BindingFlags.Instance);
+                            AllInstanceFlags);
 
                         if (method != null)
                         {
@@ -1847,9 +1846,7 @@ namespace AccessibleArena.Core.Services
                     if (mb != null && mb.GetType().Name == "ContentControllerPlayerInbox")
                     {
                         var method = mb.GetType().GetMethod("CloseCurrentLetter",
-                            System.Reflection.BindingFlags.Public |
-                            System.Reflection.BindingFlags.NonPublic |
-                            System.Reflection.BindingFlags.Instance);
+                            AllInstanceFlags);
 
                         if (method != null)
                         {
@@ -2094,7 +2091,7 @@ namespace AccessibleArena.Core.Services
                 {
                     // Close the panel
                     var closeMethod = socialUI.GetType().GetMethod("CloseFriendsWidget",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (closeMethod != null)
                     {
                         closeMethod.Invoke(socialUI, null);
@@ -2107,7 +2104,7 @@ namespace AccessibleArena.Core.Services
                 {
                     // Open the panel
                     var showMethod = socialUI.GetType().GetMethod("ShowSocialEntitiesList",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        AllInstanceFlags);
                     if (showMethod != null)
                     {
                         showMethod.Invoke(socialUI, null);
@@ -2348,7 +2345,7 @@ namespace AccessibleArena.Core.Services
             }
 
             var widgetType = widget.GetType();
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Open all collapsed sections by setting _isOpen directly (avoids triggering sound effects)
             foreach (var sectionName in new[] { "SectionBlocks", "SectionIncomingInvites", "SectionOutgoingInvites", "SectionFriends" })
@@ -2359,7 +2356,7 @@ namespace AccessibleArena.Core.Services
                 var header = sectionField.GetValue(widget) as Component;
                 if (header == null) continue;
 
-                var isOpenField = header.GetType().GetField("_isOpen", BindingFlags.NonPublic | BindingFlags.Instance);
+                var isOpenField = header.GetType().GetField("_isOpen", PrivateInstance);
                 if (isOpenField != null)
                 {
                     bool isOpen = (bool)isOpenField.GetValue(header);

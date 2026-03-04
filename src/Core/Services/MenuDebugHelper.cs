@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -138,7 +139,7 @@ namespace AccessibleArena.Core.Services
             if (tooltipTrigger == null) return;
 
             var type = tooltipTrigger.GetType();
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             DebugConfig.LogIf(DebugConfig.LogNavigation, tag, $"    === TooltipTrigger Details ===");
 
@@ -862,7 +863,7 @@ namespace AccessibleArena.Core.Services
             // Look for data-holding MonoBehaviours and dump their fields/properties
             MelonLogger.Msg($"[{tag}] ");
             MelonLogger.Msg($"[{tag}] === MonoBehaviour Details (searching for set/product data) ===");
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             var allMbs = carouselBooster.GetComponentsInChildren<MonoBehaviour>(true);
             string[] relevantPatterns = { "Booster", "Carousel", "Product", "Pack", "Set", "Item", "Data", "View", "Controller" };
@@ -998,7 +999,7 @@ namespace AccessibleArena.Core.Services
             if (obj == null) return;
 
             var type = obj.GetType();
-            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Limit to 10 properties to avoid huge logs
             int count = 0;
@@ -1038,7 +1039,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static void DumpWorkflowSystemDebug(string tag, GameObject workflowBrowser = null)
         {
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
             var staticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
             MelonLogger.Msg($"[{tag}] ╔══════════════════════════════════════════════════════════════╗");

@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -284,7 +285,7 @@ namespace AccessibleArena.Core.Services
                 {
                     _cachedDropdownType = type;
                     _cachedIsExpandedProperty = type.GetProperty("IsExpanded",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        PublicInstance);
                 }
 
                 if (_cachedIsExpandedProperty != null)

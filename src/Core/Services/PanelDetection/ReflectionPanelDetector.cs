@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using MelonLoader;
 using UnityEngine;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services.PanelDetection
 {
@@ -246,7 +247,7 @@ namespace AccessibleArena.Core.Services.PanelDetection
         {
             // Try IsOpen property
             var isOpenProp = type.GetProperty("IsOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (isOpenProp != null && isOpenProp.PropertyType == typeof(bool))
             {
@@ -265,7 +266,7 @@ namespace AccessibleArena.Core.Services.PanelDetection
 
             // Try IsOpen() method
             var isOpenMethod = type.GetMethod("IsOpen",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                AllInstanceFlags,
                 null, Type.EmptyTypes, null);
 
             if (isOpenMethod != null && isOpenMethod.ReturnType == typeof(bool))
@@ -285,7 +286,7 @@ namespace AccessibleArena.Core.Services.PanelDetection
 
             // Check IsReadyToShow if available
             var isReadyProp = type.GetProperty("IsReadyToShow",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                AllInstanceFlags);
 
             if (isReadyProp != null && isReadyProp.PropertyType == typeof(bool))
             {

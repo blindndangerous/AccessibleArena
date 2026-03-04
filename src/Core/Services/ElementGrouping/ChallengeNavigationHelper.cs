@@ -5,6 +5,7 @@ using AccessibleArena.Core.Models;
 using MelonLoader;
 using TMPro;
 using UnityEngine;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services.ElementGrouping
 {
@@ -637,7 +638,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     // Resolve DeckSelector field (needed to verify controller has one)
                     if (_deckSelectorField == null)
                         _deckSelectorField = _playBladeControllerType.GetField("DeckSelector",
-                            BindingFlags.Public | BindingFlags.Instance);
+                            PublicInstance);
                     if (_deckSelectorField == null) continue;
 
                     var deckSelector = _deckSelectorField.GetValue(controller);
@@ -652,7 +653,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     if (_hideDeckSelectorMethod == null)
                     {
                         _hideDeckSelectorMethod = _playBladeControllerType.GetMethod("HideDeckSelector",
-                            BindingFlags.Public | BindingFlags.Instance);
+                            PublicInstance);
                     }
                     if (_hideDeckSelectorMethod != null)
                     {
@@ -722,7 +723,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (_reflectionInitialized) return;
             _reflectionInitialized = true;
 
-            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var flags = PrivateInstance;
 
             // Find types
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -748,7 +749,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 _playerNameField = _playerDisplayType.GetField("_playerName", flags);
                 _noPlayerField = _playerDisplayType.GetField("_noPlayer", flags);
                 _playerInvitedField = _playerDisplayType.GetField("_playerInvited", flags);
-                _playerIdProp = _playerDisplayType.GetProperty("PlayerId", BindingFlags.Public | BindingFlags.Instance);
+                _playerIdProp = _playerDisplayType.GetProperty("PlayerId", PublicInstance);
             }
 
             if (_bladeWidgetType != null)
@@ -757,10 +758,10 @@ namespace AccessibleArena.Core.Services.ElementGrouping
 
                 // Try both property and field for settings lock
                 _isChallengeSettingsLockedProp = _bladeWidgetType.GetProperty("IsChallengeSettingsLocked",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    AllInstanceFlags);
                 if (_isChallengeSettingsLockedProp == null)
                     _isChallengeSettingsLockedField = _bladeWidgetType.GetField("IsChallengeSettingsLocked",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        AllInstanceFlags);
                 if (_isChallengeSettingsLockedField == null)
                     _isChallengeSettingsLockedField = _bladeWidgetType.GetField("_isChallengeSettingsLocked", flags);
             }
@@ -839,7 +840,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (playerDisplayMb != null)
             {
                 // Find _playerStatus field (Localize component) and read its text
-                var statusField = _playerDisplayType?.GetField("_playerStatus", BindingFlags.NonPublic | BindingFlags.Instance);
+                var statusField = _playerDisplayType?.GetField("_playerStatus", PrivateInstance);
                 if (statusField != null)
                 {
                     var statusComponent = statusField.GetValue(playerDisplay) as Component;

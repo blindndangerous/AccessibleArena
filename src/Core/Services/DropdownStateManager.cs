@@ -2,6 +2,7 @@ using System.Reflection;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -469,7 +470,7 @@ namespace AccessibleArena.Core.Services
                 return _cachedOnValueChangedField;
 
             _cachedOnValueChangedField = type.GetField("m_OnValueChanged",
-                BindingFlags.NonPublic | BindingFlags.Instance);
+                PrivateInstance);
             return _cachedOnValueChangedField;
         }
 

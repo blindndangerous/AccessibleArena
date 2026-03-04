@@ -3,6 +3,7 @@ using MelonLoader;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Patches
 {
@@ -51,14 +52,14 @@ namespace AccessibleArena.Patches
 
                 // List all methods on UXEventQueue for debugging
                 MelonLogger.Msg("[UXEventQueuePatch] Available methods on UXEventQueue:");
-                foreach (var m in uxEventQueueType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
+                foreach (var m in uxEventQueueType.GetMethods(AllInstanceFlags))
                 {
                     MelonLogger.Msg($"  - {m.Name}({string.Join(", ", Array.ConvertAll(m.GetParameters(), p => p.ParameterType.Name))})");
                 }
 
                 // Patch the single-event EnqueuePending method
                 var singleEventMethod = uxEventQueueType.GetMethod("EnqueuePending",
-                    BindingFlags.Public | BindingFlags.Instance,
+                    PublicInstance,
                     null,
                     new Type[] { uxEventType },
                     null);
@@ -78,7 +79,7 @@ namespace AccessibleArena.Patches
                 // Patch the multi-event EnqueuePending method (IEnumerable<UXEvent>)
                 var iEnumerableType = typeof(IEnumerable<>).MakeGenericType(uxEventType);
                 var multiEventMethod = uxEventQueueType.GetMethod("EnqueuePending",
-                    BindingFlags.Public | BindingFlags.Instance,
+                    PublicInstance,
                     null,
                     new Type[] { iEnumerableType },
                     null);
@@ -104,26 +105,7 @@ namespace AccessibleArena.Patches
             }
         }
 
-        /// <summary>
-        /// Finds a type by full name across all loaded assemblies.
-        /// </summary>
-        private static Type FindType(string fullName)
-        {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
-                {
-                    var type = assembly.GetType(fullName);
-                    if (type != null)
-                        return type;
-                }
-                catch
-                {
-                    // Ignore assembly load errors
-                }
-            }
-            return null;
-        }
+        // FindType provided by ReflectionUtils via using static
 
         /// <summary>
         /// Postfix for single-event EnqueuePending(UXEvent evt)

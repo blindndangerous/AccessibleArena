@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -53,7 +54,7 @@ namespace AccessibleArena.Core.Services
         {
             try
             {
-                var loyaltyCostProp = abilityType.GetProperty("LoyaltyCost", BindingFlags.Public | BindingFlags.Instance);
+                var loyaltyCostProp = abilityType.GetProperty("LoyaltyCost", PublicInstance);
                 if (loyaltyCostProp == null) return null;
 
                 var loyaltyCostObj = loyaltyCostProp.GetValue(ability);
@@ -90,7 +91,7 @@ namespace AccessibleArena.Core.Services
             string[] propertyNames = { "Text", "RulesText", "AbilityText", "TextContent", "Description" };
             foreach (var propName in propertyNames)
             {
-                var prop = abilityType.GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
+                var prop = abilityType.GetProperty(propName, PublicInstance);
                 if (prop != null)
                 {
                     try
@@ -108,7 +109,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Try GetText() method (ICardTextEntry interface)
-            var getTextMethod = abilityType.GetMethod("GetText", BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+            var getTextMethod = abilityType.GetMethod("GetText", PublicInstance, null, Type.EmptyTypes, null);
             if (getTextMethod != null && getTextMethod.ReturnType == typeof(string))
             {
                 try
@@ -198,7 +199,7 @@ namespace AccessibleArena.Core.Services
                         {
                             var cardDbType = cardDb.GetType();
 
-                            foreach (var prop in cardDbType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                            foreach (var prop in cardDbType.GetProperties(PublicInstance))
                             {
                                 if (prop.Name.Contains("Text") || prop.Name.Contains("Ability"))
                                 {
@@ -208,7 +209,7 @@ namespace AccessibleArena.Core.Services
                                     if (provider != null)
                                     {
                                         var providerType = provider.GetType();
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
                                             var paramStr = string.Join(", ", m.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
@@ -254,7 +255,7 @@ namespace AccessibleArena.Core.Services
                             {
                                 var cardDbType = cardDb.GetType();
 
-                                foreach (var prop in cardDbType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                                foreach (var prop in cardDbType.GetProperties(PublicInstance))
                                 {
                                     if (prop.Name.Contains("Text") || prop.Name.Contains("Ability"))
                                     {
@@ -262,7 +263,7 @@ namespace AccessibleArena.Core.Services
                                         if (provider != null)
                                         {
                                             var providerType = provider.GetType();
-                                            foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                            foreach (var m in providerType.GetMethods(PublicInstance))
                                             {
                                                 if (m.DeclaringType == typeof(object)) continue;
                                                 if (m.ReturnType == typeof(string))
@@ -321,7 +322,7 @@ namespace AccessibleArena.Core.Services
                                     var providerType = greLocProvider.GetType();
                                     DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardTextProvider", $"Found GreLocProvider: {providerType.FullName}");
 
-                                    foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                    foreach (var m in providerType.GetMethods(PublicInstance))
                                     {
                                         if (m.DeclaringType == typeof(object)) continue;
                                         var paramStr = string.Join(", ", m.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
@@ -352,7 +353,7 @@ namespace AccessibleArena.Core.Services
                                     var providerType = clientLocProvider.GetType();
                                     DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardTextProvider", $"Found ClientLocProvider: {providerType.FullName}");
 
-                                    foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                    foreach (var m in providerType.GetMethods(PublicInstance))
                                     {
                                         if (m.DeclaringType == typeof(object)) continue;
                                         var paramStr = string.Join(", ", m.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
@@ -404,7 +405,7 @@ namespace AccessibleArena.Core.Services
                                     if (greLocProvider != null)
                                     {
                                         var providerType = greLocProvider.GetType();
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
                                             if (m.ReturnType == typeof(string) &&
@@ -430,7 +431,7 @@ namespace AccessibleArena.Core.Services
                                     if (clientLocProvider != null)
                                     {
                                         var providerType = clientLocProvider.GetType();
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
                                             if (m.ReturnType == typeof(string))
@@ -477,7 +478,7 @@ namespace AccessibleArena.Core.Services
                         {
                             var cardDbType = cardDb.GetType();
 
-                            foreach (var prop in cardDbType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                            foreach (var prop in cardDbType.GetProperties(PublicInstance))
                             {
                                 if (prop.Name.Contains("Artist"))
                                 {
@@ -487,7 +488,7 @@ namespace AccessibleArena.Core.Services
                                     if (provider != null)
                                     {
                                         var providerType = provider.GetType();
-                                        foreach (var m in providerType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                                        foreach (var m in providerType.GetMethods(PublicInstance))
                                         {
                                             if (m.DeclaringType == typeof(object)) continue;
 

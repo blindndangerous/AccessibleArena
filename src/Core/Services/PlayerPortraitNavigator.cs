@@ -6,6 +6,7 @@ using AccessibleArena.Core.Models;
 using System.Linq;
 using System.Reflection;
 using TMPro;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -41,10 +42,6 @@ namespace AccessibleArena.Core.Services
         private MonoBehaviour _opponentMatchTimer;
 
         // Avatar reflection cache (for emote wheel via PortraitButton)
-        private static readonly BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-        private static readonly BindingFlags PublicInstance =
-            BindingFlags.Public | BindingFlags.Instance;
         private static System.Type _avatarViewType;
         private static PropertyInfo _isLocalPlayerProp;
         private static FieldInfo _portraitButtonField;
@@ -980,7 +977,7 @@ namespace AccessibleArena.Core.Services
             if (player == null) return -1;
 
             var playerType = player.GetType();
-            var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var bindingFlags = AllInstanceFlags;
 
             // Try various property names for life
             string[] lifeNames = { "LifeTotal", "Life", "CurrentLife", "StartingLife", "_life", "_lifeTotal", "life", "lifeTotal" };
@@ -1300,7 +1297,7 @@ namespace AccessibleArena.Core.Services
                 }
 
                 var piType = playerInfo.GetType();
-                var allBindings = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                var allBindings = AllInstanceFlags;
                 _rankingClassField = piType.GetField("RankingClass", allBindings);
                 _rankingTierField = piType.GetField("RankingTier", allBindings);
                 _mythicPercentileField = piType.GetField("MythicPercentile", allBindings);

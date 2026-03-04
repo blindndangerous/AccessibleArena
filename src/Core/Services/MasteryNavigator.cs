@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 
 namespace AccessibleArena.Core.Services
 {
@@ -317,7 +318,7 @@ namespace AccessibleArena.Core.Services
             if (_reflectionInitialized && _controllerType == controllerType) return;
 
             _controllerType = controllerType;
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // Controller properties/fields
             _isOpenProp = controllerType.GetProperty("IsOpen", flags | BindingFlags.FlattenHierarchy);
@@ -331,10 +332,10 @@ namespace AccessibleArena.Core.Services
                 _levelsField = _viewType.GetField("_levels", flags);
                 _levelRewardDataField = _viewType.GetField("_levelRewardData", flags);
                 _pagesField = _viewType.GetField("_pages", flags);
-                _currentPageProp = _viewType.GetProperty("CurrentPage", BindingFlags.Public | BindingFlags.Instance);
-                _pagesCountProp = _viewType.GetProperty("PagesCount", BindingFlags.Public | BindingFlags.Instance);
-                _trackNameField = _viewType.GetField("TrackName", BindingFlags.Public | BindingFlags.Instance);
-                _trackLabelField = _viewType.GetField("TrackLabel", BindingFlags.Public | BindingFlags.Instance);
+                _currentPageProp = _viewType.GetProperty("CurrentPage", PublicInstance);
+                _pagesCountProp = _viewType.GetProperty("PagesCount", PublicInstance);
+                _trackNameField = _viewType.GetField("TrackName", PublicInstance);
+                _trackLabelField = _viewType.GetField("TrackLabel", PublicInstance);
                 _masteryTreeButtonField = _viewType.GetField("_masteryTreeButton", flags);
                 _previousTreeButtonField = _viewType.GetField("_previousTreeButton", flags);
                 _purchaseButtonField = _viewType.GetField("_purchaseButton", flags);
@@ -345,7 +346,7 @@ namespace AccessibleArena.Core.Services
                 if (_masteryPassProviderProp != null)
                 {
                     _setMasteryDataProviderType = _masteryPassProviderProp.PropertyType;
-                    var pubInstance = BindingFlags.Public | BindingFlags.Instance;
+                    var pubInstance = PublicInstance;
                     _getCurrentLevelIndexMethod = _setMasteryDataProviderType.GetMethod("GetCurrentLevelIndex",
                         pubInstance, null, new[] { typeof(string) }, null);
                     _getCurrentXpProgressMethod = _setMasteryDataProviderType.GetMethod("GetCurrentXpProgress",
@@ -358,8 +359,8 @@ namespace AccessibleArena.Core.Services
                 _pageLevelsType = _viewType.GetNestedType("PageLevels", BindingFlags.NonPublic);
                 if (_pageLevelsType != null)
                 {
-                    _pageLevelStartField = _pageLevelsType.GetField("LevelStart", BindingFlags.Public | BindingFlags.Instance);
-                    _pageLevelEndProp = _pageLevelsType.GetProperty("LevelEnd", BindingFlags.Public | BindingFlags.Instance);
+                    _pageLevelStartField = _pageLevelsType.GetField("LevelStart", PublicInstance);
+                    _pageLevelEndProp = _pageLevelsType.GetProperty("LevelEnd", PublicInstance);
                 }
             }
 
@@ -387,11 +388,11 @@ namespace AccessibleArena.Core.Services
             // ProgressionTrackLevel fields
             if (_trackLevelType != null)
             {
-                _levelIndexField = _trackLevelType.GetField("Index", BindingFlags.Public | BindingFlags.Instance);
-                _levelExpField = _trackLevelType.GetField("EXPProgressIfIsCurrent", BindingFlags.Public | BindingFlags.Instance);
-                _levelCompleteField = _trackLevelType.GetField("IsProgressionComplete", BindingFlags.Public | BindingFlags.Instance);
-                _levelRepeatableField = _trackLevelType.GetField("IsRepeatable", BindingFlags.Public | BindingFlags.Instance);
-                _serverLevelField = _trackLevelType.GetField("ServerLevel", BindingFlags.Public | BindingFlags.Instance);
+                _levelIndexField = _trackLevelType.GetField("Index", PublicInstance);
+                _levelExpField = _trackLevelType.GetField("EXPProgressIfIsCurrent", PublicInstance);
+                _levelCompleteField = _trackLevelType.GetField("IsProgressionComplete", PublicInstance);
+                _levelRepeatableField = _trackLevelType.GetField("IsRepeatable", PublicInstance);
+                _serverLevelField = _trackLevelType.GetField("ServerLevel", PublicInstance);
             }
 
             // ClientTrackLevelInfo fields
@@ -401,23 +402,23 @@ namespace AccessibleArena.Core.Services
             }
             if (_clientLevelInfoType != null)
             {
-                _xpToCompleteField = _clientLevelInfoType.GetField("xpToComplete", BindingFlags.Public | BindingFlags.Instance);
+                _xpToCompleteField = _clientLevelInfoType.GetField("xpToComplete", PublicInstance);
             }
 
             // RewardDisplayData fields
             if (_rewardDisplayType != null)
             {
-                _rewardMainTextField = _rewardDisplayType.GetField("MainText", BindingFlags.Public | BindingFlags.Instance);
-                _rewardQuantityField = _rewardDisplayType.GetField("Quantity", BindingFlags.Public | BindingFlags.Instance);
-                _rewardDescTextField = _rewardDisplayType.GetField("DescriptionText", BindingFlags.Public | BindingFlags.Instance);
-                _rewardSecondaryField = _rewardDisplayType.GetField("SecondaryText", BindingFlags.Public | BindingFlags.Instance);
+                _rewardMainTextField = _rewardDisplayType.GetField("MainText", PublicInstance);
+                _rewardQuantityField = _rewardDisplayType.GetField("Quantity", PublicInstance);
+                _rewardDescTextField = _rewardDisplayType.GetField("DescriptionText", PublicInstance);
+                _rewardSecondaryField = _rewardDisplayType.GetField("SecondaryText", PublicInstance);
             }
 
             // MTGALocalizedString fields
             if (_mtgaLocStringType != null)
             {
-                _locStringKeyField = _mtgaLocStringType.GetField("Key", BindingFlags.Public | BindingFlags.Instance);
-                _locStringParamsField = _mtgaLocStringType.GetField("Parameters", BindingFlags.Public | BindingFlags.Instance);
+                _locStringKeyField = _mtgaLocStringType.GetField("Key", PublicInstance);
+                _locStringParamsField = _mtgaLocStringType.GetField("Parameters", PublicInstance);
             }
 
             // Languages.ActiveLocProvider
@@ -447,7 +448,7 @@ namespace AccessibleArena.Core.Services
             if (_prizeWallReflectionInitialized && _prizeWallControllerType == controllerType) return;
 
             _prizeWallControllerType = controllerType;
-            var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            var flags = AllInstanceFlags;
 
             // IsOpen from NavContentController base
             _prizeWallIsOpenProp = controllerType.GetProperty("IsOpen", flags | BindingFlags.FlattenHierarchy);
