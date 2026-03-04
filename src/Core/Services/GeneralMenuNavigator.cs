@@ -2946,6 +2946,9 @@ namespace AccessibleArena.Core.Services
             // Store previous controller to detect screen transitions
             var previousController = _activeContentController;
 
+            // Capture card count BEFORE rescan so we can detect actual changes
+            string previousCardCount = _announceDeckCountOnRescan ? DeckInfoProvider.GetCardCountText() : null;
+
             // Detect active controller BEFORE discovering elements so filtering works correctly
             DetectActiveContentController();
             LogDebug($"[{NavigatorId}] Rescanning elements after panel change (controller: {_activeContentController ?? "none"})");
@@ -2998,16 +3001,18 @@ namespace AccessibleArena.Core.Services
             // Update menu type based on new state
             _detectedMenuType = DetectMenuType();
 
-            // When a card was added/removed, announce just the card count instead of full rescan
+            // When a card was added/removed, announce just the card count if it changed
             if (_announceDeckCountOnRescan && _activeContentController == "WrapperDeckBuilder")
             {
                 _announceDeckCountOnRescan = false;
                 string cardCount = DeckInfoProvider.GetCardCountText();
-                if (!string.IsNullOrEmpty(cardCount))
+                if (!string.IsNullOrEmpty(cardCount) && cardCount != previousCardCount)
                 {
                     _announcer.AnnounceInterrupt(cardCount);
                     return;
                 }
+                // Card count didn't change (e.g., unowned card) - skip announcement entirely
+                return;
             }
 
             // Announce the change

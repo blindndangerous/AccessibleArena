@@ -501,7 +501,7 @@ Both handlers delegate to `DeckBuilderActionsHandler` (via `Pantry.Get<DeckBuild
 - If `CanCraft`: opens card viewer popup (no add-to-deck, no craft)
 - Otherwise: triggers rollover zoom right-click behavior
 
-**Key insight:** Both left and right click paths call `OpenCardViewer(cardView, zoomHandler)` with default `quantityToCraft=1`. The `quantityToCraft` parameter does NOT auto-craft — it sets the initial stepper value in the popup. The actual craft only happens when the user clicks the Craft button (or `OnEnter()` is called by PopupManager on Enter KeyUp). For keyboard accessibility, we call `OpenCardViewer` directly via reflection with `quantityToCraft=0` and block the Enter KeyUp to prevent `OnEnter()` from auto-triggering craft.
+**Key insight:** Both left and right click paths call `OpenCardViewer(cardView, zoomHandler)` with default `quantityToCraft=1`. The `quantityToCraft` parameter does NOT auto-craft — it sets the initial stepper value in the popup. The actual craft only happens when the user clicks the Craft button (or `OnEnter()` is called by PopupManager on Enter KeyUp). For keyboard accessibility, we simulate a left click on the card (which lets the game handle adding to deck or opening the craft popup naturally) and block the Enter KeyUp via `InputManager.BlockNextEnterKeyUp` to prevent `OnEnter()` from auto-triggering craft.
 
 ### CardViewerController (Craft Popup)
 
@@ -510,10 +510,13 @@ Both handlers delegate to `DeckBuilderActionsHandler` (via `Pantry.Get<DeckBuild
 **Key Fields (SerializeField):**
 - `_craftButton` (CustomButton) — Craft confirmation button
 - `_cancelButton` (CustomButton) — Cancel/close button
-- `_CraftPips` (CustomButton[4]) — Visual craft quantity pips
+- `_CraftPips` (CustomButton[4]) — Visual craft quantity pips (always 4 slots, NOT = owned count)
 - `_craftCountLabel` (TMP_Text) — Shows craft count (e.g., "x1")
+- `_collectedQuantity` (int) — Actual number of copies owned (set from `Inv.Cards.TryGetValue` in `OpenCraftMode()`)
 - `_quantityToCraft` (int) — Set from `Setup()` parameter, used in `OpenCraftMode()`
 - `_requestedQuantity` (int) — Computed as `ownedCount + _quantityToCraft` in `OpenCraftMode()`
+
+**Pip ownership display:** In `OpenCraftMode()`, pips with `i < ownedTitleCount` get `_CraftPipOwned` sprite and `Interactable = false`. Pips with `i >= ownedTitleCount` get `_CraftPipUnowned` sprite and `Interactable = true`. The mod reads `_collectedQuantity` via reflection to get the actual owned count (not pip count, which is always 4).
 
 **Key Methods:**
 - `Setup(bool craftMode, uint grpid, string craftSkin, int quantityToCraft, ...)` — Initializes popup. Calls `OpenCraftMode()` when `craftSkin == null`.
@@ -523,8 +526,8 @@ Both handlers delegate to `DeckBuilderActionsHandler` (via `Pantry.Get<DeckBuild
 - `Unity_OnCraftIncrease()` — Increment craft quantity
 - `Unity_OnCraftDecrease()` — Decrement craft quantity
 
-**Opening the popup without crafting (mod approach):**
-Call `DeckBuilderActionsHandler.OpenCardViewer(metaCardView, zoomHandler, 0)` via reflection with `quantityToCraft=0`. This opens the popup with 0 pending crafts. Must also block Enter KeyUp via `InputManager.BlockNextEnterKeyUp` to prevent `PopupManager.HandleKeyUp` → `OnEnter()` → `OnCraftClicked()`.
+**Collection card activation (mod approach):**
+`UIActivator.TryActivateCollectionCard` simulates a left click on the card, letting the game's `DeckBuilderActionsHandler` handle the action naturally (add to deck if owned, open craft popup if unowned/crafting mode). `InputManager.BlockNextEnterKeyUp` blocks the Enter KeyUp from reaching `PopupManager.HandleKeyUp` → `OnEnter()` → `OnCraftClicked()`.
 
 **Reflection lookup for future reference:**
 - `Wizards.Mtga.Pantry` — Service locator. `Pantry.Get<T>()` (public static generic method)

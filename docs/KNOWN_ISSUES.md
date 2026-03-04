@@ -85,24 +85,6 @@ When clicking a non-attacking token during declare attackers, the game always se
 
 ## Under Investigation
 
-### Auto-Craft on Collection Card Activation
-
-**Status:** Fixed (two-part fix).
-
-**Symptom:** Pressing Enter on a collection card in the deck builder opened the craft popup AND immediately crafted 1 copy.
-
-**Root cause (two issues):**
-1. All click simulation paths (OnAddClicked, CustomButton, pointer click) called `DeckBuilderActionsHandler.OpenCardViewer()` with default `quantityToCraft=1`
-2. The game's `PopupManager.HandleKeyUp(Return)` calls `_activePopup.OnEnter()` on the CardViewerController, which auto-calls `OnCraftClicked()` if the craft button is interactable. Our mod activates on KeyDown, popup opens, then the same Enter's KeyUp triggers OnEnter → craft.
-
-**Fix:**
-1. `UIActivator.TryActivateCollectionCard` calls `OpenCardViewer` directly via reflection with `quantityToCraft=0`, bypassing all click simulation
-2. `InputManager.BlockNextEnterKeyUp` flag blocks the Enter KeyUp from reaching PopupManager after opening the popup
-
-**Files:** `UIActivator.cs`, `InputManager.cs`, `KeyboardManagerPatch.cs`
-
----
-
 ## Needs Testing
 
 ### Other Windows Versions and Screen Readers
@@ -286,12 +268,11 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 12. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
 13. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
 14. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-15. Card crafting - wildcard crafting workflow accessibility
-16. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
-17. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
-18. Vehicle power and toughness - announce power/toughness for vehicle cards when not crewed
-19. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-20. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+15. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
+16. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
+17. Vehicle power and toughness - announce power/toughness for vehicle cards when not crewed
+18. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+19. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
 
 ### Low Priority / v1.1
 

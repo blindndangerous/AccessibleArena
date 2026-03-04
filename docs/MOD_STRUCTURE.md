@@ -27,7 +27,6 @@
         CardModelProvider.cs     - Card data from game models (deck list, collection, attachments, targeting)
         CardPoolAccessor.cs      - Reflection wrapper for CardPoolHolder (collection page API)
         RecentPlayAccessor.cs    - Reflection wrapper for LastPlayedBladeContentView (Recent tab tiles)
-        CraftConfirmationPopup.cs - Custom Unity UI popup for wildcard craft confirmation (under investigation)
         InputFieldEditHelper.cs  - Shared input field edit mode logic (used by BaseNavigator for both menu and popup input fields)
         MenuDebugHelper.cs       - UI investigation utilities (DumpGameObjectDetails, LogTooltipTriggerDetails)
 
@@ -736,6 +735,31 @@ Dedicated navigator for the Advanced Filters popup in Collection/Deck Builder sc
 
 **Files:**
 - `src/Core/Services/AdvancedFiltersNavigator.cs` - Main navigator implementation
+
+---
+
+### Deck Builder Card Crafting
+
+Collection card activation and wildcard crafting are fully accessible in the deck builder.
+
+**Collection Card Activation:**
+- Enter on a collection card simulates a left click (`UIActivator.TryActivateCollectionCard`)
+- Game handles the action: adds card to deck if owned, opens craft popup if unowned or in crafting mode
+- `InputManager.BlockNextEnterKeyUp` prevents the Enter KeyUp from reaching `PopupManager` → `CardViewerController.OnEnter()` → auto-craft
+- After activation, deck card count is compared before/after rescan — only announced if it actually changed
+
+**Craft Popup (CardViewerPopup):**
+- Uses the game's native `CardViewerPopup` with `CardViewerController`
+- Craft pips (always 4 slots) replaced with single "Owned X" text element
+- Owned count read from `_collectedQuantity` field on `CardViewerController` via reflection (actual value from `Inv.Cards`)
+- Craft quantity stepper with Left/Right arrow navigation (reads `_craftCountLabel`, calls `Unity_OnCraftIncrease`/`Unity_OnCraftDecrease`)
+- Cancel via Backspace (finds `_cancelButton` on `CardViewerController` via reflection)
+
+**Files:**
+- `src/Core/Services/UIActivator.cs` - Collection card activation
+- `src/Core/Services/BaseNavigator.cs` - Craft popup stepper discovery (`DiscoverPopupSteppers`)
+- `src/Core/Services/GeneralMenuNavigator.cs` - Deck count announcement after card activation
+- `src/Core/Services/InputManager.cs` - Enter KeyUp blocking
 
 ---
 

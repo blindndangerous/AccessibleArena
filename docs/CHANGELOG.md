@@ -4,6 +4,25 @@ All notable changes to Accessible Arena.
 
 ## v0.7.4-dev
 
+### Fix: Deck Count Not Announced on No-Op Card Activation
+- Pressing Enter on an unowned collection card in deck builder no longer announces "60/60 Karten" when nothing changed
+- Root cause: `_announceDeckCountOnRescan` flag always triggered card count announcement after rescan, even when the count didn't change
+- Fix: Capture card count text before rescan, compare after, only announce if it actually changed
+- Files: GeneralMenuNavigator.cs
+
+### Fix: Craft Popup Owned Count
+- Craft popup now shows the correct owned count instead of always showing 4
+- Root cause: Owned count was derived from the number of `_CraftPips` GameObjects (always 4 slots), not the actual ownership
+- Fix: Read `_collectedQuantity` field from `CardViewerController` via reflection, which holds the real value from `Inv.Cards`
+- Files: BaseNavigator.cs
+
+### Refactor: Collection Card Activation Simplified
+- Collection card activation now simulates a left click instead of calling `OpenCardViewer` directly via reflection
+- Left click lets the game handle the action naturally: add to deck if owned, open craft popup if unowned/in crafting mode
+- `InputManager.BlockNextEnterKeyUp` still prevents the Enter KeyUp from triggering auto-craft via `PopupManager.HandleKeyUp` → `OnEnter()` → `OnCraftClicked()`
+- Removed `CraftConfirmationPopup.cs` — native game crafting with stepper support replaces custom popup
+- Files: UIActivator.cs, InputManager.cs, KeyboardManagerPatch.cs
+
 ### Fix: Advanced Filters Navigator Stability
 - Fixed OK button closing the entire deck builder instead of just the filters popup
 - Root cause: UIActivator had blanket special handling for any button named "MainButton", which also matched the filters popup's OK button, triggering `WrapperDeckBuilder.OnDeckbuilderDoneButtonClicked()`
@@ -21,11 +40,10 @@ All notable changes to Accessible Arena.
 - Navigators simplified: SettingsMenuNavigator, DraftNavigator, MasteryNavigator, StoreNavigator, GeneralMenuNavigator all reduced by removing per-navigator popup boilerplate
 - Files: BaseNavigator.cs (popup mode region added), PopupHandler.cs (deleted), GeneralMenuNavigator.cs, SettingsMenuNavigator.cs, MasteryNavigator.cs, StoreNavigator.cs, DraftNavigator.cs
 
-### Fix: Craft Confirmation Popup Rework
-- Craft confirmation popup now properly dismisses after activation, buttons are in correct order, wildcard type is announced
-- Uses screen detection (`WrapperDeckBuilder`) and auto-dismisses game's CardViewerPopup after craft
-- Cancel buttons found via reflection for reliable popup dismissal
-- Files: CraftConfirmationPopup.cs, GeneralMenuNavigator.cs
+### Fix: Craft Popup Rework
+- Replaced custom `CraftConfirmationPopup` with native game `CardViewerPopup` — craft pips replaced with single owned count + stepper for craft quantity
+- Cancel button found via reflection (`_cancelButton` on `CardViewerController`) for reliable popup dismissal
+- Files: BaseNavigator.cs, GeneralMenuNavigator.cs
 
 ### Fix: Popup Mode Stability (Multiple Fixes)
 - Fixed popup close detection: exit popup mode on any non-popup panel change, not just when panel becomes null

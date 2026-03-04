@@ -2701,6 +2701,15 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
+                // Read actual owned count from controller (not pip count which is always 4)
+                int ownedCount = 0;
+                var collectedQtyField = type.GetField("_collectedQuantity",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (collectedQtyField != null)
+                {
+                    ownedCount = (int)collectedQtyField.GetValue(mb);
+                }
+
                 // Find the craft count label
                 var countLabelField = type.GetField("_craftCountLabel",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -2743,7 +2752,7 @@ namespace AccessibleArena.Core.Services
                         _elements.Insert(pipInsertIndex, new NavigableElement
                         {
                             GameObject = firstPip,
-                            Label = Models.Strings.CardOwned(removedPips),
+                            Label = Models.Strings.CardOwned(ownedCount),
                             Role = UIElementClassifier.ElementRole.TextBlock
                         });
                         pipInsertIndex++; // stepper goes after owned
@@ -2777,7 +2786,7 @@ namespace AccessibleArena.Core.Services
                         }
                     });
 
-                    MelonLogger.Msg($"[{NavigatorId}] Popup: craft stepper: {countText}, owned: {removedPips}");
+                    MelonLogger.Msg($"[{NavigatorId}] Popup: craft stepper: {countText}, owned: {ownedCount}");
                 }
                 else if (pipObjects.Count > 0)
                 {
@@ -2785,7 +2794,6 @@ namespace AccessibleArena.Core.Services
                     int pipInsertIndex = _elements.FindIndex(e =>
                         e.GameObject != null && pipObjects.Contains(e.GameObject));
 
-                    int ownedCount = pipObjects.Count;
                     _elements.RemoveAll(e =>
                         e.GameObject != null && pipObjects.Contains(e.GameObject));
 
