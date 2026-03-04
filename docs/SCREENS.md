@@ -356,7 +356,7 @@ When focused on a card, Up/Down arrows cycle through card information blocks:
 **MainDeck_MetaCardHolder Activation:**
 The `MainDeck_MetaCardHolder` GameObject (which contains deck list cards) may be inactive when entering the deck builder without a popup dialog appearing first. `GameObject.Find()` only finds active objects, so the holder would not be found.
 
-The fix in `CardModelProvider.GetDeckListCards()`:
+The fix in `DeckCardProvider.GetDeckListCards()`:
 1. First tries `GameObject.Find("MainDeck_MetaCardHolder")` (fast, but only finds active objects)
 2. If not found, searches ALL transforms including inactive ones via `FindObjectsOfType<Transform>(true)`
 3. If found but inactive, activates it with `SetActive(true)`

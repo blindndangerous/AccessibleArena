@@ -469,7 +469,7 @@ When no text is found via TMP_Text, siblings, or other extractors, `GetText()` t
 `GetElementType()` returns "item" when no specific type is detected. This is the default fallback - check for it if you need to handle unknown elements specially.
 
 ### CardDetector
-Card detection utilities (cached for performance). Delegates to CardModelProvider for model access:
+Card detection utilities (cached for performance). Delegates to CardModelProvider for model access and CardStateProvider/DeckCardProvider for categorization and deck cards:
 ```csharp
 // Detection (CardDetector's core responsibility)
 bool isCard = CardDetector.IsCard(element);
@@ -477,7 +477,7 @@ GameObject root = CardDetector.GetCardRoot(element);
 bool hasTargets = CardDetector.HasValidTargetsOnBattlefield();
 CardDetector.ClearCache(); // Call on scene change (clears both caches)
 
-// Card info extraction (delegates to CardModelProvider, falls back to UI)
+// Card info extraction (delegates to CardModelProvider/DeckCardProvider, falls back to UI)
 CardInfo info = CardDetector.ExtractCardInfo(element);
 List<CardInfoBlock> blocks = CardDetector.GetInfoBlocks(element);
 
@@ -485,32 +485,52 @@ List<CardInfoBlock> blocks = CardDetector.GetInfoBlocks(element);
 // Useful when you have card data but no on-screen card (e.g., store details)
 List<CardInfoBlock> blocks = CardDetector.BuildInfoBlocks(cardInfo);
 
-// Card categorization (delegates to CardModelProvider)
+// Card categorization (delegates to CardStateProvider)
 var (isCreature, isLand, isOpponent) = CardDetector.GetCardCategory(card);
 bool creature = CardDetector.IsCreatureCard(card);
 bool land = CardDetector.IsLandCard(card);
 bool opponent = CardDetector.IsOpponentCard(card);
 ```
 
-### CardModelProvider
+### CardModelProvider (split into 5 files)
+
+The original CardModelProvider was split into 5 focused files:
+- **CardModelProvider.cs** (2,185 lines) - Core: component access, name lookup, mana parsing, card info extraction
+- **CardTextProvider.cs** (606 lines) - Ability text, flavor text, artist names, localized text lookups (internal, called by CardModelProvider)
+- **CardStateProvider.cs** (1,170 lines) - Attachments, combat state, targeting, counters, card categorization
+- **DeckCardProvider.cs** (795 lines) - Deck list cards, sideboard cards, read-only deck cards
+- **ExtendedCardInfoProvider.cs** (609 lines) - Keyword descriptions, linked face info
+
 Direct access to card Model data. Use when you already have a card and need its properties:
 ```csharp
-// Component access
+// Component access (CardModelProvider)
 Component cdc = CardModelProvider.GetDuelSceneCDC(card);
 object model = CardModelProvider.GetCardModel(cdc);
 
-// Card info from GameObject (finds Model via CDC or MetaCardView)
+// Card info from GameObject (CardModelProvider - finds Model via CDC or MetaCardView)
 CardInfo? info = CardModelProvider.ExtractCardInfoFromModel(cardGameObject);
 
-// Card info from any data object (Model, CardData, CardPrintingData, etc.)
-// This is the shared extraction logic - works without a GameObject
+// Card info from any data object (CardModelProvider)
 CardInfo info = CardModelProvider.ExtractCardInfoFromObject(dataObject);
 
-// Card categorization (efficient single Model lookup)
-var (isCreature, isLand, isOpponent) = CardModelProvider.GetCardCategory(card);
-
-// Name lookup from database
+// Name lookup from database (CardModelProvider)
 string name = CardModelProvider.GetNameFromGrpId(grpId);
+
+// Card categorization (CardStateProvider)
+var (isCreature, isLand, isOpponent) = CardStateProvider.GetCardCategory(card);
+
+// Combat/targeting state (CardStateProvider)
+string combatState = CardStateProvider.GetCombatStateText(card);
+string targetingText = CardStateProvider.GetTargetingText(card);
+string counters = CardStateProvider.GetCountersFromCard(card);
+
+// Deck list cards (DeckCardProvider)
+List<DeckCardInfo> deckCards = DeckCardProvider.GetDeckListCards();
+List<DeckCardInfo> sideboardCards = DeckCardProvider.GetSideboardCards();
+
+// Extended info (ExtendedCardInfoProvider)
+List<string> keywords = ExtendedCardInfoProvider.GetKeywordDescriptions(card);
+List<CardInfoBlock> linkedFace = ExtendedCardInfoProvider.GetLinkedFaceInfo(card);
 
 // Build navigable info blocks from CardInfo (no GameObject needed)
 List<CardInfoBlock> blocks = CardDetector.BuildInfoBlocks(info);
@@ -524,13 +544,16 @@ List<CardInfoBlock> blocks = CardDetector.BuildInfoBlocks(info);
 
 **Type detection vs display:**
 - For **display** (type line shown to user): Always use `info.TypeLine` from CardInfo - already localized by extraction methods
-- For **internal type checks** (isCreature, isLand): Use `CardModelProvider.GetCardCategory(go)`, `IsCreatureCard(go)`, or `IsLandCard(go)` - these check enum values directly and are language-agnostic
+- For **internal type checks** (isCreature, isLand): Use `CardStateProvider.GetCardCategory(go)`, `IsCreatureCard(go)`, or `IsLandCard(go)` - these check enum values directly and are language-agnostic
 - **Never** match English strings against `info.TypeLine` for type detection - it is localized
 
 **When to use which:**
 - **CardDetector.ExtractCardInfo**: Default choice - handles all card types with automatic fallback
 - **CardModelProvider.ExtractCardInfoFromModel**: When you have a card GameObject and want Model-based extraction only
 - **CardModelProvider.ExtractCardInfoFromObject**: When you have a raw data object (not a GameObject) like store CardData, and want full card info extraction
+- **CardStateProvider**: When you need combat state, targeting, counters, or card categorization
+- **DeckCardProvider**: When you need deck list, sideboard, or read-only deck cards
+- **ExtendedCardInfoProvider**: When you need keyword descriptions or linked face info
 - **CardDetector.BuildInfoBlocks(CardInfo)**: When you have a CardInfo struct and need navigable info blocks without a GameObject (e.g., store details view)
 
 **Mana Cost Parsing:**
@@ -661,7 +684,7 @@ This gives an overview when multiple attackers were declared.
 **Blocker Phase Announcements (January 2026, enriched February 2026):**
 
 The `CombatNavigator` tracks blocker selection and assignment during the declare blockers phase.
-Uses **model-based detection** via `CardModelProvider` for attacking/blocking state, with UI fallback.
+Uses **model-based detection** via `CardStateProvider` for attacking/blocking state, with UI fallback.
 Resolves blocker-attacker relationships via `Instance.BlockingIds` / `Instance.BlockedByIds` fields.
 
 *Two States Tracked:*
@@ -700,8 +723,8 @@ UpdateBlockerSelection()      // Called each frame, tracks both states
 FindSelectedBlockers()        // Finds creatures with selection highlight + blocker frame
 FindAssignedBlockers()        // Finds creatures with IsBlocking active
 IsCreatureSelectedAsBlocker() // Checks selection highlight + blocker frame (UI-only)
-IsCreatureAttacking()         // Model-first via CardModelProvider, UI fallback
-IsCreatureBlocking()          // Model-first via CardModelProvider, UI fallback
+IsCreatureAttacking()         // Model-first via CardStateProvider, UI fallback
+IsCreatureBlocking()          // Model-first via CardStateProvider, UI fallback
 GetBlockingText()             // Resolves BlockingIds → "blocking Angel"
 GetBlockedByText()            // Resolves BlockedByIds → "blocked by Cat"
 ```
@@ -768,7 +791,7 @@ if (targetStr.Contains("LocalPlayer"))
 else if (targetStr.Contains("Opponent"))
     targetName = "opponent";
 else
-    targetName = CardModelProvider.GetNameFromGrpId(target.GrpId);
+    targetName = CardModelProvider.GetNameFromGrpId(target.GrpId); // Still in CardModelProvider
 ```
 
 *Announcement Examples:*
@@ -1248,7 +1271,7 @@ string text = UITextExtractor.GetText(element);
 string buttonText = UITextExtractor.GetButtonText(button, null);
 ```
 
-**CardDetector + CardModelProvider** - Card detection and data extraction:
+**CardDetector + CardModelProvider/CardStateProvider/DeckCardProvider** - Card detection and data extraction:
 ```csharp
 // When you have a card GameObject (duel, deck builder, collection)
 if (CardDetector.IsCard(element))

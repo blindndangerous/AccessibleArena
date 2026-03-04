@@ -55,7 +55,7 @@ namespace AccessibleArena.Core.Services
             if (card == null) return false;
 
             // Model-based check (authoritative)
-            if (CardModelProvider.GetIsAttackingFromCard(card))
+            if (CardStateProvider.GetIsAttackingFromCard(card))
                 return true;
 
             // Debug: Log relevant children to find the exact indicator
@@ -117,7 +117,7 @@ namespace AccessibleArena.Core.Services
             if (card == null) return false;
 
             // Model-based check (authoritative)
-            if (CardModelProvider.GetIsBlockingFromCard(card))
+            if (CardStateProvider.GetIsBlockingFromCard(card))
                 return true;
 
             // UI fallback - "IsBlocking" child is ACTIVE when assigned as a blocker
@@ -408,9 +408,9 @@ namespace AccessibleArena.Core.Services
             bool isSelected = false;
 
             // Model-based state (authoritative)
-            bool isAttacking = CardModelProvider.GetIsAttackingFromCard(card);
-            bool isBlocking = CardModelProvider.GetIsBlockingFromCard(card);
-            bool isTapped = CardModelProvider.GetIsTappedFromCard(card);
+            bool isAttacking = CardStateProvider.GetIsAttackingFromCard(card);
+            bool isBlocking = CardStateProvider.GetIsBlockingFromCard(card);
+            bool isTapped = CardStateProvider.GetIsTappedFromCard(card);
 
             // UI scan for frames, selection (still needed for "can block"/"can attack" etc.)
             foreach (Transform child in card.GetComponentsInChildren<Transform>(true))
@@ -449,7 +449,7 @@ namespace AccessibleArena.Core.Services
             // Model-based fallback: CombatIcon_AttackerFrame can be delayed on newly created tokens.
             // Check model data directly - creature can attack if no summoning sickness and not tapped.
             else if (!hasAttackerFrame && _duelAnnouncer.IsInDeclareAttackersPhase
-                     && !isTapped && !CardModelProvider.GetHasSummoningSicknessFromCard(card))
+                     && !isTapped && !CardStateProvider.GetHasSummoningSicknessFromCard(card))
                 states.Add(Models.Strings.Combat_CanAttack);
 
             // Blocking states (priority: is blocking > selected to block > can block)
@@ -490,13 +490,13 @@ namespace AccessibleArena.Core.Services
                 var model = CardModelProvider.GetCardModel(cdc);
                 if (model == null) return null;
 
-                var blockingIds = CardModelProvider.GetBlockingIds(model);
+                var blockingIds = CardStateProvider.GetBlockingIds(model);
                 if (blockingIds.Count == 0) return null;
 
                 var names = new List<string>();
                 foreach (var id in blockingIds)
                 {
-                    string name = CardModelProvider.ResolveInstanceIdToName(id);
+                    string name = CardStateProvider.ResolveInstanceIdToName(id);
                     if (!string.IsNullOrEmpty(name))
                         names.Add(name);
                 }
@@ -521,13 +521,13 @@ namespace AccessibleArena.Core.Services
                 var model = CardModelProvider.GetCardModel(cdc);
                 if (model == null) return null;
 
-                var blockedByIds = CardModelProvider.GetBlockedByIds(model);
+                var blockedByIds = CardStateProvider.GetBlockedByIds(model);
                 if (blockedByIds.Count == 0) return null;
 
                 var names = new List<string>();
                 foreach (var id in blockedByIds)
                 {
-                    string name = CardModelProvider.ResolveInstanceIdToName(id);
+                    string name = CardStateProvider.ResolveInstanceIdToName(id);
                     if (!string.IsNullOrEmpty(name))
                         names.Add(name);
                 }

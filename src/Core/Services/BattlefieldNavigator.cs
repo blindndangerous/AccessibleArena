@@ -689,10 +689,10 @@ namespace AccessibleArena.Core.Services
             string combatState = _combatNavigator?.GetCombatStateText(card) ?? "";
 
             // Add attachment info (enchantments, equipment attached to this card)
-            string attachmentText = CardModelProvider.GetAttachmentText(card);
+            string attachmentText = CardStateProvider.GetAttachmentText(card);
 
             // Add targeting info (what this card targets / what targets it)
-            string targetingText = CardModelProvider.GetTargetingText(card);
+            string targetingText = CardStateProvider.GetTargetingText(card);
 
             string prefix = includeRowName ? $"{GetRowName(_currentRow)}, " : "";
             _announcer.Announce($"{prefix}{cardName}{combatState}{attachmentText}{targetingText}, {position} of {total}", priority);
@@ -745,7 +745,7 @@ namespace AccessibleArena.Core.Services
 
             foreach (var card in cards)
             {
-                bool isTapped = CardModelProvider.GetIsTappedFromCard(card);
+                bool isTapped = CardStateProvider.GetIsTappedFromCard(card);
                 if (isTapped)
                 {
                     tappedCount++;

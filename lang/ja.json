@@ -226,7 +226,7 @@
 
   "HelpMenuTitle": "ヘルプメニュー",
   "HelpMenuInstructions": "上下矢印キーで移動、BackspaceまたはF1で閉じる",
-  "HelpItemPosition_Format": "{1}件中{0}件目: {2}",
+  "HelpItemPosition_Format": "{2}、{1}件中{0}件目",
   "HelpMenuClosed": "ヘルプを閉じました",
 
   "HelpCategoryGlobal": "グローバルショートカット",

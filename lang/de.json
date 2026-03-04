@@ -228,7 +228,7 @@
 
   "HelpMenuTitle": "Hilfemenü",
   "HelpMenuInstructions": "Pfeil hoch und runter zum Navigieren, Rücktaste oder F1 zum Schließen",
-  "HelpItemPosition_Format": "{0} von {1}: {2}",
+  "HelpItemPosition_Format": "{2}, {0} von {1}",
   "HelpMenuClosed": "Hilfe geschlossen",
 
   "HelpCategoryGlobal": "Globale Tastenkürzel",

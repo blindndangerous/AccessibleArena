@@ -226,7 +226,7 @@
 
   "HelpMenuTitle": "Menu di aiuto",
   "HelpMenuInstructions": "Freccia su e giù per navigare, Backspace o F1 per chiudere",
-  "HelpItemPosition_Format": "{0} di {1}: {2}",
+  "HelpItemPosition_Format": "{2}, {0} di {1}",
   "HelpMenuClosed": "Aiuto chiuso",
 
   "HelpCategoryGlobal": "Scorciatoie globali",

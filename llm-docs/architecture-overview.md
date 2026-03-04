@@ -85,9 +85,16 @@ The mod uses extensive reflection to access game internals:
 
 ## Card Data
 
-`CardModelProvider` (4,626 lines) handles all card data extraction:
+Card data was split from a single `CardModelProvider` (4,626 lines) into 5 focused files:
+- **CardModelProvider** (2,185 lines) — Core: component access, name lookup, mana parsing, card info extraction
+- **CardTextProvider** (606 lines) — Ability text, flavor text, artist names, localized text lookups (internal)
+- **CardStateProvider** (1,170 lines) — Attachments, combat state, targeting, counters, card categorization
+- **DeckCardProvider** (795 lines) — Deck list cards, sideboard cards, read-only deck cards
+- **ExtendedCardInfoProvider** (609 lines) — Keyword descriptions, linked face info
+
+Key patterns:
 - Localized text via `GreLocProvider.GetLocalizedText(locId)` — never use enum `.ToString()`
-- Card type detection via `GetCardCategory()` — never string-match type lines
+- Card type detection via `CardStateProvider.GetCardCategory()` — never string-match type lines
 - Supports duel cards (CDC-based) and collection cards (MetaCardView-based)
 
 ## Screen Reader Output

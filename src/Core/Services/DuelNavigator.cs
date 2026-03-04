@@ -491,7 +491,7 @@ namespace AccessibleArena.Core.Services
 
                 if (card != null)
                 {
-                    var counters = CardModelProvider.GetCountersFromCard(card);
+                    var counters = CardStateProvider.GetCountersFromCard(card);
                     if (counters.Count > 0)
                     {
                         var parts = new List<string>();

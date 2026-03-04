@@ -896,7 +896,7 @@ namespace AccessibleArena.Core.Services
 
                 // Filter out cards from other zones (e.g., commander from Command zone)
                 // that the game places visually in the hand holder
-                string modelZone = CardModelProvider.GetCardZoneTypeName(card);
+                string modelZone = CardStateProvider.GetCardZoneTypeName(card);
                 if (!string.IsNullOrEmpty(modelZone) && modelZone != "Hand")
                 {
                     MelonLogger.Msg($"[BrowserNavigator] Skipping {cardInfo.Name} - actual zone: {modelZone}");
@@ -1099,12 +1099,12 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private string GetMultiZoneCardZoneName(GameObject card)
         {
-            string modelZone = CardModelProvider.GetCardZoneTypeName(card);
+            string modelZone = CardStateProvider.GetCardZoneTypeName(card);
             if (string.IsNullOrEmpty(modelZone)) return "";
 
             if (MultiZoneMap.TryGetValue(modelZone, out var zonePair))
             {
-                bool isOpponent = CardModelProvider.IsOpponentCard(card);
+                bool isOpponent = CardStateProvider.IsOpponentCard(card);
                 var zoneType = isOpponent ? zonePair.opponent : zonePair.local;
                 return $", {Strings.GetZoneName(zoneType)}";
             }

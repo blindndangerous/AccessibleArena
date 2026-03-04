@@ -35,7 +35,11 @@ Total lines: ~55,635
 | File | Lines | Description |
 |------|------:|-------------|
 | GeneralMenuNavigator.cs | 4766 | General-purpose navigator for menu screens using CustomButton components; fallback for unhandled screens |
-| CardModelProvider.cs | 4626 | Reflection-based access to card model data (names, types, costs, rules text, categorization) |
+| CardModelProvider.cs | 2185 | Core card data: component access, name lookup, mana parsing, card info extraction |
+| CardTextProvider.cs | 606 | Ability text, flavor text, artist names, localized text lookups (internal, called by CardModelProvider) |
+| CardStateProvider.cs | 1170 | Attachments, combat state, targeting, counters, card categorization |
+| DeckCardProvider.cs | 795 | Deck list cards, sideboard cards, read-only deck cards |
+| ExtendedCardInfoProvider.cs | 609 | Keyword descriptions, linked face info |
 | BaseNavigator.cs | 2928 | Abstract base class for all screen navigators; handles Tab/Enter navigation, element management, announcements |
 | DuelAnnouncer.cs | 2294 | Announces duel events to screen reader (draws, plays, damage, phase changes, combat) |
 | UIActivator.cs | 2196 | Centralized UI activation utilities (clicking buttons, toggling checkboxes, playing cards) |

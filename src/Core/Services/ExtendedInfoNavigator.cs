@@ -35,10 +35,10 @@ namespace AccessibleArena.Core.Services
             _items.Clear();
 
             // Keywords: each "Header: Details" from GetKeywordDescriptions is one entry
-            _items.AddRange(CardModelProvider.GetKeywordDescriptions(card));
+            _items.AddRange(ExtendedCardInfoProvider.GetKeywordDescriptions(card));
 
             // Linked face: split into individual field entries
-            var linkedFace = CardModelProvider.GetLinkedFaceInfo(card);
+            var linkedFace = ExtendedCardInfoProvider.GetLinkedFaceInfo(card);
             if (linkedFace.HasValue)
             {
                 var (label, faceInfo) = linkedFace.Value;

@@ -291,7 +291,7 @@ namespace AccessibleArena.Core.Services
 
             foreach (var card in handCards)
             {
-                string modelZone = CardModelProvider.GetCardZoneTypeName(card);
+                string modelZone = CardStateProvider.GetCardZoneTypeName(card);
                 if (modelZone == "Command")
                 {
                     var cdc = CardModelProvider.GetDuelSceneCDC(card);
@@ -2429,7 +2429,7 @@ namespace AccessibleArena.Core.Services
             var parts = new List<string>();
 
             // Check if this is an ability rather than a spell
-            var (isAbility, isTriggered) = CardModelProvider.IsAbilityOnStack(cardObj);
+            var (isAbility, isTriggered) = CardStateProvider.IsAbilityOnStack(cardObj);
 
             if (isAbility)
             {
@@ -2448,7 +2448,7 @@ namespace AccessibleArena.Core.Services
 
             // Brief mode: for own cards, just announce the name/header (skip rules text)
             bool briefMode = AccessibleArenaMod.Instance?.Settings?.BriefCastAnnouncements == true;
-            if (briefMode && !CardModelProvider.IsOpponentCard(cardObj))
+            if (briefMode && !CardStateProvider.IsOpponentCard(cardObj))
                 return string.Join(", ", parts);
 
             // Rules text is relevant for both spells and abilities

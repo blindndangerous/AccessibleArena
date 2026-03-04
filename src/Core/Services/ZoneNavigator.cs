@@ -488,7 +488,7 @@ namespace AccessibleArena.Core.Services
 
             foreach (var card in handZone.Cards)
             {
-                string modelZone = CardModelProvider.GetCardZoneTypeName(card);
+                string modelZone = CardStateProvider.GetCardZoneTypeName(card);
                 if (modelZone == "Command")
                 {
                     commandZone.Cards.Add(card);
@@ -883,14 +883,14 @@ namespace AccessibleArena.Core.Services
             if (_currentZone == ZoneType.Battlefield)
             {
                 combatState = _combatNavigator?.GetCombatStateText(card) ?? "";
-                attachmentText = CardModelProvider.GetAttachmentText(card);
+                attachmentText = CardStateProvider.GetAttachmentText(card);
             }
 
             // Add targeting info for battlefield and stack cards
             string targetingText = "";
             if (_currentZone == ZoneType.Battlefield || _currentZone == ZoneType.Stack)
             {
-                targetingText = CardModelProvider.GetTargetingText(card);
+                targetingText = CardStateProvider.GetTargetingText(card);
             }
 
             string prefix = includeZoneName ? $"{GetZoneName(_currentZone)}, " : "";
@@ -933,7 +933,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private string GetOriginZoneText(GameObject card)
         {
-            string modelZoneName = CardModelProvider.GetCardZoneTypeName(card);
+            string modelZoneName = CardStateProvider.GetCardZoneTypeName(card);
             if (string.IsNullOrEmpty(modelZoneName)) return "";
 
             if (GameZoneToModZone.TryGetValue(modelZoneName, out var modelZoneType))

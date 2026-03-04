@@ -236,7 +236,7 @@
 
   "HelpMenuTitle": "Help Menu",
   "HelpMenuInstructions": "Arrow Up and Down to navigate, Backspace or F1 to close",
-  "HelpItemPosition_Format": "{0} of {1}: {2}",
+  "HelpItemPosition_Format": "{2}, {0} of {1}",
   "HelpMenuClosed": "Help closed",
 
   "HelpCategoryGlobal": "Global shortcuts",

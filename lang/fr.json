@@ -226,7 +226,7 @@
 
   "HelpMenuTitle": "Menu d'aide",
   "HelpMenuInstructions": "Flèche haut et bas pour naviguer, Retour arrière ou F1 pour fermer",
-  "HelpItemPosition_Format": "{0} sur {1} : {2}",
+  "HelpItemPosition_Format": "{2}, {0} sur {1}",
   "HelpMenuClosed": "Aide fermée",
 
   "HelpCategoryGlobal": "Raccourcis globaux",

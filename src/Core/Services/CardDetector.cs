@@ -506,7 +506,7 @@ namespace AccessibleArena.Core.Services
             if (cardObj == null) return new CardInfo();
 
             // Check if this is a deck list card (MainDeck_MetaCardHolder)
-            var deckListInfo = CardModelProvider.ExtractDeckListCardInfo(cardObj);
+            var deckListInfo = DeckCardProvider.ExtractDeckListCardInfo(cardObj);
             if (deckListInfo.HasValue && deckListInfo.Value.IsValid)
             {
                 MelonLogger.Msg($"[CardDetector] Using DECK LIST extraction: {deckListInfo.Value.Name} (Qty: {deckListInfo.Value.Quantity})");
@@ -514,7 +514,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Check if this is a sideboard card (non-MainDeck holder)
-            var sideboardInfo = CardModelProvider.ExtractSideboardCardInfo(cardObj);
+            var sideboardInfo = DeckCardProvider.ExtractSideboardCardInfo(cardObj);
             if (sideboardInfo.HasValue && sideboardInfo.Value.IsValid)
             {
                 MelonLogger.Msg($"[CardDetector] Using SIDEBOARD extraction: {sideboardInfo.Value.Name} (Qty: {sideboardInfo.Value.Quantity})");
@@ -522,7 +522,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Check if this is a read-only deck card (StaticColumnMetaCardView)
-            var readOnlyInfo = CardModelProvider.ExtractReadOnlyDeckCardInfo(cardObj);
+            var readOnlyInfo = DeckCardProvider.ExtractReadOnlyDeckCardInfo(cardObj);
             if (readOnlyInfo.HasValue && readOnlyInfo.Value.IsValid)
             {
                 MelonLogger.Msg($"[CardDetector] Using READ-ONLY DECK extraction: {readOnlyInfo.Value.Name} (Qty: {readOnlyInfo.Value.Quantity})");
@@ -710,7 +710,7 @@ namespace AccessibleArena.Core.Services
                 string collectionText = info.UsedInDeckCount > 0
                     ? Models.Strings.CardOwnedInDeck(info.OwnedCount, info.UsedInDeckCount)
                     : Models.Strings.CardOwned(info.OwnedCount);
-                blocks.Add(new CardInfoBlock(Models.Strings.CardInfoCollection, collectionText, false));
+                blocks.Add(new CardInfoBlock(Models.Strings.CardInfoCollection, collectionText));
             }
 
             // Block order varies by zone context
@@ -810,28 +810,28 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Gets card category info (creature, land, opponent) in a single Model lookup.
-        /// Delegates to CardModelProvider.
+        /// Delegates to CardStateProvider.
         /// </summary>
         public static (bool isCreature, bool isLand, bool isOpponent) GetCardCategory(GameObject card)
-            => CardModelProvider.GetCardCategory(card);
+            => CardStateProvider.GetCardCategory(card);
 
         /// <summary>
-        /// Checks if a card is a creature. Delegates to CardModelProvider.
+        /// Checks if a card is a creature. Delegates to CardStateProvider.
         /// </summary>
         public static bool IsCreatureCard(GameObject card)
-            => CardModelProvider.IsCreatureCard(card);
+            => CardStateProvider.IsCreatureCard(card);
 
         /// <summary>
-        /// Checks if a card is a land. Delegates to CardModelProvider.
+        /// Checks if a card is a land. Delegates to CardStateProvider.
         /// </summary>
         public static bool IsLandCard(GameObject card)
-            => CardModelProvider.IsLandCard(card);
+            => CardStateProvider.IsLandCard(card);
 
         /// <summary>
-        /// Checks if a card belongs to the opponent. Delegates to CardModelProvider.
+        /// Checks if a card belongs to the opponent. Delegates to CardStateProvider.
         /// </summary>
         public static bool IsOpponentCard(GameObject card)
-            => CardModelProvider.IsOpponentCard(card);
+            => CardStateProvider.IsOpponentCard(card);
 
         #endregion
 

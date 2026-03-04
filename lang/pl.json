@@ -236,7 +236,7 @@
 
   "HelpMenuTitle": "Menu pomocy",
   "HelpMenuInstructions": "Strzałka w górę i w dół do nawigacji, Backspace lub F1 do zamknięcia",
-  "HelpItemPosition_Format": "{0} z {1}: {2}",
+  "HelpItemPosition_Format": "{2}, {0} z {1}",
   "HelpMenuClosed": "Pomoc zamknięta",
 
   "HelpCategoryGlobal": "Skróty globalne",

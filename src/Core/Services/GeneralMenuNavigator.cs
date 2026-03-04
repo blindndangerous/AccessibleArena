@@ -3860,7 +3860,7 @@ namespace AccessibleArena.Core.Services
             LogDebug($"[{NavigatorId}] Deck Builder detected, searching for deck list cards...");
 
             // Get deck list cards from CardModelProvider
-            var deckCards = CardModelProvider.GetDeckListCards();
+            var deckCards = DeckCardProvider.GetDeckListCards();
             if (deckCards.Count == 0)
             {
                 LogDebug($"[{NavigatorId}] No deck list cards found");
@@ -3906,7 +3906,7 @@ namespace AccessibleArena.Core.Services
             if (_activeContentController != "WrapperDeckBuilder")
                 return;
 
-            var sideboardCards = CardModelProvider.GetSideboardCards();
+            var sideboardCards = DeckCardProvider.GetSideboardCards();
             if (sideboardCards.Count == 0)
                 return;
 
@@ -3949,13 +3949,13 @@ namespace AccessibleArena.Core.Services
             _isDeckBuilderReadOnly = false;
 
             // Only try if the normal deck list didn't find cards
-            var normalDeckCards = CardModelProvider.GetDeckListCards();
+            var normalDeckCards = DeckCardProvider.GetDeckListCards();
             if (normalDeckCards.Count > 0)
                 return;
 
             LogDebug($"[{NavigatorId}] Normal deck list empty, checking for read-only column view...");
 
-            var readOnlyCards = CardModelProvider.GetReadOnlyDeckCards();
+            var readOnlyCards = DeckCardProvider.GetReadOnlyDeckCards();
             if (readOnlyCards.Count == 0)
             {
                 LogDebug($"[{NavigatorId}] No read-only deck cards found");
@@ -4456,8 +4456,8 @@ namespace AccessibleArena.Core.Services
 
             // Check if it's a regular card (collection), deck list card, or sideboard card
             bool isCard = CardDetector.IsCard(gameObject);
-            bool isDeckListCard = CardModelProvider.IsDeckListCard(gameObject);
-            bool isSideboardCard = CardModelProvider.IsSideboardCard(gameObject);
+            bool isDeckListCard = DeckCardProvider.IsDeckListCard(gameObject);
+            bool isSideboardCard = DeckCardProvider.IsSideboardCard(gameObject);
 
             if (isCard || isDeckListCard || isSideboardCard)
             {
@@ -4639,13 +4639,13 @@ namespace AccessibleArena.Core.Services
                 // Special handling for DeckBuilderDeckList: refresh deck cards immediately while UI is active
                 if (currentGroup.HasValue && currentGroup.Value.Group == ElementGroup.DeckBuilderDeckList)
                 {
-                    CardModelProvider.ClearDeckListCache();
-                    CardModelProvider.ClearReadOnlyDeckCache();
+                    DeckCardProvider.ClearDeckListCache();
+                    DeckCardProvider.ClearReadOnlyDeckCache();
                     // Force immediate refresh while UI is in active state
-                    var deckCards = CardModelProvider.GetDeckListCards();
+                    var deckCards = DeckCardProvider.GetDeckListCards();
                     if (deckCards.Count == 0 && _isDeckBuilderReadOnly)
                     {
-                        var roCards = CardModelProvider.GetReadOnlyDeckCards();
+                        var roCards = DeckCardProvider.GetReadOnlyDeckCards();
                         MelonLogger.Msg($"[{NavigatorId}] Entering DeckBuilderDeckList (read-only) - refreshed {roCards.Count} deck cards");
                     }
                     else

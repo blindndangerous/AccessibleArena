@@ -226,7 +226,7 @@
 
   "HelpMenuTitle": "Menu de Ajuda",
   "HelpMenuInstructions": "Setas para cima e para baixo para navegar, Backspace ou F1 para fechar",
-  "HelpItemPosition_Format": "{0} de {1}: {2}",
+  "HelpItemPosition_Format": "{2}, {0} de {1}",
   "HelpMenuClosed": "Ajuda fechada",
 
   "HelpCategoryGlobal": "Atalhos globais",

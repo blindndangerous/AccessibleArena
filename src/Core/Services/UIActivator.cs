@@ -499,7 +499,7 @@ namespace AccessibleArena.Core.Services
         private static IEnumerator PlayCardCoroutine(GameObject card, System.Action<bool, string> callback)
         {
             // Step 0: Check if card is a land (lands use simplified double-click, no screen center needed)
-            bool isLand = CardModelProvider.IsLandCard(card);
+            bool isLand = CardStateProvider.IsLandCard(card);
 
             // Step 1: First click (select)
             Log("Step 1: First click (select)");

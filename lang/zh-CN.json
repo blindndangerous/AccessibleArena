@@ -226,7 +226,7 @@
 
   "HelpMenuTitle": "帮助菜单",
   "HelpMenuInstructions": "上下方向键导航，Backspace或F1关闭",
-  "HelpItemPosition_Format": "第{0}项，共{1}项：{2}",
+  "HelpItemPosition_Format": "{2}，第{0}项，共{1}项",
   "HelpMenuClosed": "帮助已关闭",
 
   "HelpCategoryGlobal": "全局快捷键",

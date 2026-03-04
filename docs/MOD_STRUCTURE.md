@@ -24,7 +24,11 @@
         UIActivator.cs           - Centralized UI element activation
         UITextExtractor.cs       - Text extraction (GetText, GetButtonText, CleanText)
         CardDetector.cs          - Card detection + card info extraction
-        CardModelProvider.cs     - Card data from game models (deck list, collection, attachments, targeting)
+        CardModelProvider.cs     - Core card data: component access, name lookup, mana parsing, card info extraction
+        CardTextProvider.cs      - Ability text, flavor text, artist names, localized text lookups
+        CardStateProvider.cs     - Attachments, combat state, targeting, counters, card categorization
+        DeckCardProvider.cs      - Deck list cards, sideboard cards, read-only deck cards
+        ExtendedCardInfoProvider.cs - Keyword descriptions, linked face info
         CardPoolAccessor.cs      - Reflection wrapper for CardPoolHolder (collection page API)
         RecentPlayAccessor.cs    - Reflection wrapper for LastPlayedBladeContentView (Recent tab tiles)
         InputFieldEditHelper.cs  - Shared input field edit mode logic (used by BaseNavigator for both menu and popup input fields)
@@ -314,7 +318,7 @@ The mod detects buttons by their **GameObject names** which never change regardl
 Button **text** is only used for announcements, not for routing decisions. This works with German, English, or any other language.
 
 **Combat State Detection:**
-Cards announce their current state using **model data first** (via `CardModelProvider`), with UI child scan as fallback:
+Cards announce their current state using **model data first** (via `CardStateProvider`), with UI child scan as fallback:
 - "attacking" - `Model.Instance.IsAttacking` property (model-based), UI fallback: `IsAttacking` child active
 - "attacking, blocked by Cat" - When attacker has `Instance.BlockedByIds` populated, resolves blocker names
 - "blocking Angel" - `Model.Instance.IsBlocking` property + `Instance.BlockingIds` resolved to attacker names
@@ -385,7 +389,7 @@ This also fixes the known issue "Card Abilities With High IDs Not Resolving" —
 - [x] Backspace key handling - Clicks `PromptButton_Secondary` (whatever text: "No Blocks", "Cancel Blocks", etc.)
 - [x] **Full blocker state announcements** - "can block", "selected to block", "blocking" (see Combat State Detection above)
 - [x] **Attacker announcements during blockers** - Enemy attackers announce ", attacking" (or ", attacking, blocked by Cat")
-- [x] **Blocker state detection** - Model-based via `CardModelProvider.GetIsBlockingFromCard()`, UI fallback for active `IsBlocking` child
+- [x] **Blocker state detection** - Model-based via `CardStateProvider.GetIsBlockingFromCard()`, UI fallback for active `IsBlocking` child
 - [x] **Blocker-attacker relationships** - Resolves `BlockingIds`/`BlockedByIds` to card names for rich announcements
 - [x] **Blocker selection tracking** - Tracks selected blockers via `SelectedHighlightBattlefield` + `CombatIcon_BlockerFrame`
 - [x] **Combined P/T announcements** - Announces "X/Y blocking" when selection changes
@@ -397,7 +401,7 @@ This also fixes the known issue "Card Abilities With High IDs Not Resolving" —
 - `GetPowerToughness(card)` - Extracts P/T from card using `CardDetector.ExtractCardInfo()`
 - `CalculateCombinedStats(blockers)` - Sums power and toughness across all selected blockers
 - `UpdateBlockerSelection()` - Called each frame, detects selection changes, announces combined stats and blocker-attacker pairings
-- `GetBlockingText(card)` / `GetBlockedByText(card)` - Resolve combat relationships to card names via `CardModelProvider`
+- `GetBlockingText(card)` / `GetBlockedByText(card)` - Resolve combat relationships to card names via `CardStateProvider`
 - `FindPromptButton(isPrimary)` - Language-agnostic button finder by GameObject name
 - Tracking uses `HashSet<int>` of instance IDs to detect changes efficiently
 - Resets tracking when entering/exiting blockers phase
@@ -653,7 +657,7 @@ Store items that contain decks or bundles offer a "Details" option as the first 
 - Extracts card list from `StoreDisplayPreconDeck.CardData` or `StoreDisplayCardViewBundle.BundleCardViews`
 - Left/Right navigates between cards (announced as "CardName, times Qty, ManaCost, X of N")
 - Up/Down navigates card info blocks (same as all other card contexts via `CardDetector.BuildInfoBlocks`)
-- Card info extracted via `CardModelProvider.ExtractCardInfoFromObject(cardDataObj)` using the stored CardData object
+- Card info extracted via `CardModelProvider.ExtractCardInfoFromObject(cardDataObj)` using the stored CardData object (still in CardModelProvider)
 - Backspace closes details view, returns to item navigation
 
 **Popup Handling:**
