@@ -2012,8 +2012,8 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Tries to activate a collection card by invoking OnAddClicked on the PagesMetaCardView.
-        /// Collection cards have an OnAddClicked action that adds the card to the deck.
+        /// Tries to activate a collection card by simulating a left click.
+        /// Left click adds to deck (if owned) or opens craft popup (if unowned).
         /// </summary>
         public static ActivationResult TryActivateCollectionCard(GameObject cardElement)
         {
@@ -2022,21 +2022,11 @@ namespace AccessibleArena.Core.Services
 
             Log($"Attempting collection card activation for: {cardElement.name}");
 
-            // Open card viewer directly via DeckBuilderActionsHandler.OpenCardViewer with
-            // quantityToCraft=0 to prevent auto-crafting. All other activation paths
-            // (OnAddClicked, CustomButton click, pointer simulation) end up calling
-            // OpenCardViewer with default quantityToCraft=1, which queues a craft on open.
-            var metaCardView = FindMetaCardView(cardElement);
-            if (metaCardView != null && TryOpenCardViewerDirectly(metaCardView))
-            {
-                // Block the Enter KeyUp from reaching PopupManager, which would call
-                // CardViewerController.OnEnter() and auto-trigger OnCraftClicked()
-                InputManager.BlockNextEnterKeyUp = true;
-                return new ActivationResult(true, Models.Strings.ActivatedBare, ActivationType.PointerClick);
-            }
+            // Block the Enter KeyUp from reaching PopupManager, which would call
+            // CardViewerController.OnEnter() and auto-trigger OnCraftClicked()
+            InputManager.BlockNextEnterKeyUp = true;
 
-            Log("Collection card activation failed — MetaCardView not found or OpenCardViewer unavailable");
-            return new ActivationResult(false, null, ActivationType.Unknown);
+            return SimulatePointerClick(cardElement);
         }
 
         /// <summary>
