@@ -306,7 +306,7 @@ namespace AccessibleArena.Core.Services
                     return modalMb.gameObject.activeSelf;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
 
             return false;
         }
@@ -321,7 +321,7 @@ namespace AccessibleArena.Core.Services
                 if (modal != null && modal.gameObject != null)
                     return modal.gameObject;
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
 
             return null;
         }
@@ -649,7 +649,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Drop rates link
@@ -732,7 +732,7 @@ namespace AccessibleArena.Core.Services
                     });
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
         }
 
         #endregion
@@ -908,7 +908,7 @@ namespace AccessibleArena.Core.Services
                     CurrencyName = currencyName
                 });
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
         }
 
         #endregion
@@ -986,7 +986,7 @@ namespace AccessibleArena.Core.Services
                         return i;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
 
             return -1;
         }
@@ -1824,7 +1824,7 @@ namespace AccessibleArena.Core.Services
                     if (_cardDataManaTextProp != null)
                     {
                         try { manaCost = _cardDataManaTextProp.GetValue(cardData) as string; }
-                        catch { }
+                        catch { /* Property may not exist on all types */ }
                     }
 
                     entries.Add(new DetailCardEntry
@@ -1836,7 +1836,7 @@ namespace AccessibleArena.Core.Services
                         CardDataObj = cardData
                     });
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
         }
 
@@ -1869,7 +1869,7 @@ namespace AccessibleArena.Core.Services
                     if (_cardDataManaTextProp != null)
                     {
                         try { manaCost = _cardDataManaTextProp.GetValue(cardData) as string; }
-                        catch { }
+                        catch { /* Property may not exist on all types */ }
                     }
 
                     entries.Add(new DetailCardEntry
@@ -1881,7 +1881,7 @@ namespace AccessibleArena.Core.Services
                         CardDataObj = cardData
                     });
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
         }
 
@@ -2215,7 +2215,7 @@ namespace AccessibleArena.Core.Services
 
                     _modalElements.Add((customButton.gameObject, $"{priceText}, button"));
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Add Cancel option
@@ -2248,7 +2248,7 @@ namespace AccessibleArena.Core.Services
                                 labelText = tmp.text.Trim();
                         }
                     }
-                    catch { }
+                    catch { /* Reflection may fail on different game versions */ }
                 }
 
                 // Get product list text from _productListContainer children
@@ -2276,7 +2276,7 @@ namespace AccessibleArena.Core.Services
                             }
                         }
                     }
-                    catch { }
+                    catch { /* Reflection may fail on different game versions */ }
                 }
             }
 

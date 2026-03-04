@@ -431,7 +431,7 @@ namespace AccessibleArena.Core.Services
                     return (bool)method.Invoke(panel.Animator, new object[] { 0 });
                 }
             }
-            catch { }
+            catch { /* Animator reflection is best-effort diagnostic probing */ }
 
             return false;
         }
@@ -454,7 +454,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Animator state reflection is best-effort diagnostic probing */ }
 
             return 1f;
         }

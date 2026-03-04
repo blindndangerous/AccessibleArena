@@ -392,7 +392,7 @@ namespace AccessibleArena.Core.Services
                             bool isOpen = (bool)isOpenProp.GetValue(mb);
                             isOpenStr = $" (IsOpen: {isOpen})";
                         }
-                        catch { }
+                        catch { /* IsOpen property may throw on some component types */ }
                     }
 
                     DebugConfig.LogIf(DebugConfig.LogNavigation, tag, $"  {typeName} on {mb.gameObject.name}{isOpenStr}");
@@ -1014,7 +1014,7 @@ namespace AccessibleArena.Core.Services
                     string valStr = FormatValueForLog(val);
                     MelonLogger.Msg($"[{tag}] {indent}.{prop.Name} = {valStr}");
                 }
-                catch { }
+                catch { /* Some properties throw on access; skip for debug dump */ }
             }
 
             // Also check fields
@@ -1029,7 +1029,7 @@ namespace AccessibleArena.Core.Services
                     string valStr = FormatValueForLog(val);
                     MelonLogger.Msg($"[{tag}] {indent}.{field.Name} = {valStr}");
                 }
-                catch { }
+                catch { /* Some fields throw on access; skip for debug dump */ }
             }
         }
 
@@ -1255,7 +1255,7 @@ namespace AccessibleArena.Core.Services
                         var val = field.GetValue(currentInteraction);
                         MelonLogger.Msg($"[{tag}]   {field.Name} ({field.FieldType.Name}) = {FormatValueForLog(val)}");
                     }
-                    catch { }
+                    catch { /* Some fields throw on access; skip for debug dump */ }
                 }
 
                 // All methods
@@ -1396,7 +1396,7 @@ namespace AccessibleArena.Core.Services
                             }
                         }
                     }
-                    catch { }
+                    catch { /* Unity internal m_Calls field may not be accessible */ }
                 }
 
                 // Check all MonoBehaviours for callback-like fields
@@ -1418,7 +1418,7 @@ namespace AccessibleArena.Core.Services
                                 var val = field.GetValue(mb);
                                 MelonLogger.Msg($"[{tag}]       {field.Name} ({field.FieldType.Name}) = {FormatValueForLog(val)}");
                             }
-                            catch { }
+                            catch { /* Callback field may throw on access; skip for debug dump */ }
                         }
                     }
                 }

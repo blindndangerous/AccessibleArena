@@ -311,7 +311,7 @@ namespace AccessibleArena.Core.Services
                     ahbType = asm.GetType("AbilityHangerBase");
                     if (ahbType != null) break;
                 }
-                catch { }
+                catch { /* Some assemblies may throw on type lookup */ }
             }
 
             UnityEngine.Object[] instances = null;
@@ -390,7 +390,7 @@ namespace AccessibleArena.Core.Services
                         metadataType = asm.GetType("Wotc.Mtga.CardParts.CDCViewMetadata");
                         if (metadataType != null) break;
                     }
-                    catch { }
+                    catch { /* Some assemblies may throw on type lookup */ }
                 }
                 if (metadataType == null) return null;
 

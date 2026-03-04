@@ -2093,7 +2093,7 @@ namespace AccessibleArena.Core.Services
                 object value = member is FieldInfo fi ? fi.GetValue(obj) : ((PropertyInfo)member).GetValue(obj);
                 return value is T typedValue ? typedValue : default(T);
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return default(T);
         }
 
@@ -2375,7 +2375,7 @@ namespace AccessibleArena.Core.Services
                         else
                             manaByColor[readableName] = 1;
                     }
-                    catch { }
+                    catch { /* Mana color reflection may fail on unexpected types */ }
                 }
 
                 if (manaByColor.Count == 0) return null;
@@ -2472,7 +2472,7 @@ namespace AccessibleArena.Core.Services
                         return child.gameObject;
                 }
             }
-            catch { }
+            catch { /* Stack holder may not exist in current game state */ }
             return null;
         }
 

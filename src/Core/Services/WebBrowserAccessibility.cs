@@ -1288,7 +1288,7 @@ namespace AccessibleArena.Core.Services
                             }
                             iframeSrcs = json;
                         }
-                        catch { }
+                        catch { /* JSON parsing is best-effort; malformed response is non-fatal */ }
                     }
 
                     MelonLogger.Msg($"[WebBrowser] CAPTCHA check: urlSuspicious={urlSuspicious}, crossOriginIframes={hasCrossOriginIframes}, details={iframeSrcs}");

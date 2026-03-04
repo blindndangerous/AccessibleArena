@@ -1170,7 +1170,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Some assemblies may throw on GetTypes() */ }
                 if (managerType != null) break;
             }
 
@@ -1228,7 +1228,7 @@ namespace AccessibleArena.Core.Services
                             }
                         }
                     }
-                    catch { }
+                    catch { /* Some assemblies may throw on GetTypes() */ }
                     if (popupManagerType != null) break;
                 }
             }
@@ -1707,7 +1707,7 @@ namespace AccessibleArena.Core.Services
                             string valStr = MenuDebugHelper.FormatValueForLog(val);
                             Log($"  {prop.Name} ({prop.PropertyType.Name}): {valStr}");
                         }
-                        catch { }
+                        catch { /* Some properties may throw when read via reflection */ }
                     }
 
                     Log($"=== CustomButton Methods ===");
@@ -2371,7 +2371,7 @@ namespace AccessibleArena.Core.Services
             if (field != null)
             {
                 try { return (T)field.GetValue(instance); }
-                catch { }
+                catch { /* Field value may be incompatible type or inaccessible */ }
             }
             return default;
         }

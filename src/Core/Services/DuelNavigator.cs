@@ -697,7 +697,7 @@ namespace AccessibleArena.Core.Services
                             var val = prop.GetValue(mb);
                             MelonLogger.Msg($"[{NavigatorId}] [Portrait]   Property {prop.Name}: {val}");
                         }
-                        catch { }
+                        catch { /* Some properties throw on access; skip for debug dump */ }
                     }
                 }
             }
@@ -765,7 +765,7 @@ namespace AccessibleArena.Core.Services
                     string textContent = "";
                     if (textProp != null)
                     {
-                        try { textContent = textProp.GetValue(mb)?.ToString() ?? ""; } catch { }
+                        try { textContent = textProp.GetValue(mb)?.ToString() ?? ""; } catch { /* Text property may throw on destroyed objects */ }
                     }
 
                     string objName = mb.gameObject.name.ToLower();
@@ -822,7 +822,7 @@ namespace AccessibleArena.Core.Services
                                 ExploreObjectForLife(val, prop.Name, 2);
                             }
                         }
-                        catch { }
+                        catch { /* Some properties throw on access; skip for debug probe */ }
                     }
 
                     // Also check fields
@@ -837,7 +837,7 @@ namespace AccessibleArena.Core.Services
                                 MelonLogger.Msg($"[{NavigatorId}] [Life]   Field {field.Name}: {val}");
                                 ExploreObjectForLife(val, field.Name, 2);
                             }
-                            catch { }
+                            catch { /* Field may throw on access; skip for debug probe */ }
                         }
                     }
                     break;
@@ -879,7 +879,7 @@ namespace AccessibleArena.Core.Services
                         var val = prop.GetValue(obj);
                         MelonLogger.Msg($"[{NavigatorId}] [Life] {indent}{context}.{prop.Name}: {val}");
                     }
-                    catch { }
+                    catch { /* Property may throw on access; skip for debug probe */ }
                 }
             }
         }
@@ -947,7 +947,7 @@ namespace AccessibleArena.Core.Services
                             var val = prop.GetValue(mb);
                             MelonLogger.Msg($"[{NavigatorId}] [LifeUI]   {prop.Name}: {val}");
                         }
-                        catch { }
+                        catch { /* Some properties throw on access; skip for debug dump */ }
                     }
                 }
             }

@@ -508,7 +508,7 @@ namespace AccessibleArena.Core.Services
                         Log($"        {field.Name}: {valStr}");
                     }
                 }
-                catch { }
+                catch { /* Some fields may throw when read via reflection */ }
             }
         }
 

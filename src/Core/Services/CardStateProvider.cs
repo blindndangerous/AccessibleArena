@@ -111,7 +111,7 @@ namespace AccessibleArena.Core.Services
                     if (val is uint id) return id;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return 0;
         }
 
@@ -130,7 +130,7 @@ namespace AccessibleArena.Core.Services
                     if (val is uint id) return id;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return 0;
         }
 
@@ -149,7 +149,7 @@ namespace AccessibleArena.Core.Services
                     if (val is uint id) return id;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return 0;
         }
 
@@ -338,7 +338,7 @@ namespace AccessibleArena.Core.Services
                 var prop = model.GetType().GetProperty("Instance");
                 return prop?.GetValue(model);
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return null;
         }
 
@@ -363,7 +363,7 @@ namespace AccessibleArena.Core.Services
                     if (val is bool b) return b;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return false;
         }
 
@@ -388,7 +388,7 @@ namespace AccessibleArena.Core.Services
                     if (val is bool b) return b;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return false;
         }
 
@@ -421,7 +421,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return result;
         }
 
@@ -454,7 +454,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return result;
         }
 
@@ -476,7 +476,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return null;
         }
 
@@ -502,7 +502,7 @@ namespace AccessibleArena.Core.Services
                     if (val is bool b) return b;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return false;
         }
 
@@ -541,7 +541,7 @@ namespace AccessibleArena.Core.Services
                     if (val is bool b) return b;
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return false;
         }
 
@@ -705,7 +705,7 @@ namespace AccessibleArena.Core.Services
                     return val?.ToString();
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return null;
         }
 
@@ -755,7 +755,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return result;
         }
 
@@ -788,7 +788,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return result;
         }
 
@@ -851,7 +851,7 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return null;
         }
 

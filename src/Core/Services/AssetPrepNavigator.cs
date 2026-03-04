@@ -315,7 +315,7 @@ namespace AccessibleArena.Core.Services
                     return CleanStatusText(_infoText.text);
                 }
             }
-            catch { }
+            catch { /* Text component may be destroyed during scene transition */ }
 
             return null;
         }
@@ -369,7 +369,7 @@ namespace AccessibleArena.Core.Services
                     _announcer.Announce(currentText, AnnouncementPriority.Normal);
                 }
             }
-            catch { }
+            catch { /* Progress check is best-effort; UI may be mid-transition */ }
         }
 
         protected override bool HandleCustomInput()

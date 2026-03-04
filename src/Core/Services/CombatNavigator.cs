@@ -504,7 +504,7 @@ namespace AccessibleArena.Core.Services
                 if (names.Count == 0) return null;
                 return Models.Strings.Combat_Blocking(string.Join(" and ", names));
             }
-            catch { }
+            catch { /* Combat state reflection may fail if card model changed */ }
             return null;
         }
 
@@ -535,7 +535,7 @@ namespace AccessibleArena.Core.Services
                 if (names.Count == 0) return null;
                 return Models.Strings.Combat_BlockedBy(string.Join(" and ", names));
             }
-            catch { }
+            catch { /* Combat state reflection may fail if card model changed */ }
             return null;
         }
 

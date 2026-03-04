@@ -998,7 +998,7 @@ namespace AccessibleArena.Core.Services
                             if (int.TryParse(lifeVal.ToString(), out int parsed)) return parsed;
                         }
                     }
-                    catch { }
+                    catch { /* Life property may not exist on all player types */ }
                 }
             }
 
@@ -1017,7 +1017,7 @@ namespace AccessibleArena.Core.Services
                             if (int.TryParse(lifeVal.ToString(), out int parsed)) return parsed;
                         }
                     }
-                    catch { }
+                    catch { /* Life field may not exist on all player types */ }
                 }
             }
 
@@ -1030,7 +1030,7 @@ namespace AccessibleArena.Core.Services
                     var val = prop.GetValue(player);
                     DebugConfig.LogIf(DebugConfig.LogNavigation, "PlayerPortrait", $"  Prop {prop.Name}: {val}");
                 }
-                catch { }
+                catch { /* Some properties throw on access; skip for debug dump */ }
             }
 
             DebugConfig.LogIf(DebugConfig.LogNavigation, "PlayerPortrait", $"MtgPlayer fields:");
@@ -1043,7 +1043,7 @@ namespace AccessibleArena.Core.Services
                     if (valStr.Length > 50) valStr = valStr.Substring(0, 50) + "...";
                     DebugConfig.LogIf(DebugConfig.LogNavigation, "PlayerPortrait", $"  Field {field.Name}: {valStr}");
                 }
-                catch { }
+                catch { /* Some fields throw on access; skip for debug dump */ }
             }
 
             return -1;
@@ -1199,7 +1199,7 @@ namespace AccessibleArena.Core.Services
                     return (T)prop.GetValue(obj);
                 }
             }
-            catch { }
+            catch { /* Property may not exist or may throw on different game versions */ }
 
             return default;
         }

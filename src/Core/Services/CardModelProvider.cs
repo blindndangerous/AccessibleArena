@@ -425,7 +425,7 @@ namespace AccessibleArena.Core.Services
                                         if (valStr.Length > 80) valStr = valStr.Substring(0, 80) + "...";
                                         DebugConfig.LogIf(DebugConfig.LogCardInfo, "CardModelProvider", $"      {prop.Name} = {valStr} ({prop.PropertyType.Name})");
                                     }
-                                    catch { }
+                                    catch { /* Some properties throw on access; skip for debug dump */ }
                                 }
                             }
                         }
@@ -892,7 +892,7 @@ namespace AccessibleArena.Core.Services
                         if (value != null)
                             return value;
                     }
-                    catch { }
+                    catch { /* Property may not exist on all model types */ }
                 }
             }
             return null;
@@ -1125,7 +1125,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Mana quantity reflection may fail on unexpected types */ }
             }
 
             // Add generic mana count at the beginning if any
@@ -1191,7 +1191,7 @@ namespace AccessibleArena.Core.Services
                     if (!string.IsNullOrEmpty(rawText))
                         return rawText;
                 }
-                catch { }
+                catch { /* RawText property may not exist on all StringBackedInt variants */ }
             }
 
             // Then try Value - the numeric value
@@ -1204,7 +1204,7 @@ namespace AccessibleArena.Core.Services
                     if (val != null)
                         return val.ToString();
                 }
-                catch { }
+                catch { /* Value property may not exist on all StringBackedInt variants */ }
             }
 
             return null;
@@ -1617,7 +1617,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Counter reflection may fail if Instance layout changes */ }
 
                 if (ptParts.Count > 0)
                     info.PowerToughness = string.Join(", ", ptParts);
@@ -1829,7 +1829,7 @@ namespace AccessibleArena.Core.Services
                 var prop = model.GetType().GetProperty("Instance");
                 return prop?.GetValue(model);
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
             return null;
         }
 

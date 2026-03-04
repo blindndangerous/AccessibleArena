@@ -702,7 +702,7 @@ namespace AccessibleArena.Core.Services
                         TryAddButton(view, _purchaseButtonField, "Purchase");
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Back button (from controller, not view)
@@ -721,7 +721,7 @@ namespace AccessibleArena.Core.Services
                         });
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             MelonLogger.Msg($"[Mastery] Found {_actionButtons.Count} action buttons");
@@ -759,7 +759,7 @@ namespace AccessibleArena.Core.Services
                     Label = resolvedLabel
                 });
             }
-            catch { }
+            catch { /* Reflection may fail on different game versions */ }
         }
 
         /// <summary>
@@ -857,7 +857,7 @@ namespace AccessibleArena.Core.Services
                     if (backBtn != null && backBtn.gameObject != null && backBtn.gameObject.activeInHierarchy)
                         _prizeWallBackButton = backBtn.gameObject;
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Find StoreItemBase components under the layout group (the purchasable items)
@@ -870,7 +870,7 @@ namespace AccessibleArena.Core.Services
                     if (layoutGroup != null)
                         layoutParent = layoutGroup.transform;
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Fallback: search under contents container
@@ -882,7 +882,7 @@ namespace AccessibleArena.Core.Services
                     if (contents != null)
                         layoutParent = contents.transform;
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             if (layoutParent != null)
@@ -921,7 +921,7 @@ namespace AccessibleArena.Core.Services
                     if (modal != null)
                         _confirmationModalGameObject = modal.gameObject;
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             if (_prizeWallItems.Count > 0 || _prizeWallGameObject != null)
@@ -1067,7 +1067,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // Fall back to TrackName (raw string) and localize it
@@ -1090,7 +1090,7 @@ namespace AccessibleArena.Core.Services
                         return trackName;
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             return "Mastery";
@@ -1603,7 +1603,7 @@ namespace AccessibleArena.Core.Services
                         return;
                     }
                 }
-                catch { }
+                catch { /* Reflection may fail on different game versions */ }
             }
 
             // No in-screen back button found — navigate home as final fallback

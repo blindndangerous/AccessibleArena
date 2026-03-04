@@ -124,13 +124,13 @@ namespace AccessibleArena.Core.Services
                         if (hasChatProp != null)
                             hasChatHistory = (bool)hasChatProp.GetValue(friend);
                     }
-                    catch { }
+                    catch { /* Friend entity properties may differ across game versions */ }
                 }
 
                 if (cache.ChallengeEnabled != null)
                 {
                     try { challengeEnabled = (bool)cache.ChallengeEnabled.GetValue(tile); }
-                    catch { }
+                    catch { /* Challenge field may not exist on all tile types */ }
                 }
 
                 // Chat available when friend is online or has chat history

@@ -266,7 +266,7 @@ namespace AccessibleArena.Core.Services
 
                     entries.Add(sb.ToString());
                 }
-                catch { }
+                catch { /* Type line field reflection may fail on different UI versions */ }
             }
 
             return entries;
@@ -397,7 +397,7 @@ namespace AccessibleArena.Core.Services
                                 sb.Append($" ({percent.Trim()})");
                         }
                     }
-                    catch { }
+                    catch { /* Type line field reflection may fail on different UI versions */ }
                 }
             }
 

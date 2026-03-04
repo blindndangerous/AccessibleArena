@@ -105,7 +105,7 @@ namespace AccessibleArena.Core.Services
                                 return propText;
                         }
                     }
-                    catch { }
+                    catch { /* Ability text property may throw on some card types */ }
                 }
             }
 
@@ -123,7 +123,7 @@ namespace AccessibleArena.Core.Services
                             return methodText;
                     }
                 }
-                catch { }
+                catch { /* GetText() invocation may fail on some ability types */ }
             }
 
             return null;
@@ -284,7 +284,7 @@ namespace AccessibleArena.Core.Services
                                 }
                             }
                         }
-                        catch { }
+                        catch { /* CardDatabase reflection may fail on different game versions */ }
                     }
                 }
             }
@@ -451,7 +451,7 @@ namespace AccessibleArena.Core.Services
                                 }
                             }
                         }
-                        catch { }
+                        catch { /* Flavor text provider reflection may fail on different game versions */ }
                     }
                 }
             }

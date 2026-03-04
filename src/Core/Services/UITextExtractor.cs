@@ -1570,7 +1570,7 @@ namespace AccessibleArena.Core.Services
                         }
                     }
                 }
-                catch { }
+                catch { /* Store item label reflection may fail on different UI versions */ }
             }
 
             // Try 2: Get text from any TMP_Text child (excluding price-like text)

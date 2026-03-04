@@ -370,7 +370,7 @@ namespace AccessibleArena.Core.Services
                     if (btn != null && btn.gameObject != null)
                         return btn.gameObject;
                 }
-                catch { }
+                catch { /* Field may not exist on different game versions */ }
             }
 
             // Fallback: find CustomButton in children
@@ -385,7 +385,7 @@ namespace AccessibleArena.Core.Services
                 {
                     return _tocChildAnchorField.GetValue(tocSection) as GameObject;
                 }
-                catch { }
+                catch { /* Field may not exist on different game versions */ }
             }
             return null;
         }
@@ -466,7 +466,7 @@ namespace AccessibleArena.Core.Services
                     IsStandalone = true
                 });
             }
-            catch { }
+            catch { /* Reflection access to button field may fail */ }
         }
 
         private GameObject FindCustomButton(GameObject parent)
@@ -1196,7 +1196,7 @@ namespace AccessibleArena.Core.Services
                                 return;
                             }
                         }
-                        catch { }
+                        catch { /* Back button field may not exist on this component */ }
                     }
 
                     // Fallback: find CustomButton in content

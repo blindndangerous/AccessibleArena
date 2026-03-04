@@ -290,7 +290,7 @@ namespace AccessibleArena.Core.Services
                         _cachedEventPageController.gameObject.activeInHierarchy)
                         return _cachedEventPageController;
                 }
-                catch { }
+                catch { /* Cached object may have been destroyed */ }
                 _cachedEventPageController = null;
             }
 
@@ -807,7 +807,7 @@ namespace AccessibleArena.Core.Services
                         _cachedPacketController.gameObject.activeInHierarchy)
                         return _cachedPacketController;
                 }
-                catch { }
+                catch { /* Cached object may have been destroyed */ }
                 _cachedPacketController = null;
             }
 
