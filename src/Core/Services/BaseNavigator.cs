@@ -1917,14 +1917,15 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Check if this is a collection card in deck builder - open card viewer popup
+            // Check if this is a collection card in deck builder - left click adds to deck or opens craft popup
             if (UIActivator.IsCollectionCard(element))
             {
-                MelonLogger.Msg($"[{NavigatorId}] Collection card detected - opening card viewer");
+                MelonLogger.Msg($"[{NavigatorId}] Collection card detected - activating");
                 var collectionResult = UIActivator.Activate(element);
                 _announcer.Announce(collectionResult.Message, AnnouncementPriority.Normal);
-                // Don't trigger rescan - we're opening a popup, not modifying the deck.
-                // The popup will be detected by AlphaDetector → PanelStateManager → popup mode.
+                // Trigger rescan to update card count. If craft popup opens instead,
+                // PerformRescan skips while popup mode is active.
+                OnDeckBuilderCardActivated();
                 return;
             }
 
@@ -2683,79 +2684,127 @@ namespace AccessibleArena.Core.Services
                 var type = mb.GetType();
                 if (type.Name != "CardViewerController") continue;
 
-                // Find the craft count label
-                var countLabelField = type.GetField("_craftCountLabel",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (countLabelField == null) continue;
-
-                var countLabel = countLabelField.GetValue(mb) as TMP_Text;
-                if (countLabel == null || !countLabel.gameObject.activeInHierarchy) continue;
-
-                // Find increment/decrement methods
-                var increaseMethod = type.GetMethod("Unity_OnCraftIncrease",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                var decreaseMethod = type.GetMethod("Unity_OnCraftDecrease",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                if (increaseMethod == null || decreaseMethod == null) continue;
-
-                string countText = UITextExtractor.CleanText(countLabel.text);
-                if (string.IsNullOrEmpty(countText)) countText = "0";
-
-                // Remove any text block that duplicates the count label
-                _elements.RemoveAll(e =>
-                    e.Role == UIElementClassifier.ElementRole.TextBlock &&
-                    e.Label == countText);
-
-                // Remove craft pip buttons — redundant with the stepper
+                // Get pip objects (shared between stepper and no-stepper paths)
                 var pipsField = type.GetField("_CraftPips",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var pipObjects = new HashSet<GameObject>();
                 if (pipsField != null)
                 {
                     var pips = pipsField.GetValue(mb) as System.Collections.IList;
                     if (pips != null)
                     {
-                        var pipObjects = new HashSet<GameObject>();
                         foreach (var pip in pips)
                         {
                             var pipMb = pip as MonoBehaviour;
                             if (pipMb != null) pipObjects.Add(pipMb.gameObject);
                         }
-                        int removedPips = _elements.RemoveAll(e =>
-                            e.GameObject != null && pipObjects.Contains(e.GameObject));
-                        if (removedPips > 0)
-                            MelonLogger.Msg($"[{NavigatorId}] Popup: removed {removedPips} craft pips (redundant with stepper)");
                     }
                 }
 
-                string label = $"{countText}, {Models.Strings.RoleStepperHint}";
+                // Find the craft count label
+                var countLabelField = type.GetField("_craftCountLabel",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var countLabel = countLabelField?.GetValue(mb) as TMP_Text;
 
-                _elements.Add(new NavigableElement
+                bool hasStepper = countLabel != null && countLabel.gameObject.activeInHierarchy;
+
+                if (hasStepper)
                 {
-                    GameObject = countLabel.gameObject,
-                    Label = label,
-                    Role = UIElementClassifier.ElementRole.Stepper,
-                    Carousel = new CarouselInfo
-                    {
-                        HasArrowNavigation = true,
-                        OnIncrement = () =>
-                        {
-                            try { increaseMethod.Invoke(mb, null); }
-                            catch (Exception ex) { MelonLogger.Warning($"[{NavigatorId}] Craft increment failed: {ex.Message}"); }
-                        },
-                        OnDecrement = () =>
-                        {
-                            try { decreaseMethod.Invoke(mb, null); }
-                            catch (Exception ex) { MelonLogger.Warning($"[{NavigatorId}] Craft decrement failed: {ex.Message}"); }
-                        },
-                        ReadLabel = () =>
-                        {
-                            try { return UITextExtractor.CleanText(countLabel.text); }
-                            catch { return null; }
-                        }
-                    }
-                });
+                    // Find increment/decrement methods
+                    var increaseMethod = type.GetMethod("Unity_OnCraftIncrease",
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    var decreaseMethod = type.GetMethod("Unity_OnCraftDecrease",
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    if (increaseMethod == null || decreaseMethod == null) continue;
 
-                MelonLogger.Msg($"[{NavigatorId}] Popup: craft stepper: {countText}");
+                    string countText = UITextExtractor.CleanText(countLabel.text);
+                    if (string.IsNullOrEmpty(countText)) countText = "0";
+
+                    // Remove any text block that duplicates the count label
+                    _elements.RemoveAll(e =>
+                        e.Role == UIElementClassifier.ElementRole.TextBlock &&
+                        e.Label == countText);
+
+                    // Find first pip index before removing, so we can insert at that position
+                    int pipInsertIndex = _elements.FindIndex(e =>
+                        e.GameObject != null && pipObjects.Contains(e.GameObject));
+
+                    // Replace craft pip buttons with single owned count
+                    int removedPips = _elements.RemoveAll(e =>
+                        e.GameObject != null && pipObjects.Contains(e.GameObject));
+                    if (pipInsertIndex < 0 || pipInsertIndex > _elements.Count)
+                        pipInsertIndex = _elements.Count;
+
+                    // Insert owned count first, then stepper after it
+                    if (removedPips > 0)
+                    {
+                        GameObject firstPip = null;
+                        foreach (var go in pipObjects) { firstPip = go; break; }
+                        _elements.Insert(pipInsertIndex, new NavigableElement
+                        {
+                            GameObject = firstPip,
+                            Label = Models.Strings.CardOwned(removedPips),
+                            Role = UIElementClassifier.ElementRole.TextBlock
+                        });
+                        pipInsertIndex++; // stepper goes after owned
+                    }
+
+                    string label = $"{countText}, {Models.Strings.RoleStepperHint}";
+
+                    _elements.Insert(pipInsertIndex, new NavigableElement
+                    {
+                        GameObject = countLabel.gameObject,
+                        Label = label,
+                        Role = UIElementClassifier.ElementRole.Stepper,
+                        Carousel = new CarouselInfo
+                        {
+                            HasArrowNavigation = true,
+                            OnIncrement = () =>
+                            {
+                                try { increaseMethod.Invoke(mb, null); }
+                                catch (Exception ex) { MelonLogger.Warning($"[{NavigatorId}] Craft increment failed: {ex.Message}"); }
+                            },
+                            OnDecrement = () =>
+                            {
+                                try { decreaseMethod.Invoke(mb, null); }
+                                catch (Exception ex) { MelonLogger.Warning($"[{NavigatorId}] Craft decrement failed: {ex.Message}"); }
+                            },
+                            ReadLabel = () =>
+                            {
+                                try { return UITextExtractor.CleanText(countLabel.text); }
+                                catch { return null; }
+                            }
+                        }
+                    });
+
+                    MelonLogger.Msg($"[{NavigatorId}] Popup: craft stepper: {countText}, owned: {removedPips}");
+                }
+                else if (pipObjects.Count > 0)
+                {
+                    // No stepper (fully owned) — replace individual pips with single ownership text
+                    int pipInsertIndex = _elements.FindIndex(e =>
+                        e.GameObject != null && pipObjects.Contains(e.GameObject));
+
+                    int ownedCount = pipObjects.Count;
+                    _elements.RemoveAll(e =>
+                        e.GameObject != null && pipObjects.Contains(e.GameObject));
+
+                    if (pipInsertIndex < 0 || pipInsertIndex > _elements.Count)
+                        pipInsertIndex = _elements.Count;
+
+                    GameObject firstPip = null;
+                    foreach (var go in pipObjects) { firstPip = go; break; }
+
+                    _elements.Insert(pipInsertIndex, new NavigableElement
+                    {
+                        GameObject = firstPip,
+                        Label = Models.Strings.CardOwned(ownedCount),
+                        Role = UIElementClassifier.ElementRole.TextBlock
+                    });
+
+                    MelonLogger.Msg($"[{NavigatorId}] Popup: owned: {ownedCount} (no stepper)");
+                }
+
                 break;
             }
         }
