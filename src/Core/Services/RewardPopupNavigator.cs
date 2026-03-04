@@ -697,12 +697,10 @@ namespace AccessibleArena.Core.Services
                     MelonLogger.Msg($"[{NavigatorId}] Activating: {elem.Label}");
                     UIActivator.Activate(elem.GameObject);
 
-                    // If it's the "More" button, rescan for new content
-                    if (elem.Label.Contains("More") || elem.Label.Contains("Mehr"))
-                    {
-                        MelonLogger.Msg($"[{NavigatorId}] More button pressed - scheduling rescan");
-                        ForceRescan();
-                    }
+                    // Always rescan after activation - claiming a reward destroys the
+                    // GameObject, which leaves stale references in _elements
+                    MelonLogger.Msg($"[{NavigatorId}] Scheduling rescan after activation");
+                    ForceRescan();
                 }
                 return;
             }

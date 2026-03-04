@@ -32,6 +32,19 @@ namespace AccessibleArena.Core.Services
         private static MethodInfo _duelGetCardPrintingMethod;
         private static bool _duelCardDataProviderSearched;
 
+        // Cache for PAPA-constructed provider (non-duel keyword descriptions)
+        private static object _papaHangerProvider;
+        private static MethodInfo _papaGetConfigsMethod;
+        private static MethodInfo _papaCleanupMethod;
+        private static bool _papaProviderSearched;
+
+        // Cache for card adapter construction (non-duel)
+        private static object _papaCardDataProvider;
+        private static MethodInfo _getCardPrintingByIdMethod;
+        private static MethodInfo _createInstanceMethod;
+        private static ConstructorInfo _cardDataCtor;
+        private static object _holderTypeHand;
+
         /// <summary>
         /// Clears extended info caches.
         /// </summary>
@@ -47,6 +60,15 @@ namespace AccessibleArena.Core.Services
             _duelCardDataProvider = null;
             _duelGetCardPrintingMethod = null;
             _duelCardDataProviderSearched = false;
+            _papaHangerProvider = null;
+            _papaGetConfigsMethod = null;
+            _papaCleanupMethod = null;
+            _papaProviderSearched = false;
+            _papaCardDataProvider = null;
+            _getCardPrintingByIdMethod = null;
+            _createInstanceMethod = null;
+            _cardDataCtor = null;
+            _holderTypeHand = null;
         }
 
         /// <summary>
@@ -66,7 +88,11 @@ namespace AccessibleArena.Core.Services
                 var cdc = CardModelProvider.GetDuelSceneCDC(card);
                 if (cdc == null)
                 {
-                    // Non-duel context: extract individual ability texts from card model
+                    // Non-duel context: try PAPA-constructed provider for keyword descriptions
+                    var papaResult = GetKeywordDescriptionsFromPAPA(card);
+                    if (papaResult.Count > 0)
+                        return papaResult;
+                    // Fallback: extract individual ability texts from card model
                     return GetAbilityTextsFromCardModel(card);
                 }
 
@@ -159,6 +185,293 @@ namespace AccessibleArena.Core.Services
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Gets keyword descriptions in non-duel context by constructing an AbilityHangerBaseConfigProvider
+        /// from PAPA's services. This gives the same Header+Details keyword tooltips as in duels.
+        /// Returns empty list if construction fails (caller falls back to GetAbilityTextsFromCardModel).
+        /// </summary>
+        private static List<string> GetKeywordDescriptionsFromPAPA(GameObject card)
+        {
+            var result = new List<string>();
+            if (card == null) return result;
+
+            try
+            {
+                // Ensure PAPA provider is constructed
+                if (!_papaProviderSearched)
+                {
+                    _papaProviderSearched = true;
+                    ConstructProviderFromPAPA();
+                }
+
+                if (_papaHangerProvider == null || _papaGetConfigsMethod == null)
+                    return result;
+
+                // Get GrpId from the card's model
+                uint grpId = 0;
+                var metaCardView = CardModelProvider.GetMetaCardView(card);
+                if (metaCardView == null)
+                {
+                    var parent = card.transform.parent;
+                    int maxLevels = 5;
+                    while (metaCardView == null && parent != null && maxLevels-- > 0)
+                    {
+                        metaCardView = CardModelProvider.GetMetaCardView(parent.gameObject);
+                        parent = parent.parent;
+                    }
+                }
+                if (metaCardView != null)
+                {
+                    var model = CardModelProvider.GetMetaCardModel(metaCardView);
+                    if (model != null)
+                    {
+                        var grpIdObj = CardModelProvider.GetModelPropertyValue(model, model.GetType(), "GrpId");
+                        if (grpIdObj is uint gid) grpId = gid;
+                    }
+                }
+
+                if (grpId == 0)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] [ExtInfo] PAPA path: No GrpId found");
+                    return result;
+                }
+
+                // Create ICardDataAdapter from GrpId
+                var cardAdapter = CreateCardDataAdapter(grpId);
+                if (cardAdapter == null)
+                {
+                    MelonLogger.Msg($"[ExtendedCardInfoProvider] [ExtInfo] PAPA path: Could not create adapter for GrpId {grpId}");
+                    return result;
+                }
+
+                // Create CDCViewMetadata with defaults (no CDC available)
+                var metadata = CreateCDCViewMetadata(null);
+                if (metadata == null || _holderTypeHand == null)
+                    return result;
+
+                // Call GetHangerConfigsForCard(adapter, holderType, metadata)
+                var configs = _papaGetConfigsMethod.Invoke(
+                    _papaHangerProvider, new object[] { cardAdapter, _holderTypeHand, metadata });
+
+                if (configs is IEnumerable configEnum)
+                {
+                    var seen = new HashSet<string>();
+                    foreach (var config in configEnum)
+                    {
+                        if (config == null) continue;
+                        var configType = config.GetType();
+
+                        var headerField = configType.GetField("Header");
+                        var detailsField = configType.GetField("Details");
+
+                        string header = headerField?.GetValue(config)?.ToString() ?? "";
+                        string details = detailsField?.GetValue(config)?.ToString() ?? "";
+
+                        if (string.IsNullOrEmpty(header) && string.IsNullOrEmpty(details)) continue;
+
+                        string text;
+                        if (!string.IsNullOrEmpty(header) && !string.IsNullOrEmpty(details))
+                            text = $"{header}: {details}";
+                        else if (!string.IsNullOrEmpty(header))
+                            text = header;
+                        else
+                            text = details;
+
+                        text = CardModelProvider.ParseManaSymbolsInText(text);
+
+                        if (seen.Add(text))
+                            result.Add(text);
+                    }
+                }
+
+                // Cleanup provider internal state
+                _papaCleanupMethod?.Invoke(_papaHangerProvider, null);
+
+                MelonLogger.Msg($"[ExtendedCardInfoProvider] [ExtInfo] PAPA keyword descriptions: {result.Count} entries for GrpId {grpId}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[ExtendedCardInfoProvider] [ExtInfo] PAPA keyword descriptions failed: {ex.Message}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Constructs an AbilityHangerBaseConfigProvider from PAPA's services.
+        /// PAPA is a singleton MonoBehaviour with CardDatabase, AssetLookupSystem, and ObjectPool.
+        /// </summary>
+        private static void ConstructProviderFromPAPA()
+        {
+            try
+            {
+                // Find PAPA singleton
+                MonoBehaviour papa = null;
+                foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == "PAPA")
+                    {
+                        papa = mb;
+                        break;
+                    }
+                }
+
+                if (papa == null)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] PAPA singleton not found");
+                    return;
+                }
+
+                var papaType = papa.GetType();
+
+                // Get services from PAPA
+                var cardDb = papaType.GetProperty("CardDatabase", PublicInstance)?.GetValue(papa);
+                var assetLookup = papaType.GetProperty("AssetLookupSystem", PublicInstance)?.GetValue(papa);
+                var objectPool = papaType.GetProperty("ObjectPool", PublicInstance)?.GetValue(papa);
+
+                if (cardDb == null || assetLookup == null || objectPool == null)
+                {
+                    MelonLogger.Msg($"[ExtendedCardInfoProvider] PAPA services missing: CardDb={cardDb != null}, AssetLookup={assetLookup != null}, ObjectPool={objectPool != null}");
+                    return;
+                }
+
+                // Get ClientLocProvider from CardDatabase
+                var clientLoc = cardDb.GetType().GetProperty("ClientLocProvider", PublicInstance)?.GetValue(cardDb);
+                if (clientLoc == null)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] ClientLocProvider not found on CardDatabase");
+                    return;
+                }
+
+                // Get CardDataProvider for later use in CreateCardDataAdapter
+                _papaCardDataProvider = cardDb.GetType().GetProperty("CardDataProvider", PublicInstance)?.GetValue(cardDb);
+                if (_papaCardDataProvider != null)
+                {
+                    _getCardPrintingByIdMethod = _papaCardDataProvider.GetType()
+                        .GetMethod("GetCardPrintingById", new[] { typeof(uint) });
+                    // Try with two params if one-param version not found
+                    if (_getCardPrintingByIdMethod == null)
+                    {
+                        _getCardPrintingByIdMethod = _papaCardDataProvider.GetType()
+                            .GetMethod("GetCardPrintingById", new[] { typeof(uint), typeof(string) });
+                    }
+                }
+
+                // Find AbilityHangerBaseConfigProvider type
+                Type providerType = FindType("Wotc.Mtga.Hangers.AbilityHangers.AbilityHangerBaseConfigProvider");
+                if (providerType == null)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] AbilityHangerBaseConfigProvider type not found");
+                    return;
+                }
+
+                // Find 4-parameter constructor: (AssetLookupSystem, ICardDatabaseAdapter, IClientLocProvider, IObjectPool)
+                ConstructorInfo ctor = null;
+                foreach (var c in providerType.GetConstructors())
+                {
+                    if (c.GetParameters().Length == 4)
+                    {
+                        ctor = c;
+                        break;
+                    }
+                }
+
+                if (ctor == null)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] 4-param constructor not found on AbilityHangerBaseConfigProvider");
+                    return;
+                }
+
+                // Construct the provider
+                var provider = ctor.Invoke(new[] { assetLookup, cardDb, clientLoc, objectPool });
+                if (provider == null)
+                {
+                    MelonLogger.Msg("[ExtendedCardInfoProvider] AbilityHangerBaseConfigProvider construction returned null");
+                    return;
+                }
+
+                // Cache methods
+                _papaGetConfigsMethod = providerType.GetMethod("GetHangerConfigsForCard");
+                _papaCleanupMethod = providerType.GetMethod("Cleanup");
+                _papaHangerProvider = provider;
+
+                // Find CardHolderType.Hand enum value
+                Type holderTypeEnum = FindType("Wotc.Mtga.CardParts.CardHolderType");
+                if (holderTypeEnum != null)
+                {
+                    try { _holderTypeHand = Enum.Parse(holderTypeEnum, "Hand"); }
+                    catch { _holderTypeHand = Enum.ToObject(holderTypeEnum, 1); }
+                }
+
+                // Find CardData constructor and CreateInstance method for adapter creation
+                Type cardDataType = FindType("GreClient.CardData.CardData");
+                if (cardDataType != null)
+                {
+                    foreach (var c in cardDataType.GetConstructors())
+                    {
+                        var ps = c.GetParameters();
+                        if (ps.Length == 2 && ps[0].ParameterType.Name == "MtgCardInstance")
+                        {
+                            _cardDataCtor = c;
+                            break;
+                        }
+                    }
+                }
+
+                Type printingDataType = FindType("Wotc.Mtga.Cards.Database.CardPrintingData");
+                if (printingDataType != null)
+                {
+                    _createInstanceMethod = printingDataType.GetMethod("CreateInstance");
+                }
+
+                MelonLogger.Msg($"[ExtendedCardInfoProvider] PAPA provider constructed: " +
+                    $"Provider={_papaHangerProvider != null}, GetConfigs={_papaGetConfigsMethod != null}, " +
+                    $"CardDataProvider={_papaCardDataProvider != null}, GetPrintingById={_getCardPrintingByIdMethod != null}, " +
+                    $"CardDataCtor={_cardDataCtor != null}, CreateInstance={_createInstanceMethod != null}, " +
+                    $"HolderType={_holderTypeHand != null}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[ExtendedCardInfoProvider] ConstructProviderFromPAPA failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Creates an ICardDataAdapter from a GrpId using PAPA's CardDataProvider.
+        /// Calls CardPrintingData.CreateInstance() then constructs CardData(instance, printing).
+        /// </summary>
+        private static object CreateCardDataAdapter(uint grpId)
+        {
+            if (_papaCardDataProvider == null || _getCardPrintingByIdMethod == null ||
+                _createInstanceMethod == null || _cardDataCtor == null)
+                return null;
+
+            try
+            {
+                // Get CardPrintingData from GrpId
+                object printing;
+                var methodParams = _getCardPrintingByIdMethod.GetParameters();
+                if (methodParams.Length == 1)
+                    printing = _getCardPrintingByIdMethod.Invoke(_papaCardDataProvider, new object[] { grpId });
+                else
+                    printing = _getCardPrintingByIdMethod.Invoke(_papaCardDataProvider, new object[] { grpId, null });
+
+                if (printing == null) return null;
+
+                // Create MtgCardInstance via CardPrintingData.CreateInstance()
+                var instance = _createInstanceMethod.Invoke(printing, null);
+                if (instance == null) return null;
+
+                // Construct CardData(MtgCardInstance, CardPrintingData)
+                return _cardDataCtor.Invoke(new[] { instance, printing });
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[ExtendedCardInfoProvider] CreateCardDataAdapter failed for GrpId {grpId}: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>

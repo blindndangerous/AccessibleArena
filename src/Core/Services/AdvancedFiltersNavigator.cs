@@ -311,16 +311,10 @@ namespace AccessibleArena.Core.Services
             // Update dropdown state tracking each frame
             DropdownStateManager.UpdateAndCheckExitTransition();
 
-            // Check if a dropdown is open - block navigation keys but allow closing
+            // Check if a dropdown is open - use BaseNavigator's full dropdown handling
             if (DropdownStateManager.IsInDropdownMode)
             {
-                // Only handle Backspace/Escape to close the dropdown
-                if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Escape))
-                {
-                    CloseActiveDropdownInternal();
-                    return;
-                }
-                // Block all other navigation - let Unity handle dropdown navigation (Up/Down for options)
+                HandleDropdownNavigation();
                 return;
             }
 
@@ -547,31 +541,6 @@ namespace AccessibleArena.Core.Services
                     // Rescan to update toggle states
                     ForceRescan();
                 }
-            }
-        }
-
-        private void CloseActiveDropdownInternal()
-        {
-            var activeDropdown = DropdownStateManager.ActiveDropdown;
-            if (activeDropdown == null) return;
-
-            var tmpDropdown = activeDropdown.GetComponent<TMP_Dropdown>();
-            if (tmpDropdown != null)
-            {
-                MelonLogger.Msg($"[{NavigatorId}] Closing TMP_Dropdown");
-                tmpDropdown.Hide();
-                DropdownStateManager.OnDropdownClosed();
-                _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
-                return;
-            }
-
-            var legacyDropdown = activeDropdown.GetComponent<Dropdown>();
-            if (legacyDropdown != null)
-            {
-                MelonLogger.Msg($"[{NavigatorId}] Closing legacy Dropdown");
-                legacyDropdown.Hide();
-                DropdownStateManager.OnDropdownClosed();
-                _announcer.Announce(Strings.DropdownClosed, AnnouncementPriority.Normal);
             }
         }
 

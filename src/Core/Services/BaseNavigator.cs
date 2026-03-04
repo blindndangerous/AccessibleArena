@@ -2044,8 +2044,17 @@ namespace AccessibleArena.Core.Services
             }
 
             var element = _elements[_currentIndex].GameObject;
-            bool isCard = element != null && CardDetector.IsCard(element);
-            MelonLogger.Msg($"[{NavigatorId}] UpdateCardNavigation: element={element?.name}, IsCard={isCard}");
+
+            // Unity's overloaded == catches destroyed objects, but C#'s ?. does not.
+            // Must check with == before accessing any properties on the object.
+            if (element == null)
+            {
+                cardNavigator.Deactivate();
+                return;
+            }
+
+            bool isCard = CardDetector.IsCard(element);
+            MelonLogger.Msg($"[{NavigatorId}] UpdateCardNavigation: element={element.name}, IsCard={isCard}");
             if (isCard)
             {
                 cardNavigator.PrepareForCard(element);
