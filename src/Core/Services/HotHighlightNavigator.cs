@@ -819,32 +819,6 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Gets text from a button GameObject (TMP_Text or Text component).
-        /// </summary>
-        private string GetButtonText(GameObject button)
-        {
-            if (button == null) return null;
-
-            var tmpText = button.GetComponentInChildren<TMP_Text>();
-            if (tmpText != null)
-            {
-                string text = tmpText.text?.Trim();
-                if (!string.IsNullOrEmpty(text))
-                    return text;
-            }
-
-            var uiText = button.GetComponentInChildren<Text>();
-            if (uiText != null)
-            {
-                string text = uiText.text?.Trim();
-                if (!string.IsNullOrEmpty(text))
-                    return text;
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Language-agnostic heuristic: short text without spaces = keyboard hints (Strg, Ctrl, Z, etc.)
         /// </summary>
         private bool IsMeaningfulButtonText(string text)
@@ -873,10 +847,10 @@ namespace AccessibleArena.Core.Services
         private void DiscoverPromptButtons()
         {
             var primaryButton = FindPrimaryButton();
-            string primaryText = GetButtonText(primaryButton);
+            string primaryText = UITextExtractor.GetButtonText(primaryButton);
 
             var secondaryButton = FindSecondaryButton();
-            string secondaryText = GetButtonText(secondaryButton);
+            string secondaryText = UITextExtractor.GetButtonText(secondaryButton);
 
             // Only add when BOTH have meaningful text (sacrifice vs pay mana, etc.)
             if (!IsMeaningfulButtonText(primaryText) || !IsMeaningfulButtonText(secondaryText))
@@ -923,8 +897,8 @@ namespace AccessibleArena.Core.Services
 
             var primaryButton = FindPrimaryButton();
             var secondaryButton = FindSecondaryButton();
-            string primaryText = GetButtonText(primaryButton);
-            string secondaryText = GetButtonText(secondaryButton);
+            string primaryText = UITextExtractor.GetButtonText(primaryButton);
+            string secondaryText = UITextExtractor.GetButtonText(secondaryButton);
 
             if (IsMeaningfulButtonText(primaryText) && IsMeaningfulButtonText(secondaryText)
                 && IsButtonVisible(primaryButton) && IsButtonVisible(secondaryButton))
