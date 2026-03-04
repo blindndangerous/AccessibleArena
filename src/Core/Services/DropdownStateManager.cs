@@ -225,6 +225,9 @@ namespace AccessibleArena.Core.Services
             _blockEnterFromGame = true;
             _suppressReentry = false; // Clear suppression from previous dropdown close
 
+            // Invalidate dropdown scan cache so queries get fresh state
+            UIFocusTracker.InvalidateDropdownCache();
+
             // Suppress onValueChanged to prevent form auto-advance while browsing items
             SuppressOnValueChanged(dropdown);
 
@@ -268,6 +271,9 @@ namespace AccessibleArena.Core.Services
                 $"User closed dropdown, new focus: {newFocusName ?? "null"}");
 
             _activeDropdownObject = null;
+
+            // Invalidate dropdown scan cache so queries get fresh state
+            UIFocusTracker.InvalidateDropdownCache();
 
             return newFocusName;
         }

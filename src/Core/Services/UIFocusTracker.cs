@@ -33,6 +33,17 @@ namespace AccessibleArena.Core.Services
         private static System.Reflection.PropertyInfo _cachedIsExpandedProperty;
         private static System.Type _cachedDropdownType;
 
+        // Cache for IsAnyInputFieldFocused fallback scan (mouse-clicked fields)
+        private static bool _cachedInputFieldFallback;
+        private static float _cachedInputFieldFallbackTime = -1f;
+        private const float InputFieldCacheExpiry = 0.5f;
+
+        // Cache for IsAnyDropdownExpanded / GetExpandedDropdown scans
+        private static bool _cachedDropdownExpanded;
+        private static GameObject _cachedExpandedDropdown;
+        private static float _cachedDropdownTime = -1f;
+        private const float DropdownCacheExpiry = 0.25f;
+
         /// <summary>
         /// When true, UIFocusTracker skips announcements because an active navigator handles them.
         /// Set each frame by AccessibleArenaMod based on NavigatorManager.HasActiveNavigator.
@@ -78,7 +89,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static bool IsAnyInputFieldFocused()
         {
-            // First check: EventSystem selection is an input field
+            // First check: EventSystem selection is an input field (fast, no scan)
             // Use interactable (not isFocused) so KeyboardManagerPatch can block Escape
             // even before the field is fully focused
             var eventSystem = EventSystem.current;
@@ -95,17 +106,26 @@ namespace AccessibleArena.Core.Services
                     return true;
             }
 
-            // Second check: Any input field has isFocused = true (caret visible)
-            // This catches mouse-clicked input fields where EventSystem selection may differ
-            var tmpInputFields = GameObject.FindObjectsOfType<TMPro.TMP_InputField>();
-            foreach (var field in tmpInputFields)
+            // Second check: Cached fallback scan for mouse-clicked input fields
+            // where EventSystem selection may differ. Expires after 0.5s.
+            float now = Time.unscaledTime;
+            if (now - _cachedInputFieldFallbackTime < InputFieldCacheExpiry)
+                return _cachedInputFieldFallback;
+
+            _cachedInputFieldFallbackTime = now;
+            _cachedInputFieldFallback = ScanForFocusedInputFields();
+            return _cachedInputFieldFallback;
+        }
+
+        private static bool ScanForFocusedInputFields()
+        {
+            foreach (var field in GameObject.FindObjectsOfType<TMPro.TMP_InputField>())
             {
                 if (field.isFocused)
                     return true;
             }
 
-            var legacyInputFields = GameObject.FindObjectsOfType<UnityEngine.UI.InputField>();
-            foreach (var field in legacyInputFields)
+            foreach (var field in GameObject.FindObjectsOfType<UnityEngine.UI.InputField>())
             {
                 if (field.isFocused)
                     return true;
@@ -230,44 +250,8 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static bool IsAnyDropdownExpanded()
         {
-            // Check cTMP_Dropdown (MTGA's custom dropdown) - most common in MTGA
-            foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
-            {
-                if (mb == null) continue;
-                var type = mb.GetType();
-                if (type.Name == T.CustomTMPDropdown)
-                {
-                    bool isExpanded = GetIsExpandedProperty(mb);
-                    if (isExpanded)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // Check standard TMP_Dropdown
-            foreach (var dropdown in GameObject.FindObjectsOfType<TMPro.TMP_Dropdown>())
-            {
-                if (dropdown == null) continue;
-                // TMP_Dropdown has a public IsExpanded property
-                if (IsDropdownExpanded(dropdown))
-                {
-                    return true;
-                }
-            }
-
-            // Check legacy Unity Dropdown
-            foreach (var dropdown in GameObject.FindObjectsOfType<UnityEngine.UI.Dropdown>())
-            {
-                if (dropdown == null) continue;
-                // Legacy Dropdown - check if dropdown list exists
-                if (IsLegacyDropdownExpanded(dropdown))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            RefreshDropdownCache();
+            return _cachedDropdownExpanded;
         }
 
         /// <summary>
@@ -333,36 +317,78 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static GameObject GetExpandedDropdown()
         {
-            // Check cTMP_Dropdown first (most common in MTGA)
+            RefreshDropdownCache();
+            return _cachedExpandedDropdown;
+        }
+
+        /// <summary>
+        /// Invalidate dropdown scan cache. Call when dropdown state changes
+        /// (opened/closed) or on focus change to force a fresh scan.
+        /// </summary>
+        public static void InvalidateDropdownCache()
+        {
+            _cachedDropdownTime = -1f;
+        }
+
+        /// <summary>
+        /// Clear all scan caches. Call on scene change.
+        /// </summary>
+        public static void ClearScanCaches()
+        {
+            _cachedInputFieldFallbackTime = -1f;
+            _cachedDropdownTime = -1f;
+            _cachedExpandedDropdown = null;
+        }
+
+        /// <summary>
+        /// Refresh dropdown cache if expired or invalidated.
+        /// Validates cached object references and forces rescan if stale.
+        /// </summary>
+        private static void RefreshDropdownCache()
+        {
+            // Validate cached object is still alive (Unity destroyed objects)
+            if (_cachedDropdownExpanded &&
+                !ReferenceEquals(_cachedExpandedDropdown, null) &&
+                _cachedExpandedDropdown == null)
+            {
+                _cachedDropdownTime = -1f; // Force rescan
+            }
+
+            float now = Time.unscaledTime;
+            if (now - _cachedDropdownTime < DropdownCacheExpiry)
+                return;
+
+            _cachedDropdownTime = now;
+            _cachedExpandedDropdown = ScanForExpandedDropdown();
+            _cachedDropdownExpanded = _cachedExpandedDropdown != null;
+        }
+
+        /// <summary>
+        /// Full scan for any expanded dropdown in the scene.
+        /// Returns the dropdown GameObject if found, null otherwise.
+        /// </summary>
+        private static GameObject ScanForExpandedDropdown()
+        {
+            // Check cTMP_Dropdown (MTGA's custom dropdown) - most common in MTGA
             foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
             {
                 if (mb == null) continue;
-                var type = mb.GetType();
-                if (type.Name == T.CustomTMPDropdown)
-                {
-                    if (GetIsExpandedProperty(mb))
-                    {
-                        return mb.gameObject;
-                    }
-                }
+                if (mb.GetType().Name == T.CustomTMPDropdown && GetIsExpandedProperty(mb))
+                    return mb.gameObject;
             }
 
             // Check standard TMP_Dropdown
             foreach (var dropdown in GameObject.FindObjectsOfType<TMPro.TMP_Dropdown>())
             {
                 if (dropdown != null && IsDropdownExpanded(dropdown))
-                {
                     return dropdown.gameObject;
-                }
             }
 
             // Check legacy Unity Dropdown
             foreach (var dropdown in GameObject.FindObjectsOfType<UnityEngine.UI.Dropdown>())
             {
                 if (dropdown != null && IsLegacyDropdownExpanded(dropdown))
-                {
                     return dropdown.gameObject;
-                }
             }
 
             return null;
@@ -457,6 +483,9 @@ namespace AccessibleArena.Core.Services
 
             var previousSelected = _lastSelected;
             _lastSelected = selected;
+
+            // Invalidate dropdown cache on focus change so we get fresh state
+            InvalidateDropdownCache();
 
             // Log dropdown state for debugging (actual state tracking is in DropdownStateManager)
             bool anyDropdownExpanded = IsAnyDropdownExpanded();

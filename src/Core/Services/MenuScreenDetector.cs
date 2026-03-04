@@ -66,6 +66,10 @@ namespace AccessibleArena.Core.Services
         private GameObject _navBarGameObject;
         private GameObject _settingsContentPanel;
 
+        // Cache for DetectActiveContentController scan
+        private float _cachedControllerTime = -1f;
+        private const float ControllerCacheExpiry = 0.5f;
+
         #endregion
 
         #region Public Properties
@@ -103,14 +107,35 @@ namespace AccessibleArena.Core.Services
             _activeControllerGameObject = null;
             _navBarGameObject = null;
             _settingsContentPanel = null;
+            _cachedControllerTime = -1f;
         }
 
         /// <summary>
         /// Detect which content controller is currently active.
         /// Updates ActiveContentController and ActiveControllerGameObject.
+        /// Results are cached for 0.5s. Cache is invalidated on Reset() or when
+        /// the cached controller GameObject is destroyed/inactive.
         /// </summary>
         /// <returns>The type name of the active controller, or null if none detected.</returns>
         public string DetectActiveContentController()
+        {
+            // Validate cached controller is still alive and active
+            if (_activeContentController != null &&
+                !ReferenceEquals(_activeControllerGameObject, null) &&
+                (_activeControllerGameObject == null || !_activeControllerGameObject.activeInHierarchy))
+            {
+                _cachedControllerTime = -1f; // GO destroyed or inactive
+            }
+
+            float now = Time.unscaledTime;
+            if (now - _cachedControllerTime < ControllerCacheExpiry)
+                return _activeContentController;
+
+            _cachedControllerTime = now;
+            return DetectActiveContentControllerUncached();
+        }
+
+        private string DetectActiveContentControllerUncached()
         {
             // Cache NavBar if not already cached
             if (_navBarGameObject == null)
@@ -156,7 +181,7 @@ namespace AccessibleArena.Core.Services
                             return typeName;
                         }
                     }
-                    catch { /* Ignore reflection errors */ }
+                    catch { /* Reflection may fail on different game versions */ }
                 }
             }
 

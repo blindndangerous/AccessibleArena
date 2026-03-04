@@ -15,7 +15,7 @@ Magic: The Gathering Arena
 ## Prompts Remaining
 - [ ] input-handling.md
 - [ ] string-builder.md
-- [ ] high-level-cleanup.md
+- [x] high-level-cleanup.md
 - [ ] low-level-cleanup.md
 - [ ] finalization.md
 
@@ -33,6 +33,15 @@ Magic: The Gathering Arena
 - Other large files (GeneralMenuNavigator, BaseNavigator, DuelAnnouncer, UIActivator, BrowserNavigator, StoreNavigator, UITextExtractor) analyzed and determined to be single-concern — no splits needed
 - Also fixed: collection card verbose label bug, help/extended info item position format (content before position)
 - Commit: c0829ae
+
+## High-Level Cleanup Summary
+- **ReflectionUtils** (`src/Core/Utils/ReflectionUtils.cs`): Centralized `PrivateInstance`/`PublicInstance`/`AllInstanceFlags` constants and `FindType()` method. Replaced inline BindingFlags across ~30 files.
+- **GameTypeNames** (`src/Core/Constants/GameTypeNames.cs`): Centralized ~50 hardcoded game type name strings. Used via `T = ...GameTypeNames` alias.
+- **SceneNames** (`src/Core/Constants/SceneNames.cs`): Centralized scene name constants (DuelScene, Bootstrap, etc.).
+- **GetButtonText consolidation**: Removed duplicate in HotHighlightNavigator, now uses UITextExtractor.GetButtonText().
+- **Empty catch blocks**: Added comments/logging to ~80 empty catch blocks across 22 files.
+- **Scene scan caching**: Cached `IsAnyInputFieldFocused` fallback (0.5s), `IsAnyDropdownExpanded`/`GetExpandedDropdown` (0.25s), `DetectActiveContentController` (0.5s). Validated cached objects, invalidated on events + scene change.
+- Also fixed 3 bugs found during testing: reward popup crash, dropdown navigation, collection keyword descriptions.
 
 ## Key Findings
 - 95 source files (91 original + 4 new), ~55,750 lines of code
