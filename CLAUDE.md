@@ -35,6 +35,14 @@ Example - instead of tables, format like this:
 - Verify changes fit existing codebase before implementing
 - Use existing utilities (UIActivator, CardDetector, UITextExtractor)
 
+## Game & Framework
+
+- **Game:** Magic: The Gathering Arena (Unity, .NET 4.7.2)
+- **Mod loader:** MelonLoader (entry point: `AccessibleArenaMod : MelonMod`)
+- **Patching:** Harmony 2.x for IL interception (4 patch classes in `src/Patches/`)
+- **Screen reader:** Tolk library (P/Invoke to native DLL, supports NVDA/JAWS/Narrator)
+- **Game assemblies:** Located at `<game>/MTGA_Data/Managed/` — Core.dll has most types, Assembly-CSharp.dll has some UI types
+
 ## Documentation
 
 Detailed documentation in `docs/`:
@@ -45,6 +53,11 @@ Detailed documentation in `docs/`:
 - **CHANGELOG.md** - Recent changes
 - **KNOWN_ISSUES.md** - Bugs, limitations, planned features
 - **old/** - Archived planning documents
+
+LLM reference documentation in `llm-docs/`:
+- **architecture-overview.md** - High-level mod architecture, entry point flow, system interactions
+- **source-inventory.md** - Complete source file inventory with line counts
+- **framework-reference.md** - MelonLoader/Harmony/Unity dependency details and patch inventory
 
 **IGNORE:** `arena accessibility backlog.txt` - outdated
 
@@ -81,7 +94,7 @@ Enable detailed debug logging for investigating browser activation issues:
 ```csharp
 // Enable debug for a specific browser type
 BrowserDetector.EnableDebugForBrowser(BrowserDetector.BrowserTypeWorkflow);
-BrowserDetector.EnableDebugForBrowser(BrowserDetector.BrowserTypeScry);
+BrowserDetector.EnableDebugForBrowser("Scry");
 
 // Disable when done
 BrowserDetector.DisableDebugForBrowser(BrowserDetector.BrowserTypeWorkflow);
