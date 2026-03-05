@@ -143,81 +143,7 @@ namespace AccessibleArena.Core.Services
                     return _cachedDeckListCards;
                 }
 
-                // Extract card info from each ListMetaCardView_Expanding
-                foreach (var cardView in cardViews)
-                {
-                    if (cardView == null) continue;
-
-                    var viewType = cardView.GetType();
-                    var info = new DeckListCardInfo();
-
-                    // Store the view's gameObject for hierarchy checks
-                    if (cardView is Component viewComponent)
-                    {
-                        info.ViewGameObject = viewComponent.gameObject;
-                    }
-
-                    // Get Card property which has GrpId
-                    var cardProp = viewType.GetProperty("Card");
-                    if (cardProp != null)
-                    {
-                        var card = cardProp.GetValue(cardView);
-                        if (card != null)
-                        {
-                            var cardType = card.GetType();
-                            var grpIdProp = cardType.GetProperty("GrpId");
-                            if (grpIdProp != null)
-                            {
-                                info.GrpId = (uint)grpIdProp.GetValue(card);
-                            }
-                        }
-                    }
-
-                    // Get Quantity
-                    var qtyProp = viewType.GetProperty("Quantity");
-                    if (qtyProp != null)
-                    {
-                        info.Quantity = (int)qtyProp.GetValue(cardView);
-                    }
-
-                    // Get TileButton (the card name button)
-                    var tileBtnProp = viewType.GetProperty("TileButton");
-                    if (tileBtnProp != null)
-                    {
-                        var tileBtn = tileBtnProp.GetValue(cardView) as Component;
-                        if (tileBtn != null)
-                        {
-                            info.TileButton = tileBtn.gameObject;
-                        }
-                    }
-
-                    // Get TagButton (the quantity button)
-                    var tagBtnProp = viewType.GetProperty("TagButton");
-                    if (tagBtnProp != null)
-                    {
-                        var tagBtn = tagBtnProp.GetValue(cardView) as Component;
-                        if (tagBtn != null)
-                        {
-                            info.TagButton = tagBtn.gameObject;
-                        }
-                    }
-
-                    // Get the CardTile_Base parent via CanvasGroup or transform
-                    var canvasGroupProp = viewType.GetProperty("CanvasGroup");
-                    if (canvasGroupProp != null)
-                    {
-                        var canvasGroup = canvasGroupProp.GetValue(cardView) as Component;
-                        if (canvasGroup != null)
-                        {
-                            info.CardTileBase = canvasGroup.gameObject;
-                        }
-                    }
-
-                    if (info.IsValid)
-                    {
-                        _cachedDeckListCards.Add(info);
-                    }
-                }
+                ExtractCardViewsInto(cardViews, _cachedDeckListCards);
             }
             catch (Exception ex)
             {
@@ -309,79 +235,7 @@ namespace AccessibleArena.Core.Services
                     if (cardViews == null)
                         continue;
 
-                    foreach (var cardView in cardViews)
-                    {
-                        if (cardView == null) continue;
-
-                        var viewType = cardView.GetType();
-                        var info = new DeckListCardInfo();
-
-                        if (cardView is Component viewComponent)
-                        {
-                            info.ViewGameObject = viewComponent.gameObject;
-                        }
-
-                        // Get Card property which has GrpId
-                        var cardProp = viewType.GetProperty("Card");
-                        if (cardProp != null)
-                        {
-                            var card = cardProp.GetValue(cardView);
-                            if (card != null)
-                            {
-                                var cardType = card.GetType();
-                                var grpIdProp = cardType.GetProperty("GrpId");
-                                if (grpIdProp != null)
-                                {
-                                    info.GrpId = (uint)grpIdProp.GetValue(card);
-                                }
-                            }
-                        }
-
-                        // Get Quantity
-                        var qtyProp = viewType.GetProperty("Quantity");
-                        if (qtyProp != null)
-                        {
-                            info.Quantity = (int)qtyProp.GetValue(cardView);
-                        }
-
-                        // Get TileButton (the card name button)
-                        var tileBtnProp = viewType.GetProperty("TileButton");
-                        if (tileBtnProp != null)
-                        {
-                            var tileBtn = tileBtnProp.GetValue(cardView) as Component;
-                            if (tileBtn != null)
-                            {
-                                info.TileButton = tileBtn.gameObject;
-                            }
-                        }
-
-                        // Get TagButton (the quantity button)
-                        var tagBtnProp = viewType.GetProperty("TagButton");
-                        if (tagBtnProp != null)
-                        {
-                            var tagBtn = tagBtnProp.GetValue(cardView) as Component;
-                            if (tagBtn != null)
-                            {
-                                info.TagButton = tagBtn.gameObject;
-                            }
-                        }
-
-                        // Get the CardTile_Base parent via CanvasGroup
-                        var canvasGroupProp = viewType.GetProperty("CanvasGroup");
-                        if (canvasGroupProp != null)
-                        {
-                            var canvasGroup = canvasGroupProp.GetValue(cardView) as Component;
-                            if (canvasGroup != null)
-                            {
-                                info.CardTileBase = canvasGroup.gameObject;
-                            }
-                        }
-
-                        if (info.IsValid)
-                        {
-                            _cachedSideboardCards.Add(info);
-                        }
-                    }
+                    ExtractCardViewsInto(cardViews, _cachedSideboardCards);
                 }
 
                 if (_cachedSideboardCards.Count > 0)
@@ -791,6 +645,60 @@ namespace AccessibleArena.Core.Services
             ClearReadOnlyDeckCache();
             _showUnCollectedField = null;
             _showUnCollectedFieldSearched = false;
+        }
+
+        /// <summary>
+        /// Extracts DeckListCardInfo from each card view in an enumerable and appends valid entries to the target list.
+        /// Shared by GetDeckListCards and GetSideboardCards.
+        /// </summary>
+        private static void ExtractCardViewsInto(System.Collections.IEnumerable cardViews, List<DeckListCardInfo> target)
+        {
+            foreach (var cardView in cardViews)
+            {
+                if (cardView == null) continue;
+
+                var viewType = cardView.GetType();
+                var info = new DeckListCardInfo();
+
+                if (cardView is Component viewComponent)
+                    info.ViewGameObject = viewComponent.gameObject;
+
+                // Card.GrpId
+                var cardProp = viewType.GetProperty("Card");
+                if (cardProp != null)
+                {
+                    var card = cardProp.GetValue(cardView);
+                    if (card != null)
+                    {
+                        var grpIdProp = card.GetType().GetProperty("GrpId");
+                        if (grpIdProp != null)
+                            info.GrpId = (uint)grpIdProp.GetValue(card);
+                    }
+                }
+
+                // Quantity
+                var qtyProp = viewType.GetProperty("Quantity");
+                if (qtyProp != null)
+                    info.Quantity = (int)qtyProp.GetValue(cardView);
+
+                // TileButton (card name button)
+                var tileBtnProp = viewType.GetProperty("TileButton");
+                if (tileBtnProp?.GetValue(cardView) is Component tileBtn)
+                    info.TileButton = tileBtn.gameObject;
+
+                // TagButton (quantity button)
+                var tagBtnProp = viewType.GetProperty("TagButton");
+                if (tagBtnProp?.GetValue(cardView) is Component tagBtn)
+                    info.TagButton = tagBtn.gameObject;
+
+                // CardTile_Base via CanvasGroup
+                var canvasGroupProp = viewType.GetProperty("CanvasGroup");
+                if (canvasGroupProp?.GetValue(cardView) is Component canvasGroup)
+                    info.CardTileBase = canvasGroup.gameObject;
+
+                if (info.IsValid)
+                    target.Add(info);
+            }
         }
     }
 }

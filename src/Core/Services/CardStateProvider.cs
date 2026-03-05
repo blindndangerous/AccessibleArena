@@ -23,31 +23,13 @@ namespace AccessibleArena.Core.Services
         private static FieldInfo _attachedToIdField;
         private static bool _attachedToIdFieldSearched;
 
-        // Combat state cache
-        private static PropertyInfo _instancePropCached;
-        private static bool _instancePropSearched;
-        private static PropertyInfo _isAttackingProp;
-        private static bool _isAttackingPropSearched;
-        private static PropertyInfo _isBlockingProp;
-        private static bool _isBlockingPropSearched;
-        private static FieldInfo _isTappedField;
-        private static bool _isTappedFieldSearched;
-        private static FieldInfo _hasSummoningSicknessField;
-        private static bool _hasSummoningSicknessFieldSearched;
-        private static FieldInfo _blockingIdsField;
-        private static bool _blockingIdsFieldSearched;
-        private static FieldInfo _blockedByIdsField;
-        private static bool _blockedByIdsFieldSearched;
-
         // Zone type cache
         private static PropertyInfo _zoneTypePropCached;
         private static bool _zoneTypePropSearched;
 
-        // Targeting cache
-        private static FieldInfo _targetIdsField;
-        private static bool _targetIdsFieldSearched;
-        private static FieldInfo _targetedByIdsField;
-        private static bool _targetedByIdsFieldSearched;
+        // Generic MemberInfo cache keyed by member name for Instance sub-object fields/properties
+        private static readonly Dictionary<string, MemberInfo> _instanceMemberCache = new Dictionary<string, MemberInfo>();
+        private static readonly HashSet<string> _instanceMemberSearched = new HashSet<string>();
 
         #endregion
 
@@ -56,33 +38,93 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static void ClearCache()
         {
-            // Attachment cache
             _attachedToIdField = null;
             _attachedToIdFieldSearched = false;
-            // Combat state cache
-            _instancePropCached = null;
-            _instancePropSearched = false;
-            _isAttackingProp = null;
-            _isAttackingPropSearched = false;
-            _isBlockingProp = null;
-            _isBlockingPropSearched = false;
-            _isTappedField = null;
-            _isTappedFieldSearched = false;
-            _hasSummoningSicknessField = null;
-            _hasSummoningSicknessFieldSearched = false;
-            _blockingIdsField = null;
-            _blockingIdsFieldSearched = false;
-            _blockedByIdsField = null;
-            _blockedByIdsFieldSearched = false;
-            // Zone type cache
             _zoneTypePropCached = null;
             _zoneTypePropSearched = false;
-            // Targeting cache
-            _targetIdsField = null;
-            _targetIdsFieldSearched = false;
-            _targetedByIdsField = null;
-            _targetedByIdsFieldSearched = false;
+            _instanceMemberCache.Clear();
+            _instanceMemberSearched.Clear();
         }
+
+        #region Generic Instance Accessors
+
+        /// <summary>
+        /// Gets a cached MemberInfo (field or property) from the Instance sub-object of a model.
+        /// Tries property first, then field, with the specified binding flags.
+        /// </summary>
+        private static MemberInfo GetCachedInstanceMember(object instance, string name, BindingFlags flags)
+        {
+            if (_instanceMemberSearched.Contains(name))
+            {
+                _instanceMemberCache.TryGetValue(name, out var cached);
+                return cached;
+            }
+            _instanceMemberSearched.Add(name);
+
+            var type = instance.GetType();
+            var prop = type.GetProperty(name, flags);
+            if (prop != null) { _instanceMemberCache[name] = prop; return prop; }
+
+            var field = type.GetField(name, flags);
+            if (field != null) { _instanceMemberCache[name] = field; return field; }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets a bool value from a cached field/property on model.Instance.
+        /// Used for IsAttacking, IsBlocking, IsTapped, HasSummoningSickness.
+        /// </summary>
+        private static bool GetBoolFromInstance(object model, string memberName, BindingFlags flags)
+        {
+            var instance = CardModelProvider.GetModelInstance(model);
+            if (instance == null) return false;
+            try
+            {
+                var member = GetCachedInstanceMember(instance, memberName, flags);
+                if (member == null) return false;
+                var val = member is PropertyInfo p ? p.GetValue(instance) : ((FieldInfo)member).GetValue(instance);
+                return val is bool b && b;
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Gets a List&lt;uint&gt; from a cached field on model.Instance.
+        /// Used for BlockingIds, BlockedByIds, TargetIds, TargetedByIds.
+        /// </summary>
+        private static List<uint> GetUintListFromInstance(object model, string fieldName, BindingFlags flags)
+        {
+            var result = new List<uint>();
+            var instance = CardModelProvider.GetModelInstance(model);
+            if (instance == null) return result;
+            try
+            {
+                var member = GetCachedInstanceMember(instance, fieldName, flags);
+                if (member is FieldInfo fi)
+                {
+                    if (fi.GetValue(instance) is IList list)
+                        foreach (var item in list)
+                            if (item is uint id) result.Add(id);
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a bool state from a card GameObject by chaining CDC → Model → Instance.
+        /// </summary>
+        private static bool GetBoolFromCard(GameObject card, Func<object, bool> accessor)
+        {
+            if (card == null) return false;
+            var cdc = CardModelProvider.GetDuelSceneCDC(card);
+            if (cdc == null) return false;
+            var model = CardModelProvider.GetCardModel(cdc);
+            return accessor(model);
+        }
+
+        #endregion
 
         #region Attachments
 
@@ -93,7 +135,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static uint GetAttachedToId(object model)
         {
-            var instance = GetModelInstance(model);
+            var instance = CardModelProvider.GetModelInstance(model);
             if (instance == null) return 0;
             try
             {
@@ -153,40 +195,8 @@ namespace AccessibleArena.Core.Services
             return 0;
         }
 
-        /// <summary>
-        /// Collects all DuelScene_CDC card models from the battlefield.
-        /// Returns list of (model, instanceId, grpId) for scanning attachment relationships.
-        /// </summary>
         private static List<(object model, uint instanceId, uint grpId)> GetAllBattlefieldCardModels()
-        {
-            var results = new List<(object model, uint instanceId, uint grpId)>();
-
-            foreach (var go in GameObject.FindObjectsOfType<GameObject>())
-            {
-                if (go == null || !go.activeInHierarchy) continue;
-                if (!go.name.Contains("BattlefieldCardHolder")) continue;
-
-                foreach (var child in go.GetComponentsInChildren<Transform>(true))
-                {
-                    if (child == null || !child.gameObject.activeInHierarchy) continue;
-
-                    var cdc = CardModelProvider.GetDuelSceneCDC(child.gameObject);
-                    if (cdc == null) continue;
-
-                    var model = CardModelProvider.GetCardModel(cdc);
-                    if (model == null) continue;
-
-                    uint instanceId = GetModelInstanceId(model);
-                    if (instanceId == 0) continue;
-
-                    uint grpId = GetModelGrpId(model);
-                    results.Add((model, instanceId, grpId));
-                }
-                break; // Only one battlefield holder needed
-            }
-
-            return results;
-        }
+            => GetAllCardModelsInHolder("BattlefieldCardHolder");
 
         /// <summary>
         /// Gets the list of cards attached to this card (enchantments, equipment, etc.).
@@ -315,148 +325,10 @@ namespace AccessibleArena.Core.Services
 
         #region Combat State
 
-        /// <summary>
-        /// Gets the Instance object from a card model via cached reflection.
-        /// This is the MtgCardInstance that holds combat state fields.
-        /// </summary>
-        private static object GetModelInstance(object model)
-        {
-            if (model == null) return null;
-            try
-            {
-                if (!_instancePropSearched)
-                {
-                    _instancePropSearched = true;
-                    _instancePropCached = model.GetType().GetProperty("Instance");
-                }
-                // If cached type doesn't match (different model type), look up directly
-                if (_instancePropCached != null && _instancePropCached.DeclaringType.IsAssignableFrom(model.GetType()))
-                {
-                    return _instancePropCached.GetValue(model);
-                }
-                // Fallback: direct lookup
-                var prop = model.GetType().GetProperty("Instance");
-                return prop?.GetValue(model);
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return null;
-        }
-
-        /// <summary>
-        /// Returns true if the card model's Instance.IsAttacking property is true.
-        /// </summary>
-        public static bool GetIsAttacking(object model)
-        {
-            var instance = GetModelInstance(model);
-            if (instance == null) return false;
-            try
-            {
-                if (!_isAttackingPropSearched)
-                {
-                    _isAttackingPropSearched = true;
-                    _isAttackingProp = instance.GetType().GetProperty("IsAttacking",
-                        PublicInstance);
-                }
-                if (_isAttackingProp != null)
-                {
-                    var val = _isAttackingProp.GetValue(instance);
-                    if (val is bool b) return b;
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return false;
-        }
-
-        /// <summary>
-        /// Returns true if the card model's Instance.IsBlocking property is true.
-        /// </summary>
-        public static bool GetIsBlocking(object model)
-        {
-            var instance = GetModelInstance(model);
-            if (instance == null) return false;
-            try
-            {
-                if (!_isBlockingPropSearched)
-                {
-                    _isBlockingPropSearched = true;
-                    _isBlockingProp = instance.GetType().GetProperty("IsBlocking",
-                        PublicInstance);
-                }
-                if (_isBlockingProp != null)
-                {
-                    var val = _isBlockingProp.GetValue(instance);
-                    if (val is bool b) return b;
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return false;
-        }
-
-        /// <summary>
-        /// Gets the list of attacker InstanceIds that this blocker is blocking.
-        /// Reads Instance.BlockingIds field (List of uint).
-        /// </summary>
-        public static List<uint> GetBlockingIds(object model)
-        {
-            var result = new List<uint>();
-            var instance = GetModelInstance(model);
-            if (instance == null) return result;
-            try
-            {
-                if (!_blockingIdsFieldSearched)
-                {
-                    _blockingIdsFieldSearched = true;
-                    _blockingIdsField = instance.GetType().GetField("BlockingIds",
-                        AllInstanceFlags);
-                }
-                if (_blockingIdsField != null)
-                {
-                    var val = _blockingIdsField.GetValue(instance);
-                    if (val is IList list)
-                    {
-                        foreach (var item in list)
-                        {
-                            if (item is uint id) result.Add(id);
-                        }
-                    }
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the list of blocker InstanceIds blocking this attacker.
-        /// Reads Instance.BlockedByIds field (List of uint).
-        /// </summary>
-        public static List<uint> GetBlockedByIds(object model)
-        {
-            var result = new List<uint>();
-            var instance = GetModelInstance(model);
-            if (instance == null) return result;
-            try
-            {
-                if (!_blockedByIdsFieldSearched)
-                {
-                    _blockedByIdsFieldSearched = true;
-                    _blockedByIdsField = instance.GetType().GetField("BlockedByIds",
-                        AllInstanceFlags);
-                }
-                if (_blockedByIdsField != null)
-                {
-                    var val = _blockedByIdsField.GetValue(instance);
-                    if (val is IList list)
-                    {
-                        foreach (var item in list)
-                        {
-                            if (item is uint id) result.Add(id);
-                        }
-                    }
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return result;
-        }
+        public static bool GetIsAttacking(object model) => GetBoolFromInstance(model, "IsAttacking", PublicInstance);
+        public static bool GetIsBlocking(object model) => GetBoolFromInstance(model, "IsBlocking", PublicInstance);
+        public static List<uint> GetBlockingIds(object model) => GetUintListFromInstance(model, "BlockingIds", AllInstanceFlags);
+        public static List<uint> GetBlockedByIds(object model) => GetUintListFromInstance(model, "BlockedByIds", AllInstanceFlags);
 
         /// <summary>
         /// Resolves an InstanceId to a card name by scanning all battlefield cards.
@@ -480,109 +352,15 @@ namespace AccessibleArena.Core.Services
             return null;
         }
 
-        /// <summary>
-        /// Returns true if the card model's Instance.IsTapped field is true.
-        /// Note: IsTapped is a public FIELD on MtgCardInstance, not a property.
-        /// </summary>
-        public static bool GetIsTapped(object model)
-        {
-            var instance = GetModelInstance(model);
-            if (instance == null) return false;
-            try
-            {
-                if (!_isTappedFieldSearched)
-                {
-                    _isTappedFieldSearched = true;
-                    _isTappedField = instance.GetType().GetField("IsTapped",
-                        PublicInstance);
-                }
-                if (_isTappedField != null)
-                {
-                    var val = _isTappedField.GetValue(instance);
-                    if (val is bool b) return b;
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return false;
-        }
+        // IsTapped and HasSummoningSickness are public FIELDS on MtgCardInstance, not properties
+        public static bool GetIsTapped(object model) => GetBoolFromInstance(model, "IsTapped", PublicInstance);
+        public static bool GetHasSummoningSickness(object model) => GetBoolFromInstance(model, "HasSummoningSickness", PublicInstance);
 
-        /// <summary>
-        /// Checks if a card GameObject is tapped, using model data.
-        /// Chains: GetDuelSceneCDC -> GetCardModel -> GetIsTapped.
-        /// </summary>
-        public static bool GetIsTappedFromCard(GameObject card)
-        {
-            if (card == null) return false;
-            var cdc = CardModelProvider.GetDuelSceneCDC(card);
-            if (cdc == null) return false;
-            var model = CardModelProvider.GetCardModel(cdc);
-            return GetIsTapped(model);
-        }
-
-        /// <summary>
-        /// Returns true if the card model's Instance.HasSummoningSickness field is true.
-        /// Note: HasSummoningSickness is a public FIELD on MtgCardInstance, not a property.
-        /// </summary>
-        public static bool GetHasSummoningSickness(object model)
-        {
-            var instance = GetModelInstance(model);
-            if (instance == null) return false;
-            try
-            {
-                if (!_hasSummoningSicknessFieldSearched)
-                {
-                    _hasSummoningSicknessFieldSearched = true;
-                    _hasSummoningSicknessField = instance.GetType().GetField("HasSummoningSickness",
-                        PublicInstance);
-                }
-                if (_hasSummoningSicknessField != null)
-                {
-                    var val = _hasSummoningSicknessField.GetValue(instance);
-                    if (val is bool b) return b;
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if a card GameObject has summoning sickness, using model data.
-        /// Chains: GetDuelSceneCDC -> GetCardModel -> GetHasSummoningSickness.
-        /// </summary>
-        public static bool GetHasSummoningSicknessFromCard(GameObject card)
-        {
-            if (card == null) return false;
-            var cdc = CardModelProvider.GetDuelSceneCDC(card);
-            if (cdc == null) return false;
-            var model = CardModelProvider.GetCardModel(cdc);
-            return GetHasSummoningSickness(model);
-        }
-
-        /// <summary>
-        /// Checks if a card GameObject is attacking, using model data.
-        /// Chains: GetDuelSceneCDC -> GetCardModel -> GetIsAttacking.
-        /// </summary>
-        public static bool GetIsAttackingFromCard(GameObject card)
-        {
-            if (card == null) return false;
-            var cdc = CardModelProvider.GetDuelSceneCDC(card);
-            if (cdc == null) return false;
-            var model = CardModelProvider.GetCardModel(cdc);
-            return GetIsAttacking(model);
-        }
-
-        /// <summary>
-        /// Checks if a card GameObject is blocking, using model data.
-        /// Chains: GetDuelSceneCDC -> GetCardModel -> GetIsBlocking.
-        /// </summary>
-        public static bool GetIsBlockingFromCard(GameObject card)
-        {
-            if (card == null) return false;
-            var cdc = CardModelProvider.GetDuelSceneCDC(card);
-            if (cdc == null) return false;
-            var model = CardModelProvider.GetCardModel(cdc);
-            return GetIsBlocking(model);
-        }
+        // Card GameObject wrappers: chain GetDuelSceneCDC → GetCardModel → accessor
+        public static bool GetIsTappedFromCard(GameObject card) => GetBoolFromCard(card, GetIsTapped);
+        public static bool GetHasSummoningSicknessFromCard(GameObject card) => GetBoolFromCard(card, GetHasSummoningSickness);
+        public static bool GetIsAttackingFromCard(GameObject card) => GetBoolFromCard(card, GetIsAttacking);
+        public static bool GetIsBlockingFromCard(GameObject card) => GetBoolFromCard(card, GetIsBlocking);
 
         /// <summary>
         /// Formats a CounterType enum name into a human-readable string.
@@ -622,7 +400,7 @@ namespace AccessibleArena.Core.Services
             var model = CardModelProvider.GetCardModel(cdc);
             if (model == null) return result;
 
-            var instance = GetModelInstance(model);
+            var instance = CardModelProvider.GetModelInstance(model);
             if (instance == null) return result;
 
             try
@@ -726,84 +504,24 @@ namespace AccessibleArena.Core.Services
 
         #region Targeting
 
-        /// <summary>
-        /// Gets the list of InstanceIds this card is targeting.
-        /// Reads Instance.TargetIds field (List of uint).
-        /// </summary>
-        public static List<uint> GetTargetIds(object model)
-        {
-            var result = new List<uint>();
-            var instance = GetModelInstance(model);
-            if (instance == null) return result;
-            try
-            {
-                if (!_targetIdsFieldSearched)
-                {
-                    _targetIdsFieldSearched = true;
-                    _targetIdsField = instance.GetType().GetField("TargetIds",
-                        AllInstanceFlags);
-                }
-                if (_targetIdsField != null)
-                {
-                    var val = _targetIdsField.GetValue(instance);
-                    if (val is IList list)
-                    {
-                        foreach (var item in list)
-                        {
-                            if (item is uint id) result.Add(id);
-                        }
-                    }
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return result;
-        }
+        public static List<uint> GetTargetIds(object model) => GetUintListFromInstance(model, "TargetIds", AllInstanceFlags);
+        public static List<uint> GetTargetedByIds(object model) => GetUintListFromInstance(model, "TargetedByIds", AllInstanceFlags);
 
-        /// <summary>
-        /// Gets the list of InstanceIds of cards targeting this card.
-        /// Reads Instance.TargetedByIds field (List of uint) from MtgEntity.
-        /// </summary>
-        public static List<uint> GetTargetedByIds(object model)
-        {
-            var result = new List<uint>();
-            var instance = GetModelInstance(model);
-            if (instance == null) return result;
-            try
-            {
-                if (!_targetedByIdsFieldSearched)
-                {
-                    _targetedByIdsFieldSearched = true;
-                    _targetedByIdsField = instance.GetType().GetField("TargetedByIds",
-                        AllInstanceFlags);
-                }
-                if (_targetedByIdsField != null)
-                {
-                    var val = _targetedByIdsField.GetValue(instance);
-                    if (val is IList list)
-                    {
-                        foreach (var item in list)
-                        {
-                            if (item is uint id) result.Add(id);
-                        }
-                    }
-                }
-            }
-            catch { /* Reflection may fail on different game versions */ }
-            return result;
-        }
-
-        /// <summary>
-        /// Collects all DuelScene_CDC card models from the stack zone.
-        /// Returns list of (model, instanceId, grpId) for name resolution.
-        /// </summary>
         private static List<(object model, uint instanceId, uint grpId)> GetAllStackCardModels()
+            => GetAllCardModelsInHolder("StackCardHolder");
+
+        /// <summary>
+        /// Collects all DuelScene_CDC card models from a named card holder zone.
+        /// Returns list of (model, instanceId, grpId) for scanning relationships.
+        /// </summary>
+        private static List<(object model, uint instanceId, uint grpId)> GetAllCardModelsInHolder(string holderNameContains)
         {
             var results = new List<(object model, uint instanceId, uint grpId)>();
 
             foreach (var go in GameObject.FindObjectsOfType<GameObject>())
             {
                 if (go == null || !go.activeInHierarchy) continue;
-                if (!go.name.Contains("StackCardHolder")) continue;
+                if (!go.name.Contains(holderNameContains)) continue;
 
                 foreach (var child in go.GetComponentsInChildren<Transform>(true))
                 {
