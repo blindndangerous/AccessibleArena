@@ -69,7 +69,7 @@ namespace AccessibleArena
             UXEventQueuePatch.Initialize();
 
             // PanelStatePatch for Harmony-based panel detection (PlayBlade, Settings, etc.)
-            // Used alongside UnifiedPanelDetector for hybrid detection
+            // Used alongside alpha-based popup detection for hybrid detection
             PanelStatePatch.Initialize();
 
             LoggerInstance.Msg("Harmony patches initialized");
