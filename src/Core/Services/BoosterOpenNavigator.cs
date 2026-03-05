@@ -31,6 +31,7 @@ namespace AccessibleArena.Core.Services
         private static PropertyInfo _cardViewsProp;
         private static FieldInfo _animActiveField;
         private static MethodInfo _stopAnimMethod;
+        private static FieldInfo _autoRevealField;
 
         // Periodic rescan until cards are found (animation event spawns cards ~2.5s after detection)
         private int _rescanFrameCounter;
@@ -912,9 +913,9 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Auto-skip the card reveal animation. Blind users don't benefit from visual card reveals.
-        /// Checks if _animationSequenceActiveField is true, then calls StopBoosterOpenAnimationSequence()
-        /// which marks all cards InFinalPosition and spawns them immediately.
+        /// Auto-skip the card reveal animation so all cards appear at once (face-down).
+        /// Clears AutoReveal on all cards first so they ALL stay hidden for the user to
+        /// flip one by one with Enter, matching the sighted card-by-card reveal experience.
         /// </summary>
         private void TrySkipAnimation()
         {
@@ -947,6 +948,10 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[{NavigatorId}] Auto-skipping pack animation for accessibility");
                 try
                 {
+                    // Clear AutoReveal on all cards so they ALL spawn face-down
+                    // This lets blind users flip each card individually with Enter
+                    ClearAutoReveal();
+
                     _stopAnimMethod.Invoke(_controller, null);
                     _animSkipped = true;
                 }
@@ -955,6 +960,37 @@ namespace AccessibleArena.Core.Services
                     MelonLogger.Msg($"[{NavigatorId}] Failed to skip animation: {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Set AutoReveal = false on all cards in _cardsToOpen so they spawn face-down.
+        /// AutoReveal is a public bool field on CardDataAndRevealStatus.
+        /// </summary>
+        private void ClearAutoReveal()
+        {
+            var cards = GetCardsToOpen(_controller);
+            if (cards == null || cards.Count == 0) return;
+
+            int cleared = 0;
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+
+                if (_autoRevealField == null)
+                    _autoRevealField = card.GetType().GetField("AutoReveal", PublicInstance);
+
+                if (_autoRevealField != null)
+                {
+                    bool wasAutoReveal = (bool)_autoRevealField.GetValue(card);
+                    if (wasAutoReveal)
+                    {
+                        _autoRevealField.SetValue(card, false);
+                        cleared++;
+                    }
+                }
+            }
+
+            MelonLogger.Msg($"[{NavigatorId}] Cleared AutoReveal on {cleared}/{cards.Count} cards");
         }
 
         #region Periodic rescan until cards are found
