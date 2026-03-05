@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -25,6 +26,19 @@ namespace AccessibleArena.Core.Services
             { "BlockPlayer_SecondaryButton", () => Models.Strings.ChallengeBlockOpponent },
             { "AddFriend_SecondaryButton", () => Models.Strings.ChallengeAddFriend },
         };
+
+        // Pre-compiled regex patterns for text cleaning
+        private static readonly Regex RichTextTagPattern = new Regex(@"<[^>]+>", RegexOptions.Compiled);
+        private static readonly Regex WhitespacePattern = new Regex(@"\s+", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Strips Unity rich text tags (e.g. &lt;color&gt;, &lt;b&gt;) from text.
+        /// </summary>
+        public static string StripRichText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return RichTextTagPattern.Replace(text, "");
+        }
 
         /// <summary>
         /// Checks if the GameObject has actual text content (not just object name fallback).
@@ -551,16 +565,10 @@ namespace AccessibleArena.Core.Services
             return null;
         }
 
-        /// <summary>
-        /// Maps a set code to a human-readable set name.
-        /// Falls back to the set code if no mapping is found.
-        /// </summary>
-        public static string MapSetCodeToName(string setCode)
+        // Common MTGA set codes to human-readable names
+        private static readonly Dictionary<string, string> SetCodeMap =
+            new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            // Common MTGA set codes to names
-            // This list can be expanded as needed
-            var setCodeMap = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)
-            {
                 // Standard sets
                 { "MKM", "Murders at Karlov Manor" },
                 { "LCI", "The Lost Caverns of Ixalan" },
@@ -621,7 +629,13 @@ namespace AccessibleArena.Core.Services
                 { "KLR", "Kaladesh Remastered" },
             };
 
-            if (setCodeMap.TryGetValue(setCode, out string name))
+        /// <summary>
+        /// Maps a set code to a human-readable set name.
+        /// Falls back to the set code if no mapping is found.
+        /// </summary>
+        public static string MapSetCodeToName(string setCode)
+        {
+            if (SetCodeMap.TryGetValue(setCode, out string name))
             {
                 return name;
             }
@@ -1086,7 +1100,7 @@ namespace AccessibleArena.Core.Services
                     string content = text.text?.Trim();
                     if (!string.IsNullOrEmpty(content) && content != "\u200B")
                     {
-                        content = System.Text.RegularExpressions.Regex.Replace(content, @"<[^>]+>", "").Trim();
+                        content = StripRichText(content).Trim();
                         if (!string.IsNullOrEmpty(content))
                         {
                             romanNumeral = content;
@@ -1104,7 +1118,7 @@ namespace AccessibleArena.Core.Services
                     if (text == null || !text.gameObject.activeInHierarchy) continue;
                     string content = text.text?.Trim();
                     if (string.IsNullOrEmpty(content)) continue;
-                    content = System.Text.RegularExpressions.Regex.Replace(content, @"<[^>]+>", "").Trim();
+                    content = StripRichText(content).Trim();
 
                     // Check if content is a Roman numeral (I, II, III, IV, V, VI, VII, VIII, IX, X)
                     if (System.Text.RegularExpressions.Regex.IsMatch(content, @"^[IVX]+$"))
@@ -1943,10 +1957,10 @@ namespace AccessibleArena.Core.Services
             text = text.Replace("\u200B", "");
 
             // Remove rich text tags like <color>, <b>, etc.
-            text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "");
+            text = RichTextTagPattern.Replace(text, "");
 
             // Normalize whitespace
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
+            text = WhitespacePattern.Replace(text, " ");
 
             return text.Trim();
         }

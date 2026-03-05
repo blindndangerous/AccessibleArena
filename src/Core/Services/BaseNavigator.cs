@@ -3425,7 +3425,7 @@ namespace AccessibleArena.Core.Services
         {
             if (string.IsNullOrEmpty(text)) return text;
 
-            text = System.Text.RegularExpressions.Regex.Replace(text.Trim(), "<[^>]+>", "");
+            text = UITextExtractor.StripRichText(text.Trim());
             text = text.Trim();
 
             if (text.Length > maxLength)

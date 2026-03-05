@@ -363,7 +363,7 @@ namespace AccessibleArena.Core.Services
         private string CleanText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]+>", "").Trim();
+            text = UITextExtractor.StripRichText(text).Trim();
             if (text == "\u200B") return null;
             return text;
         }

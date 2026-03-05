@@ -493,7 +493,7 @@ namespace AccessibleArena.Core.Services
         private static string CleanLabel(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;
-            text = Regex.Replace(text, @"<[^>]+>", "").Trim();
+            text = UITextExtractor.StripRichText(text).Trim();
             text = Regex.Replace(text, @"\s+", " ");
             return text;
         }

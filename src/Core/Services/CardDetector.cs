@@ -690,7 +690,7 @@ namespace AccessibleArena.Core.Services
         private static string CleanText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
-            text = Regex.Replace(text, @"<[^>]+>", "");
+            text = UITextExtractor.StripRichText(text);
             text = text.Trim();
             return string.IsNullOrEmpty(text) ? null : text;
         }

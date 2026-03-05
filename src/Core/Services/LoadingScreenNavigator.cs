@@ -892,7 +892,7 @@ namespace AccessibleArena.Core.Services
         private string CleanStatusText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
-            text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "");
+            text = UITextExtractor.StripRichText(text);
             return text.Trim();
         }
 

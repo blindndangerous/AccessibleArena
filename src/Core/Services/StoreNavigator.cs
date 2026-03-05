@@ -826,7 +826,7 @@ namespace AccessibleArena.Core.Services
                 if (string.IsNullOrEmpty(raw) || raw.Length < 2) continue;
 
                 // Strip rich text tags
-                string text = System.Text.RegularExpressions.Regex.Replace(raw, @"<[^>]+>", "").Trim();
+                string text = UITextExtractor.StripRichText(raw).Trim();
                 if (string.IsNullOrEmpty(text) || text.Length < 2) continue;
 
                 string objName = t.gameObject.name;
@@ -1754,7 +1754,7 @@ namespace AccessibleArena.Core.Services
                 if (!string.IsNullOrEmpty(resolved) && !resolved.StartsWith("$"))
                 {
                     // Clean rich text tags
-                    resolved = System.Text.RegularExpressions.Regex.Replace(resolved, @"<[^>]+>", "").Trim();
+                    resolved = UITextExtractor.StripRichText(resolved).Trim();
                     return resolved;
                 }
             }
@@ -2266,7 +2266,7 @@ namespace AccessibleArena.Core.Services
                                 string text = t.text?.Trim();
                                 if (!string.IsNullOrEmpty(text) && text.Length > 3)
                                 {
-                                    text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]+>", "").Trim();
+                                    text = UITextExtractor.StripRichText(text).Trim();
                                     if (text.Length > 3)
                                     {
                                         descText = text;

@@ -177,7 +177,7 @@ namespace AccessibleArena.Core.Services
                     string content = text.text?.Trim();
                     if (!string.IsNullOrEmpty(content))
                     {
-                        content = System.Text.RegularExpressions.Regex.Replace(content, @"<[^>]+>", "").Trim();
+                        content = UITextExtractor.StripRichText(content).Trim();
                         if (!string.IsNullOrEmpty(content))
                             return content;
                     }

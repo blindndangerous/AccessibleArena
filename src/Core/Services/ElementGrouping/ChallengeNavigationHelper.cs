@@ -866,7 +866,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         {
             if (string.IsNullOrEmpty(text)) return text;
             // Remove <color=...>...</color> and similar rich text tags
-            return System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "").Trim();
+            return UITextExtractor.StripRichText(text).Trim();
         }
 
         #endregion

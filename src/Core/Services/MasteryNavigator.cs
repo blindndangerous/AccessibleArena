@@ -951,7 +951,7 @@ namespace AccessibleArena.Core.Services
                 if (string.IsNullOrEmpty(text)) continue;
 
                 // Clean rich text tags
-                text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]+>", "").Trim();
+                text = UITextExtractor.StripRichText(text).Trim();
                 if (string.IsNullOrEmpty(text)) continue;
 
                 // Check if this TMP is inside a purchase button (MainButtonGreen/Blue/Orange/Clear)
@@ -986,7 +986,7 @@ namespace AccessibleArena.Core.Services
             {
                 itemName = UITextExtractor.GetText(storeItemGo);
                 if (string.IsNullOrEmpty(itemName)) itemName = storeItemGo.name;
-                itemName = System.Text.RegularExpressions.Regex.Replace(itemName, @"<[^>]+>", "").Trim();
+                itemName = UITextExtractor.StripRichText(itemName).Trim();
             }
 
             // Append sphere cost if found
@@ -1020,7 +1020,7 @@ namespace AccessibleArena.Core.Services
                 // Clean rich text tags
                 if (!string.IsNullOrEmpty(resolved))
                 {
-                    resolved = System.Text.RegularExpressions.Regex.Replace(resolved, @"<[^>]+>", "").Trim();
+                    resolved = UITextExtractor.StripRichText(resolved).Trim();
                 }
 
                 return (!string.IsNullOrEmpty(resolved) && !resolved.StartsWith("$")) ? resolved : null;
@@ -1062,7 +1062,7 @@ namespace AccessibleArena.Core.Services
                         string resolved = label.ToString();
                         if (!string.IsNullOrEmpty(resolved) && !resolved.StartsWith("$"))
                         {
-                            resolved = System.Text.RegularExpressions.Regex.Replace(resolved, @"<[^>]+>", "").Trim();
+                            resolved = UITextExtractor.StripRichText(resolved).Trim();
                             if (!string.IsNullOrEmpty(resolved)) return resolved;
                         }
                     }
