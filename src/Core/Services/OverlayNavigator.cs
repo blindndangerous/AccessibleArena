@@ -360,19 +360,6 @@ namespace AccessibleArena.Core.Services
             return null;
         }
 
-        private string ExtractContainerText(GameObject container)
-        {
-            var texts = container.GetComponentsInChildren<TMPro.TMP_Text>(true);
-            foreach (var text in texts)
-            {
-                if (text == null || !text.gameObject.activeInHierarchy) continue;
-                string content = CleanText(text.text);
-                if (!string.IsNullOrEmpty(content) && content.Length > 2)
-                    return content;
-            }
-            return null;
-        }
-
         private string CleanText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;

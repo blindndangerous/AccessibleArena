@@ -37,9 +37,6 @@ namespace AccessibleArena.Core.Services
         private const float DUPLICATE_THRESHOLD_SECONDS = 0.5f;
 
         private uint _localPlayerId;
-        // DEPRECATED: TargetNavigator was used to auto-enter targeting mode on spell cast
-        // Now HotHighlightNavigator handles targeting via game's HotHighlight system
-        // private TargetNavigator _targetNavigator;
         private ZoneNavigator _zoneNavigator;
         private BattlefieldNavigator _battlefieldNavigator;
         private DateTime _lastSpellResolvedTime = DateTime.MinValue;
@@ -92,15 +89,6 @@ namespace AccessibleArena.Core.Services
                                       ?? Strings.Duel_PhaseDesc_Turn;
 
             return Strings.Duel_TurnPhase(owner, phaseDescription, _userTurnCount);
-        }
-
-        /// <summary>
-        /// Gets a human-readable description of the current phase and step.
-        /// Delegates to Strings.GetPhaseDescription() for localization.
-        /// </summary>
-        private string GetPhaseDescription()
-        {
-            return Strings.GetPhaseDescription(_currentPhase, _currentStep);
         }
 
         /// <summary>
@@ -382,9 +370,9 @@ namespace AccessibleArena.Core.Services
                 case DuelEventType.Combat:
                     return BuildCombatAnnouncement(uxEvent);
                 case DuelEventType.TargetSelection:
-                    return HandleTargetSelectionEvent(uxEvent);
+                    return null; // HotHighlightNavigator handles targeting via Tab
                 case DuelEventType.TargetConfirmed:
-                    return HandleTargetConfirmedEvent(uxEvent);
+                    return null; // HotHighlightNavigator discovers new state on next Tab
                 case DuelEventType.ResolutionStarted:
                     return HandleResolutionStarted(uxEvent);
                 case DuelEventType.ResolutionEnded:
@@ -1122,12 +1110,6 @@ namespace AccessibleArena.Core.Services
             }
         }
 
-        private (int power, int toughness) GetCardPowerToughnessByInstanceId(uint instanceId)
-        {
-            var (power, toughness, _) = GetCardPowerToughnessAndOwnerByInstanceId(instanceId);
-            return (power, toughness);
-        }
-
         private (int power, int toughness, bool isOpponent) GetCardPowerToughnessAndOwnerByInstanceId(uint instanceId)
         {
             if (instanceId == 0) return (-1, -1, false);
@@ -1164,30 +1146,6 @@ namespace AccessibleArena.Core.Services
             }
 
             return (-1, -1, false);
-        }
-
-        private string HandleTargetSelectionEvent(object uxEvent)
-        {
-            // DEPRECATED: Old targeting mode entry - now HotHighlightNavigator handles targeting
-            // via Tab cycling through highlighted targets. The game's HotHighlight system shows
-            // valid targets, and users Tab to cycle through them.
-            // if (_targetNavigator != null)
-            // {
-            //     bool hasSpellOnStack = _zoneNavigator?.GetFreshStackCount() > 0;
-            //     if (hasSpellOnStack)
-            //     {
-            //         _targetNavigator.TryEnterTargetMode(requireValidTargets: false);
-            //     }
-            //     return null;
-            // }
-            return null; // No announcement needed - Tab will discover targets
-        }
-
-        private string HandleTargetConfirmedEvent(object uxEvent)
-        {
-            // DEPRECATED: _targetNavigator?.ExitTargetMode();
-            // HotHighlightNavigator automatically discovers new highlight state on next Tab
-            return null;
         }
 
         // Track if we've logged various event fields (once per type for discovery)

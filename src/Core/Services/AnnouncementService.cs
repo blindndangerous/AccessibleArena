@@ -56,11 +56,6 @@ namespace AccessibleArena.Core.Services
             _enabled = enabled;
         }
 
-        public string GetLastAnnouncement()
-        {
-            return _lastAnnouncement;
-        }
-
         public void RepeatLastAnnouncement()
         {
             if (!string.IsNullOrEmpty(_lastAnnouncement))

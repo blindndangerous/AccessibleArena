@@ -743,12 +743,6 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Finds the first clickable child inside a container (Button, EventTrigger, etc.).
-        /// Used for WorkflowBrowser which is a container with clickable children.
-        /// Also searches sibling hierarchies for ConfirmWidgetButton since the actual
-        /// clickable button may be a sibling of WorkflowBrowser, not a child.
-        /// </summary>
-        /// <summary>
         /// Checks if a WorkflowBrowser has a ConfirmWidgetButton sibling.
         /// This is the structural marker that distinguishes real workflow prompts
         /// (ability activation, sacrifice, mana payment) from noise WorkflowBrowser
@@ -788,92 +782,6 @@ namespace AccessibleArena.Core.Services
                         var btn = descendant.GetComponent<UnityEngine.UI.Button>();
                         if (btn != null && btn.interactable)
                             return descendant.gameObject;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        private static GameObject FindClickableChild(GameObject container)
-        {
-            if (container == null) return null;
-
-            // First check if the container itself is clickable
-            if (HasClickableComponent(container))
-            {
-                var button = container.GetComponent<UnityEngine.UI.Button>();
-                if (button != null && button.interactable)
-                {
-                    return container;
-                }
-            }
-
-            // Search children for clickable components
-            foreach (Transform child in container.GetComponentsInChildren<Transform>(true))
-            {
-                if (child == null || !child.gameObject.activeInHierarchy) continue;
-                if (child.gameObject == container) continue; // Skip self
-
-                // Check for Button component
-                var button = child.GetComponent<UnityEngine.UI.Button>();
-                if (button != null && button.interactable)
-                {
-                    return child.gameObject;
-                }
-
-                // Check for EventTrigger
-                var eventTrigger = child.GetComponent<UnityEngine.EventSystems.EventTrigger>();
-                if (eventTrigger != null)
-                {
-                    return child.gameObject;
-                }
-
-                // Check for IPointerClickHandler (custom click handlers)
-                var clickHandlers = child.GetComponents<UnityEngine.EventSystems.IPointerClickHandler>();
-                if (clickHandlers != null && clickHandlers.Length > 0)
-                {
-                    return child.gameObject;
-                }
-            }
-
-            // Not found in children - search sibling hierarchies
-            // The ConfirmWidgetButton is often a sibling of WorkflowBrowser under the same parent
-            if (container.transform.parent != null)
-            {
-                var parent = container.transform.parent;
-                foreach (Transform sibling in parent)
-                {
-                    if (sibling == null || sibling.gameObject == container) continue;
-                    if (!sibling.gameObject.activeInHierarchy) continue;
-
-                    // Look for ConfirmWidgetButton or similar in sibling hierarchy
-                    foreach (Transform descendant in sibling.GetComponentsInChildren<Transform>(true))
-                    {
-                        if (descendant == null || !descendant.gameObject.activeInHierarchy) continue;
-
-                        // Priority: look for ConfirmWidgetButton component by name
-                        string name = descendant.name;
-                        if (name.Contains("ConfirmWidgetButton") || name.Contains("ConfirmButton"))
-                        {
-                            var btn = descendant.GetComponent<UnityEngine.UI.Button>();
-                            if (btn != null && btn.interactable)
-                            {
-                                MelonLogger.Msg($"[BrowserDetector] Found ConfirmWidgetButton in sibling: {name}");
-                                return descendant.gameObject;
-                            }
-                        }
-
-                        // Also check for any Button in ConfirmWidget sibling
-                        if (sibling.name.Contains("ConfirmWidget"))
-                        {
-                            var btn = descendant.GetComponent<UnityEngine.UI.Button>();
-                            if (btn != null && btn.interactable)
-                            {
-                                MelonLogger.Msg($"[BrowserDetector] Found Button in ConfirmWidget sibling: {descendant.name}");
-                                return descendant.gameObject;
-                            }
-                        }
                     }
                 }
             }

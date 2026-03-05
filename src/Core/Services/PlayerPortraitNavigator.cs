@@ -18,8 +18,6 @@ namespace AccessibleArena.Core.Services
     public class PlayerPortraitNavigator
     {
         private readonly IAnnouncementService _announcer;
-        // DEPRECATED: TargetNavigator was used to check IsTargeting to prevent exiting player zone during targeting
-        // private readonly TargetNavigator _targetNavigator;
         private bool _isActive;
 
         // State machine for V key navigation
@@ -349,22 +347,6 @@ namespace AccessibleArena.Core.Services
             if (InputManager.GetEnterAndConsume())
             {
                 DebugConfig.LogIf(DebugConfig.LogNavigation, "PlayerPortrait", $"Enter pressed and consumed in PlayerNavigation, playerIndex={_currentPlayerIndex}");
-
-                // DEPRECATED: Old targeting check - now handled by HotHighlightNavigator which includes player targets
-                // if (_targetNavigator != null && _targetNavigator.IsTargeting)
-                // {
-                //     var playerAvatar = FindCurrentPlayerAvatar();
-                //     if (playerAvatar != null && HasPlayerTargetingHighlight(playerAvatar))
-                //     {
-                //         var result = UIActivator.SimulatePointerClick(playerAvatar);
-                //         string playerName = _currentPlayerIndex == 0 ? Strings.You : Strings.Opponent;
-                //         if (result.Success)
-                //             _announcer.Announce(Strings.Targeted(playerName), AnnouncementPriority.Normal);
-                //         else
-                //             _announcer.Announce(Strings.CouldNotTarget(playerName), AnnouncementPriority.Normal);
-                //         return true;
-                //     }
-                // }
 
                 // Open emote wheel (local player only)
                 if (_currentPlayerIndex == 0)
@@ -1047,44 +1029,6 @@ namespace AccessibleArena.Core.Services
             }
 
             return -1;
-        }
-
-        private string GetPlayerInfo(GameObject timerObj, MonoBehaviour matchTimer, string playerLabel)
-        {
-            if (timerObj == null)
-            {
-                return $"{playerLabel} timer not found";
-            }
-
-            var parts = new System.Collections.Generic.List<string>();
-            parts.Add(playerLabel);
-
-            // Get timer text (shows remaining match time like "00:00")
-            var timerText = GetTimerText(timerObj);
-            if (!string.IsNullOrEmpty(timerText))
-            {
-                // Format time more naturally
-                parts.Add($"timer {FormatTimerText(timerText)}");
-            }
-
-            // Get timeout count from TimeoutDisplay
-            var timeoutCount = GetTimeoutCount(playerLabel == "Your" ? "LocalPlayer" : "Opponent");
-            if (timeoutCount >= 0)
-            {
-                parts.Add($"{timeoutCount} timeouts");
-            }
-
-            // Try to get additional info from MatchTimer component
-            if (matchTimer != null)
-            {
-                var additionalInfo = GetMatchTimerInfo(matchTimer);
-                if (!string.IsNullOrEmpty(additionalInfo))
-                {
-                    parts.Add(additionalInfo);
-                }
-            }
-
-            return string.Join(". ", parts);
         }
 
         private string GetTimerText(GameObject timerObj)

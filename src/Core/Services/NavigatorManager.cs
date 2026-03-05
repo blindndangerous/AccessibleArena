@@ -1,6 +1,5 @@
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
-using AccessibleArena.Patches;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,11 +21,6 @@ namespace AccessibleArena.Core.Services
         public NavigatorManager()
         {
             Instance = this;
-
-            // Phase 5: Removed PanelStatePatch subscription
-            // HarmonyPanelDetector now subscribes to PanelStatePatch.OnPanelStateChanged
-            // and reports to PanelStateManager. GeneralMenuNavigator subscribes to
-            // PanelStateManager events (OnPanelChanged, OnAnyPanelOpened) for rescans.
         }
 
         /// <summary>Currently active navigator, if any</summary>
@@ -158,9 +152,5 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>Check if any navigator is active</summary>
         public bool HasActiveNavigator => _activeNavigator != null;
-
-        // Phase 5: OnPanelStateChanged method removed
-        // HarmonyPanelDetector now handles panel state changes and reports to PanelStateManager.
-        // GeneralMenuNavigator subscribes to PanelStateManager events for rescans.
     }
 }

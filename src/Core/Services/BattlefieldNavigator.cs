@@ -35,10 +35,6 @@ namespace AccessibleArena.Core.Services
         private float _watchStartTime;
         private const float WatchTimeoutSeconds = 3f;
 
-        // DEPRECATED: TargetNavigator was used to check IsTargeting for row navigation behavior
-        // Now HotHighlightNavigator handles targeting - battlefield navigation is always available
-        // private TargetNavigator _targetNavigator;
-
         // Row order from top (enemy side) to bottom (player side) for Shift+Up/Down navigation
         private static readonly BattlefieldRow[] RowOrder = {
             BattlefieldRow.EnemyLands,
@@ -184,9 +180,6 @@ namespace AccessibleArena.Core.Services
                 return true;
             }
 
-            // DEPRECATED: Old targeting mode special handling removed
-            // HotHighlightNavigator handles targeting via Tab - battlefield navigation always works
-            // bool isTargeting = _targetNavigator?.IsTargeting == true;
             bool inBattlefield = _zoneNavigator.CurrentZone == ZoneType.Battlefield;
 
             // Row switching with Shift+Up/Down (only when already in battlefield)

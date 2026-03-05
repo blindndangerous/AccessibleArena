@@ -128,68 +128,6 @@ namespace AccessibleArena.Core.Services
             return "Unknown";
         }
 
-        /// <summary>
-        /// Try to detect the game's active language via reflection.
-        /// Returns the language code or "en" if detection fails.
-        /// </summary>
-        public static string DetectGameLanguage()
-        {
-            try
-            {
-                // Try to access Wotc.Mtga.Loc.Languages.ActiveLocProvider
-                var locType = Type.GetType("Wotc.Mtga.Loc.Languages, Core");
-                if (locType == null)
-                {
-                    // Try scanning loaded assemblies
-                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        locType = asm.GetType("Wotc.Mtga.Loc.Languages");
-                        if (locType != null) break;
-                    }
-                }
-
-                if (locType != null)
-                {
-                    var providerProp = locType.GetProperty("ActiveLocProvider", BindingFlags.Public | BindingFlags.Static);
-                    if (providerProp != null)
-                    {
-                        var provider = providerProp.GetValue(null);
-                        if (provider != null)
-                        {
-                            // The provider should have a language code or locale property
-                            var langProp = provider.GetType().GetProperty("LanguageCode")
-                                ?? provider.GetType().GetProperty("Locale")
-                                ?? provider.GetType().GetProperty("Language");
-
-                            if (langProp != null)
-                            {
-                                string lang = langProp.GetValue(provider)?.ToString();
-                                if (!string.IsNullOrEmpty(lang))
-                                {
-                                    MelonLogger.Msg($"[ModSettings] Detected game language: {lang}");
-                                    return lang;
-                                }
-                            }
-
-                            // Try ToString as fallback
-                            string provStr = provider.ToString();
-                            if (!string.IsNullOrEmpty(provStr) && provStr.Length <= 10)
-                            {
-                                MelonLogger.Msg($"[ModSettings] Detected game language (ToString): {provStr}");
-                                return provStr;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning($"[ModSettings] Language detection failed: {ex.Message}");
-            }
-
-            return "en";
-        }
-
         private string ToJson()
         {
             // Simple hand-written JSON (no external dependencies)

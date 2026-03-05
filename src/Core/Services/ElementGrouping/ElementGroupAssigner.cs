@@ -459,31 +459,6 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         }
 
         /// <summary>
-        /// Check if element is a secondary action.
-        /// Note: Profile, Mail, Achievements moved to Social group.
-        /// </summary>
-        private bool IsSecondaryAction(string name, string parentPath)
-        {
-            // Settings button (opens settings menu)
-            if (name.Contains("Settings") && name.Contains("Button"))
-                return true;
-
-            // Help button
-            if (name.Contains("Help") && name.Contains("Button"))
-                return true;
-
-            // Info buttons
-            if (name.Contains("Info") && name.Contains("Button"))
-                return true;
-
-            // Options button
-            if (name == "Options" || name.Contains("OptionsButton"))
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
         /// Determine which friend panel sub-group an element belongs to.
         /// Maps challenge/add-friend buttons to action groups and friend tiles to section groups.
         /// </summary>

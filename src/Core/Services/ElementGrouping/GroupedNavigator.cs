@@ -1509,24 +1509,6 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         }
 
         /// <summary>
-        /// Activate a folder toggle to show only that folder's decks.
-        /// This simulates the sighted user experience of clicking on a folder.
-        /// Uses UIActivator to go through normal activation path which triggers rescans.
-        /// </summary>
-        private void ActivateFolderToggle(GameObject folderToggle, string folderName)
-        {
-            if (folderToggle == null) return;
-
-            var toggle = folderToggle.GetComponent<UnityEngine.UI.Toggle>();
-            if (toggle != null && !toggle.isOn)
-            {
-                // Use UIActivator to trigger normal activation path (which triggers rescans)
-                UIActivator.Activate(folderToggle);
-                MelonLogger.Msg($"[GroupedNavigator] Activated folder toggle: {folderName}");
-            }
-        }
-
-        /// <summary>
         /// Exit the current group (return to group list).
         /// </summary>
         /// <returns>True if exited, false if already at group level.</returns>
@@ -1543,21 +1525,6 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             _navigationLevel = NavigationLevel.GroupList;
             _currentElementIndex = -1;
             return true;
-        }
-
-        /// <summary>
-        /// Deactivate a folder toggle when exiting the folder group.
-        /// </summary>
-        private void DeactivateFolderToggle(GameObject folderToggle, string folderName)
-        {
-            if (folderToggle == null) return;
-
-            var toggle = folderToggle.GetComponent<Toggle>();
-            if (toggle != null && toggle.isOn)
-            {
-                toggle.isOn = false;
-                MelonLogger.Msg($"[GroupedNavigator] Deactivated folder toggle: {folderName}");
-            }
         }
 
         /// <summary>
