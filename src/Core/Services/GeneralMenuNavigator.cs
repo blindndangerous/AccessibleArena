@@ -2542,8 +2542,23 @@ namespace AccessibleArena.Core.Services
         /// <summary>
         /// Check if a GameObject is a child of (or the same as) a parent GameObject.
         /// </summary>
-        private static bool IsChildOf(GameObject child, GameObject parent) =>
-            MenuPanelTracker.IsChildOf(child, parent);
+        private static bool IsChildOf(GameObject child, GameObject parent)
+        {
+            if (child == null || parent == null)
+                return false;
+
+            Transform current = child.transform;
+            Transform parentTransform = parent.transform;
+
+            while (current != null)
+            {
+                if (current == parentTransform)
+                    return true;
+                current = current.parent;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Check if a GameObject is a popup overlay (Popup or SystemMessageView).

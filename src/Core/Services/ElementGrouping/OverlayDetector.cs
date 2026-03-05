@@ -121,7 +121,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         private bool IsInsidePopup(GameObject obj)
         {
             var foregroundPanel = ForegroundPanel;
-            return foregroundPanel != null && MenuPanelTracker.IsChildOf(obj, foregroundPanel);
+            return foregroundPanel != null && IsChildOf(obj, foregroundPanel);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         private bool IsInsideSettingsMenu(GameObject obj)
         {
             var settingsPanel = _screenDetector.SettingsContentPanel;
-            return settingsPanel != null && MenuPanelTracker.IsChildOf(obj, settingsPanel);
+            return settingsPanel != null && IsChildOf(obj, settingsPanel);
         }
 
         /// <summary>
@@ -139,7 +139,28 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         private bool IsInsideSocialPanel(GameObject obj)
         {
             var socialPanel = GameObject.Find("SocialUI_V2_Desktop_16x9(Clone)");
-            return socialPanel != null && MenuPanelTracker.IsChildOf(obj, socialPanel);
+            return socialPanel != null && IsChildOf(obj, socialPanel);
+        }
+
+        /// <summary>
+        /// Check if a GameObject is a child of (or the same as) a parent GameObject.
+        /// </summary>
+        private static bool IsChildOf(GameObject child, GameObject parent)
+        {
+            if (child == null || parent == null)
+                return false;
+
+            Transform current = child.transform;
+            Transform parentTransform = parent.transform;
+
+            while (current != null)
+            {
+                if (current == parentTransform)
+                    return true;
+                current = current.parent;
+            }
+
+            return false;
         }
 
         /// <summary>
