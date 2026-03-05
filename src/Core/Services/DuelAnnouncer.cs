@@ -54,6 +54,9 @@ namespace AccessibleArena.Core.Services
         // Track commander GrpIds for command zone access (Brawl/Commander)
         private readonly HashSet<uint> _commandZoneGrpIds = new HashSet<uint>();
 
+        // Track which event labels have been field-logged (replaces per-type boolean flags)
+        private static readonly HashSet<string> _fieldLoggedLabels = new HashSet<string>();
+
         // Pre-compiled regex patterns for zone event parsing
         private static readonly Regex ZoneNamePattern = new Regex(@"^(\w+)\s*\(", RegexOptions.Compiled);
         private static readonly Regex ZoneCountPattern = new Regex(@"(\d+)\s*cards?\)", RegexOptions.Compiled);
@@ -534,18 +537,14 @@ namespace AccessibleArena.Core.Services
         }
 
         // Track if we've logged life event fields (only once for discovery)
-        private static bool _lifeEventFieldsLogged = false;
+
 
         private string BuildLifeChangeAnnouncement(object uxEvent)
         {
             try
             {
                 // Log all fields/properties for discovery (once per session)
-                if (!_lifeEventFieldsLogged)
-                {
-                    _lifeEventFieldsLogged = true;
-                    LogEventFields(uxEvent, "LIFE EVENT");
-                }
+                LogEventFieldsOnce(uxEvent, "LIFE EVENT");
 
                 // Field names from discovery: AffectedId, Change (property)
                 var affectedId = GetFieldValue<uint>(uxEvent, "AffectedId");
@@ -614,15 +613,13 @@ namespace AccessibleArena.Core.Services
             }
         }
 
-        // Track if we've logged damage event fields (only once for discovery)
-        private static bool _damageEventFieldsLogged = false;
 
         private string BuildDamageAnnouncement(object uxEvent)
         {
             try
             {
                 // Log all fields/properties for discovery (once per session)
-                LogDamageEventFields(uxEvent);
+                LogEventFieldsOnce(uxEvent, "DAMAGE EVENT");
 
                 var damage = GetFieldValue<int>(uxEvent, "DamageAmount");
                 if (damage <= 0) return null;
@@ -664,6 +661,16 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Warning($"[DuelAnnouncer] Error building damage announcement: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Logs event fields/properties once per label (for discovery/debugging).
+        /// Replaces per-event-type boolean flags with a single HashSet.
+        /// </summary>
+        private void LogEventFieldsOnce(object uxEvent, string label)
+        {
+            if (uxEvent == null || !_fieldLoggedLabels.Add(label)) return;
+            LogEventFields(uxEvent, label);
         }
 
         private void LogEventFields(object uxEvent, string label)
@@ -710,50 +717,7 @@ namespace AccessibleArena.Core.Services
             DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"=== END {label} FIELDS ===");
         }
 
-        private void LogDamageEventFields(object uxEvent)
-        {
-            if (_damageEventFieldsLogged || uxEvent == null) return;
-            _damageEventFieldsLogged = true;
-
-            var type = uxEvent.GetType();
-            DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"=== DAMAGE EVENT TYPE: {type.FullName} ===");
-
-            // Log all fields
-            var fields = type.GetFields(AllInstanceFlags);
-            foreach (var field in fields)
-            {
-                try
-                {
-                    var value = field.GetValue(uxEvent);
-                    string valueStr = value?.ToString() ?? "null";
-                    if (valueStr.Length > 100) valueStr = valueStr.Substring(0, 100) + "...";
-                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Field: {field.Name} = {valueStr} ({field.FieldType.Name})");
-                }
-                catch (Exception ex)
-                {
-                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Field: {field.Name} = [Error: {ex.Message}]");
-                }
-            }
-
-            // Log all properties
-            var props = type.GetProperties(AllInstanceFlags);
-            foreach (var prop in props)
-            {
-                try
-                {
-                    var value = prop.GetValue(uxEvent);
-                    string valueStr = value?.ToString() ?? "null";
-                    if (valueStr.Length > 100) valueStr = valueStr.Substring(0, 100) + "...";
-                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Property: {prop.Name} = {valueStr} ({prop.PropertyType.Name})");
-                }
-                catch (Exception ex)
-                {
-                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Property: {prop.Name} = [Error: {ex.Message}]");
-                }
-            }
-
-            DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"=== END DAMAGE EVENT FIELDS ===");
-        }
+        // LogDamageEventFields removed - use LogEventFieldsOnce
 
         private string GetDamageTargetName(uint targetPlayerId, uint targetInstanceId)
         {
@@ -766,7 +730,7 @@ namespace AccessibleArena.Core.Services
             // Try to find target card by InstanceId
             if (targetInstanceId != 0)
             {
-                string cardName = FindCardNameByInstanceId(targetInstanceId);
+                string cardName = GetCardNameByInstanceId(targetInstanceId);
                 if (!string.IsNullOrEmpty(cardName))
                     return cardName;
             }
@@ -786,7 +750,7 @@ namespace AccessibleArena.Core.Services
                 var instanceId = GetFieldValue<uint>(uxEvent, fieldName);
                 if (instanceId != 0)
                 {
-                    string name = FindCardNameByInstanceId(instanceId);
+                    string name = GetCardNameByInstanceId(instanceId);
                     if (!string.IsNullOrEmpty(name))
                     {
                         DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Found source from {fieldName}: {name}");
@@ -840,38 +804,7 @@ namespace AccessibleArena.Core.Services
             return flags.Count > 0 ? $"({string.Join(", ", flags)})" : null;
         }
 
-        private string FindCardNameByInstanceId(uint instanceId)
-        {
-            if (instanceId == 0) return null;
-
-            try
-            {
-                foreach (var holderName in AllZoneHolders)
-                {
-                    foreach (var go in EnumerateCDCsInHolder(holderName))
-                    {
-                        var cdcComponent = CardModelProvider.GetDuelSceneCDC(go);
-                        if (cdcComponent == null) continue;
-
-                        var model = CardModelProvider.GetCardModel(cdcComponent);
-                        if (model == null) continue;
-
-                        var cid = GetFieldValue<uint>(model, "InstanceId");
-                        if (cid == instanceId)
-                        {
-                            var gid = GetFieldValue<uint>(model, "GrpId");
-                            if (gid != 0) return CardModelProvider.GetNameFromGrpId(gid);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning($"[DuelAnnouncer] Error finding card by InstanceId {instanceId}: {ex.Message}");
-            }
-
-            return null;
-        }
+        // FindCardNameByInstanceId removed - use GetCardNameByInstanceId (cached)
 
         private string BuildPhaseChangeAnnouncement(object uxEvent)
         {
@@ -1046,11 +979,7 @@ namespace AccessibleArena.Core.Services
                 if (typeName == "AttackLobUXEvent")
                 {
                     // Debug: Log all fields once to discover available data
-                    if (!_attackLobFieldsLogged)
-                    {
-                        _attackLobFieldsLogged = true;
-                        LogEventFields(uxEvent, "AttackLobUXEvent");
-                    }
+                    LogEventFieldsOnce(uxEvent, "AttackLobUXEvent");
                     return BuildAttackerDeclaredAnnouncement(uxEvent);
                 }
                 if (typeName == "AttackDecrementUXEvent") return Strings.Duel_AttackerRemoved;
@@ -1064,7 +993,6 @@ namespace AccessibleArena.Core.Services
         }
 
         // Track if we've logged AttackLobUXEvent fields (one-time debug)
-        private static bool _attackLobFieldsLogged = false;
 
         private string BuildAttackerDeclaredAnnouncement(object uxEvent)
         {
@@ -1080,7 +1008,7 @@ namespace AccessibleArena.Core.Services
                 // Look up card by InstanceId
                 if (attackerId != 0)
                 {
-                    cardName = FindCardNameByInstanceId(attackerId);
+                    cardName = GetCardNameByInstanceId(attackerId);
 
                     // Get P/T and ownership from the card model
                     var (power, toughness, isOpp) = GetCardPowerToughnessAndOwnerByInstanceId(attackerId);
@@ -1149,10 +1077,6 @@ namespace AccessibleArena.Core.Services
         }
 
         // Track if we've logged various event fields (once per type for discovery)
-        private static bool _resolutionEventFieldsLogged = false;
-        private static bool _cardModelUpdateFieldsLogged = false;
-        private static bool _zoneTransferFieldsLogged = false;
-        private static bool _combatFrameFieldsLogged = false;
 
         // Track previous damage values to detect changes
         private Dictionary<uint, uint> _creatureDamage = new Dictionary<uint, uint>();
@@ -1162,11 +1086,7 @@ namespace AccessibleArena.Core.Services
             try
             {
                 // Log fields for discovery (once)
-                if (!_cardModelUpdateFieldsLogged)
-                {
-                    _cardModelUpdateFieldsLogged = true;
-                    LogEventFields(uxEvent, "CARD MODEL UPDATE");
-                }
+                LogEventFieldsOnce(uxEvent, "CARD MODEL UPDATE");
 
                 // Try to extract card instance and damage info
                 var instanceId = GetFieldValue<uint>(uxEvent, "InstanceId");
@@ -1212,18 +1132,13 @@ namespace AccessibleArena.Core.Services
         }
 
         // Track if we've logged ZoneTransferUXEvent fields (once for discovery)
-        private static bool _zoneTransferUXEventFieldsLogged = false;
 
         private string HandleZoneTransferGroup(object uxEvent)
         {
             try
             {
                 // Log fields for discovery (once)
-                if (!_zoneTransferFieldsLogged)
-                {
-                    _zoneTransferFieldsLogged = true;
-                    LogEventFields(uxEvent, "ZONE TRANSFER GROUP");
-                }
+                LogEventFieldsOnce(uxEvent, "ZONE TRANSFER GROUP");
 
                 // Get the _zoneTransfers list which contains individual ZoneTransferUXEvent items
                 var zoneTransfers = GetFieldValue<object>(uxEvent, "_zoneTransfers");
@@ -1239,11 +1154,7 @@ namespace AccessibleArena.Core.Services
                     if (transfer == null) continue;
 
                     // Log ZoneTransferUXEvent fields once for discovery
-                    if (!_zoneTransferUXEventFieldsLogged)
-                    {
-                        _zoneTransferUXEventFieldsLogged = true;
-                        LogEventFields(transfer, "ZONE TRANSFER UX EVENT");
-                    }
+                    LogEventFieldsOnce(transfer, "ZONE TRANSFER UX EVENT");
 
                     // Extract zone transfer details
                     var announcement = ProcessZoneTransfer(transfer);
@@ -1715,11 +1626,7 @@ namespace AccessibleArena.Core.Services
             try
             {
                 // Log fields for discovery (once)
-                if (!_combatFrameFieldsLogged)
-                {
-                    _combatFrameFieldsLogged = true;
-                    LogEventFields(uxEvent, "COMBAT FRAME");
-                }
+                LogEventFieldsOnce(uxEvent, "COMBAT FRAME");
 
                 var announcements = new List<string>();
 
@@ -1805,7 +1712,6 @@ namespace AccessibleArena.Core.Services
         }
 
         // Track if we've logged multistep effect fields (once for discovery)
-        private static bool _multistepEffectFieldsLogged = false;
 
         /// <summary>
         /// Tracks if a library manipulation browser (scry, surveil, etc.) is active.
@@ -1824,11 +1730,7 @@ namespace AccessibleArena.Core.Services
             try
             {
                 // Log fields for discovery (once)
-                if (!_multistepEffectFieldsLogged)
-                {
-                    _multistepEffectFieldsLogged = true;
-                    LogEventFields(uxEvent, "MULTISTEP EFFECT");
-                }
+                LogEventFieldsOnce(uxEvent, "MULTISTEP EFFECT");
 
                 // Extract effect information using correct property names from logs:
                 // - AbilityCategory (AbilitySubCategory enum): Scry, Surveil, etc.
@@ -2112,11 +2014,7 @@ namespace AccessibleArena.Core.Services
             try
             {
                 // Log fields for discovery (once)
-                if (!_resolutionEventFieldsLogged)
-                {
-                    _resolutionEventFieldsLogged = true;
-                    LogEventFields(uxEvent, "RESOLUTION EVENT");
-                }
+                LogEventFieldsOnce(uxEvent, "RESOLUTION EVENT");
 
                 // Try to get the instigator (source card) info
                 var instigatorInstanceId = GetFieldValue<uint>(uxEvent, "InstigatorInstanceId");
