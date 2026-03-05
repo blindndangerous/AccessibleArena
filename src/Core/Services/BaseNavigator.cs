@@ -1693,10 +1693,13 @@ namespace AccessibleArena.Core.Services
                 bool isInputField = UIFocusTracker.IsInputField(element);
                 bool isArrowNavToInputField = isInputField && !_lastNavigationWasTab;
                 bool isToggle = element.GetComponent<Toggle>() != null;
+                bool isDropdown = UIFocusTracker.IsDropdown(element);
 
                 // Set submit blocking flag BEFORE any EventSystem interaction.
-                // EventSystemPatch checks this flag to block Unity's Submit events for toggles.
-                InputManager.BlockSubmitForToggle = isToggle;
+                // EventSystemPatch checks this flag to block Unity's Submit events.
+                // For dropdowns: prevents SendSubmitEventToSelectedObject from firing
+                // before our Update opens the dropdown and sets ShouldBlockEnterFromGame.
+                InputManager.BlockSubmitForToggle = isToggle || isDropdown;
 
                 // INPUT FIELD HANDLING (arrow navigation):
                 // Clear EventSystem selection when arrow-navigating to input fields.

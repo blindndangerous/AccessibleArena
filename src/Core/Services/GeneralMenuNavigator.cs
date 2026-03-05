@@ -4512,10 +4512,13 @@ namespace AccessibleArena.Core.Services
                 // Check if this is a toggle - need to handle MTGA's OnSelect re-toggle
                 var toggle = gameObject.GetComponent<Toggle>();
                 bool isToggle = toggle != null;
+                bool isDropdown = UIFocusTracker.IsDropdown(gameObject);
 
                 // Set submit blocking flag BEFORE any EventSystem interaction.
-                // EventSystemPatch checks this flag to block Unity's Submit events for toggles.
-                InputManager.BlockSubmitForToggle = isToggle;
+                // EventSystemPatch checks this flag to block Unity's Submit events.
+                // For dropdowns: prevents SendSubmitEventToSelectedObject from firing
+                // before our Update opens the dropdown and sets ShouldBlockEnterFromGame.
+                InputManager.BlockSubmitForToggle = isToggle || isDropdown;
 
                 // Skip SetSelectedGameObject if EventSystem already has our element selected.
                 // Calling it again would trigger OnSelect handlers unnecessarily, which can cause

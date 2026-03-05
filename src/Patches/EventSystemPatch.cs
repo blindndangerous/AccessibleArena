@@ -86,7 +86,7 @@ namespace AccessibleArena.Patches
         }
 
         /// <summary>
-        /// Patch Input.GetKeyDown to block Enter key when on a toggle.
+        /// Patch Input.GetKeyDown to block Enter key when on a toggle or dropdown.
         /// This catches MTGA code that directly reads Input.GetKeyDown(KeyCode.Return)
         /// bypassing both KeyboardManager and EventSystem.
         /// Sets EnterPressedWhileBlocked flag so our code can still detect the press.
@@ -95,12 +95,12 @@ namespace AccessibleArena.Patches
         [HarmonyPostfix]
         public static void GetKeyDown_Postfix(KeyCode key, ref bool __result)
         {
-            // Only intercept when we're on a toggle and the key is Enter
+            // Only intercept when we're on a toggle/dropdown and the key is Enter
             if (InputManager.BlockSubmitForToggle && __result)
             {
                 if (key == KeyCode.Return || key == KeyCode.KeypadEnter)
                 {
-                    MelonLogger.Msg($"[EventSystemPatch] BLOCKED Input.GetKeyDown({key}) - on toggle, setting EnterPressedWhileBlocked");
+                    MelonLogger.Msg($"[EventSystemPatch] BLOCKED Input.GetKeyDown({key}) - on toggle/dropdown, setting EnterPressedWhileBlocked");
                     InputManager.EnterPressedWhileBlocked = true;
                     __result = false;
                 }

@@ -1,7 +1,7 @@
 # Dropdown Handling - Unified State Management
 
 **Created:** 2026-02-03
-**Updated:** 2026-03-03 (PopupHandler unified into BaseNavigator, deferred value notification, captionText reading, stale value correction)
+**Updated:** 2026-03-05 (Pre-open Submit blocking via BlockSubmitForToggle on dropdown elements)
 
 ---
 
@@ -86,9 +86,11 @@ Supports all dropdown types: `cTMP_Dropdown` (via reflection on `m_OnValueChange
 
 The mod fully handles Enter key presses in dropdown mode. The game never sees Enter while a dropdown is open:
 
-1. **KeyboardManagerPatch** - Blocks Enter from `MTGA.KeyboardManager.PublishKeyDown` when `ShouldBlockEnterFromGame` is true
-2. **EventSystemPatch** - Blocks `SendSubmitEventToSelectedObject` when `ShouldBlockEnterFromGame` is true
+1. **Pre-open blocking** - `InputManager.BlockSubmitForToggle` is set to true when the navigator focuses a dropdown element (before the user presses Enter). This blocks `SendSubmitEventToSelectedObject` and `Input.GetKeyDown(Enter)` via EventSystemPatch. Without this, Unity's EventSystem processes Submit BEFORE our Update runs, causing the game to auto-advance the form (e.g., registration page Continue button) when Enter is pressed to open the dropdown. Cleared by `OnDropdownOpened()` when the dropdown actually opens.
+2. **Open-mode blocking** - `ShouldBlockEnterFromGame` is set by `OnDropdownOpened()` and stays true until dropdown mode exits. Blocks Enter from `KeyboardManager.PublishKeyDown` and `SendSubmitEventToSelectedObject`.
 3. **Post-close blocking** - `ShouldBlockSubmit()` blocks Submit for 3 frames after dropdown close to prevent auto-clicking the next focused element
+
+**Handoff sequence:** `BlockSubmitForToggle` (navigate to dropdown) → `OnDropdownOpened()` clears `BlockSubmitForToggle`, sets `ShouldBlockEnterFromGame` → `OnDropdownClosed()` clears `ShouldBlockEnterFromGame`, starts `ShouldBlockSubmit()` window.
 
 ### Item Selection and Close (BaseNavigator)
 
@@ -192,11 +194,18 @@ if (justExitedDropdown)
 ```
 [Normal Navigation]
     |
-    v User presses Enter on dropdown
+    v Navigator focuses dropdown element
+[Pre-Open Blocking]
+    | BlockSubmitForToggle = true (blocks Submit + Input.GetKeyDown(Enter) from game)
+    | EventSystemPatch: SendSubmitEventToSelectedObject blocked
+    | EventSystemPatch: Input.GetKeyDown(Enter) returns false, sets EnterPressedWhileBlocked
+    v User presses Enter
 [Dropdown Opens]
+    | UIActivator.Activate() opens dropdown
+    | OnDropdownOpened(): BlockSubmitForToggle = false (handoff)
+    | _blockEnterFromGame = true (Enter blocked from game)
     | IsDropdownExpanded = true
     | DropdownStateManager.IsInDropdownMode = true
-    | _blockEnterFromGame = true (Enter blocked from game)
     | onValueChanged suppressed (replaced with empty event)
     v
 [Dropdown Mode]
@@ -346,6 +355,8 @@ MTGA has multiple ways of detecting Enter:
 3. Direct `Input.GetKeyDown` calls
 
 All three must be blocked while in dropdown mode. The `_blockEnterFromGame` flag is set when entering dropdown mode and persists until our `Update()` processes the exit transition. This is necessary because `EventSystem.Process()` runs before our `Update()` and may close the dropdown before `PublishKeyDown` is called.
+
+**Critical timing issue:** `EventSystem.Update()` runs BEFORE MelonLoader's `OnUpdate()`. When the user presses Enter to open a dropdown, `SendSubmitEventToSelectedObject` fires before our code can open the dropdown and set `_blockEnterFromGame`. If MTGA has auto-moved EventSystem selection to a form button (e.g., Continue on the registration page when all fields are filled), the unblocked Submit triggers the button, auto-advancing the page. To prevent this, `BlockSubmitForToggle` is set preemptively when the navigator focuses a dropdown element, blocking Submit before the user even presses Enter. `OnDropdownOpened()` then clears `BlockSubmitForToggle` and sets `_blockEnterFromGame` to take over.
 
 ### Why Silent Value Setting + Deferred Notification?
 

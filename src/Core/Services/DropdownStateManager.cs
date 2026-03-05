@@ -225,6 +225,14 @@ namespace AccessibleArena.Core.Services
             _blockEnterFromGame = true;
             _suppressReentry = false; // Clear suppression from previous dropdown close
 
+            // Hand off Enter blocking from BlockSubmitForToggle to ShouldBlockEnterFromGame.
+            // BlockSubmitForToggle was set when navigating TO the dropdown (before opening) to
+            // prevent SendSubmitEventToSelectedObject from auto-advancing the form. Now that
+            // the dropdown is open, ShouldBlockEnterFromGame takes over. We must clear
+            // BlockSubmitForToggle so Input.GetKeyDown(Enter) works for item selection inside
+            // the dropdown (the GetKeyDown_Postfix blocks Enter when BlockSubmitForToggle is true).
+            InputManager.BlockSubmitForToggle = false;
+
             // Invalidate dropdown scan cache so queries get fresh state
             UIFocusTracker.InvalidateDropdownCache();
 

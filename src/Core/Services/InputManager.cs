@@ -35,10 +35,13 @@ namespace AccessibleArena.Core.Services
         public static bool BlockNextEnterKeyUp { get; set; }
 
         /// <summary>
-        /// When true, EventSystemPatch blocks Unity's Submit events for toggles.
-        /// Set by navigators when the current element is a toggle, cleared when moving away.
+        /// When true, EventSystemPatch blocks Unity's Submit events.
+        /// Set by navigators when the current element is a toggle or dropdown,
+        /// cleared when moving to other element types.
         /// This persistent flag works around the timing issue where EventSystem.Update()
         /// runs BEFORE our MonoBehaviour.Update() can consume keys.
+        /// Without this, pressing Enter on a dropdown triggers SendSubmitEventToSelectedObject
+        /// before our Update can open the dropdown and set ShouldBlockEnterFromGame.
         /// </summary>
         private static bool _blockSubmitForToggle;
         public static bool BlockSubmitForToggle
