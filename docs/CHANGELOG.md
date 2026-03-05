@@ -21,7 +21,14 @@ All notable changes to Accessible Arena.
 - Reads pack data from ContentControllerRewards before the game consumes it
 - Converts CollationId to set code via CollationMapping enum, then resolves localized name
 
+### Improved: Pack Opening Experience
+- Pack openings now closely match the sighted experience of revealing cards one by one
+- Animation auto-skipped for accessibility, all cards spawn face-down for manual reveal
+- Cards ordered commons-first, rare/mythic last for natural dramaturgy
+- I key works during pack openings for extended card info
+
 ### Bug Fixes
+- Fixed pack openings showing 0 cards after detection rewrite
 - Fixed reward popups not closing
 - Fixed card count not announced when adding or removing cards in deck builder
 - Fixed various dropdown navigation issues

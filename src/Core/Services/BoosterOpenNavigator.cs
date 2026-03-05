@@ -169,8 +169,10 @@ namespace AccessibleArena.Core.Services
                 FindCardsByComponentType(cardEntries, addedObjects);
             }
 
-            // Sort cards by index
-            cardEntries = cardEntries.OrderBy(x => x.sortOrder).ToList();
+            // Sort cards in reverse order (highest index first = rightmost card first)
+            // The rare/mythic is at index 0 (leftmost), commons at higher indices (right)
+            // Reverse order gives the natural "open commons first, rare last" dramaturgy
+            cardEntries = cardEntries.OrderByDescending(x => x.sortOrder).ToList();
 
             MelonLogger.Msg($"[{NavigatorId}] Found {cardEntries.Count} entries (cards + vault progress)");
 
@@ -195,18 +197,18 @@ namespace AccessibleArena.Core.Services
                 }
 
                 // Check if this is vault progress (not a real card)
-                bool isVaultProgress = displayName.StartsWith("Vault Progress");
+                bool isVaultProgress = displayName.Contains("Vault Progress");
 
                 string label;
-                if (isVaultProgress)
+                if (isHidden)
                 {
-                    label = displayName;
-                }
-                else if (isHidden)
-                {
-                    // Face-down card - don't reveal name, prompt user to flip
+                    // Face-down card - always show as hidden, regardless of other text
                     label = Strings.HiddenCard;
                     cardNum++;
+                }
+                else if (isVaultProgress)
+                {
+                    label = displayName;
                 }
                 else
                 {
@@ -351,7 +353,8 @@ namespace AccessibleArena.Core.Services
 
                 // Check for vault/duplicate progress indicator (e.g., "+99")
                 // This appears when you get a 5th+ copy of a common/uncommon
-                if (objName.Contains("Progress") && objName.Contains("Quantity"))
+                // Only check ACTIVE elements - the prefab has these on all cards but inactive when not relevant
+                if (objName.Contains("Progress") && objName.Contains("Quantity") && text.gameObject.activeInHierarchy)
                 {
                     string content = text.text?.Trim();
                     if (!string.IsNullOrEmpty(content))
@@ -360,7 +363,8 @@ namespace AccessibleArena.Core.Services
 
                 // Collect tags from TAG parent elements (these describe the vault progress type)
                 // Structure: Text_1 (parent=TAG_1): 'Alchemy', Text_2 (parent=TAG_2): 'Bonus', etc.
-                if (parentName.StartsWith("TAG"))
+                // Only check ACTIVE elements
+                if (parentName.StartsWith("TAG") && text.gameObject.activeInHierarchy)
                 {
                     string content = text.text?.Trim();
                     if (!string.IsNullOrEmpty(content))
@@ -991,6 +995,67 @@ namespace AccessibleArena.Core.Services
             }
 
             MelonLogger.Msg($"[{NavigatorId}] Cleared AutoReveal on {cleared}/{cards.Count} cards");
+        }
+
+        /// <summary>
+        /// Override ForceRescan to preserve cursor position and suppress redundant announcements.
+        /// The base implementation resets to index 0 and re-announces the full activation text
+        /// on every rescan, which is disruptive during periodic polling.
+        /// </summary>
+        public override void ForceRescan()
+        {
+            if (!_isActive) return;
+
+            int oldCount = _elements.Count;
+            int oldIndex = _currentIndex;
+            GameObject oldObj = IsValidIndex ? _elements[_currentIndex].GameObject : null;
+
+            _elements.Clear();
+            _currentIndex = -1;
+
+            DiscoverElements();
+
+            if (_elements.Count > 0)
+            {
+                // Restore position by matching the same GameObject (stable across label changes)
+                int restored = -1;
+                if (oldObj != null)
+                {
+                    for (int i = 0; i < _elements.Count; i++)
+                    {
+                        if (_elements[i].GameObject == oldObj)
+                        {
+                            restored = i;
+                            break;
+                        }
+                    }
+                }
+
+                // Fall back to old index (clamped) or 0
+                if (restored >= 0)
+                    _currentIndex = restored;
+                else if (oldIndex >= 0 && oldIndex < _elements.Count)
+                    _currentIndex = oldIndex;
+                else
+                    _currentIndex = 0;
+
+                // Only announce when element count changes (new cards found, cards revealed)
+                if (_elements.Count != oldCount)
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Rescan: {oldCount} -> {_elements.Count} elements");
+                    _announcer.AnnounceInterrupt(GetActivationAnnouncement());
+                }
+                // Announce the current element's new label after a reveal (label changed but same object)
+                else if (restored >= 0 && oldObj != null)
+                {
+                    string newLabel = _elements[restored].Label;
+                    _announcer.AnnounceInterrupt(newLabel);
+                }
+            }
+            else
+            {
+                MelonLogger.Msg($"[{NavigatorId}] Rescan found no elements");
+            }
         }
 
         #region Periodic rescan until cards are found

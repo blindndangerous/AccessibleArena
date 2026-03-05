@@ -192,28 +192,40 @@ The pack carousel is a special element that combines all pack hitboxes into a si
 **Navigator:** `BoosterOpenNavigator`
 **Priority:** 80
 
-After clicking a pack, displays the cards you received in a scrollable list.
+After clicking a pack, all cards appear face-down for the user to reveal one by one, matching the sighted card-by-card reveal experience.
 
 **Detection:**
-- BoosterChamber controller active
-- CardScroller element visible
-- RevealAll button present
+- BoosterChamber controller active with `_cardsToOpen` populated
+- Uses `BoosterOpenToScrollListController` as authoritative source (not UI element names)
 
 **Elements Detected:**
-- Individual cards from opened pack
-- "Reveal All" button
-- Continue/Done button
+- All cards from opened pack (face-down initially, revealable with Enter)
+- Vault progress markers (duplicate protection, e.g., "+99")
+- Continue/Done button (appears after all cards revealed)
+- Close button (ModalFade background)
 
 **Navigation:**
-- Left/Right arrows: Navigate between cards
-- Up/Down arrows: Read card details
-- Enter: Reveal card / Continue
+- Left/Right arrows: Navigate between cards (commons first, rare last)
+- Up/Down arrows: Read card details (via CardNavigator)
+- I key: Extended card info (keyword descriptions, other faces)
+- Enter: Flip hidden card to reveal, or activate button
 - Home/End: Jump to first/last card
+- Backspace: Close pack contents
+
+**Card Reveal Flow:**
+1. Pack animation is auto-skipped (blind users don't benefit from visual reveals)
+2. AutoReveal is cleared so ALL cards spawn face-down
+3. Cards ordered right-to-left: commons first, rare/mythic last (natural dramaturgy)
+4. User flips each card with Enter, card name announced on reveal
+5. After all cards revealed, "Continue" button appears
 
 **Technical Notes:**
-- Detects `BoosterOpenToScrollListController` pattern
-- Cards are navigable via standard card detection
-- "Reveal All" speeds up card reveal animation
+- Reads `_onScreenboosterCardHoldersWithIndex` dictionary from controller via reflection
+- Uses `CardViews[0]` (BoosterMetaCardView) as navigable element for card info extraction
+- Auto-skips animation by calling `StopBoosterOpenAnimationSequence()` when `_animationSequenceActiveField` becomes true
+- Periodic rescan every 0.5s until cards appear (~2.5s after pack opening due to 3D animation event)
+- ForceRescan preserves cursor position (matches by GameObject reference) and suppresses redundant announcements
+- Vault progress text only extracted from active elements to avoid phantom text from prefab structure
 
 ## Deck Management
 

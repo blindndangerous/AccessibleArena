@@ -278,7 +278,7 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 1. Auto version checking and auto update - check for new mod versions on launch and optionally auto-update. May be too problematic to implement reliably.
 2. ~~Pack expansion selection~~ - DONE (v0.8): set filter navigation in Store Packs tab with localized set names
-3. Card flipping during pack opening - allow flipping/revealing individual cards during pack opening for a more interactive experience
+3. ~~Card flipping during pack opening~~ - DONE (v0.8): all cards spawn face-down, user reveals one by one with Enter, animation auto-skipped for accessibility
 4. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
 5. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
 6. Achievement screen - accessible navigation and reading of achievement progress and rewards
