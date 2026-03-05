@@ -34,6 +34,7 @@ Example - instead of tables, format like this:
 - Consistent naming
 - Verify changes fit existing codebase before implementing
 - Use existing utilities (UIActivator, CardDetector, UITextExtractor)
+- When fixing UI interaction bugs (e.g., keyboard event handling, dropdowns), always test edge cases where the fix might interfere with normal component behavior
 
 ## Game & Framework
 
@@ -58,6 +59,10 @@ LLM reference documentation in `llm-docs/`:
 - **architecture-overview.md** - High-level mod architecture, entry point flow, system interactions
 - **source-inventory.md** - Complete source file inventory with line counts
 - **framework-reference.md** - MelonLoader/Harmony/Unity dependency details and patch inventory
+- **type-index.md** - Game type → full namespace + DLL mapping (check this FIRST when investigating game types)
+- **decompiled/** - Pre-decompiled game type sources (gitignored). Read these before running ilspycmd.
+
+**Investigating game types:** Always check `llm-docs/decompiled/` and `llm-docs/type-index.md` first. To decompile a new type: `powershell -NoProfile -File tools\decompile.ps1 "TypeName"`
 
 **IGNORE:** `arena accessibility backlog.txt` - outdated
 
@@ -88,6 +93,9 @@ powershell -NoProfile -Command "Copy-Item -Path 'C:\Users\fabia\arena\src\bin\De
 - `UIActivator.Activate(element)` - Element activation
 - `CardDetector.IsCard(element)` - Card detection
 - `UITextExtractor.GetText(element)` - Text extraction
+- `CardModelProvider` - Card data extraction, component access, name lookup, mana parsing
+- `CardTextProvider` - Ability text, flavor text, localized text lookups
+- `CardStateProvider` - Attachments, combat state, targeting, counters, categorization
 
 ### Browser Debug Tools
 Enable detailed debug logging for investigating browser activation issues:

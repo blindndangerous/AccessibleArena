@@ -41,6 +41,7 @@ namespace AccessibleArena.Core.Services
         private enum NavigationLevel
         {
             Tabs,
+            SetFilter,
             Items
         }
 
@@ -50,6 +51,12 @@ namespace AccessibleArena.Core.Services
         private int _currentPurchaseOptionIndex;
         private bool _waitingForTabLoad;
         private float _loadCheckTimer;
+
+        // Set filter state (Packs tab set selection)
+        private List<object> _setFilterModels = new List<object>();
+        private int _currentSetFilterIndex;
+        private MonoBehaviour _setFilterTogglesComponent;
+        private bool _waitingForSetChange; // true when waiting for set change reload
 
         // Confirmation modal handling (custom element list, not base popup mode)
         private bool _wasConfirmationModalOpen; // Track modal transitions for confirmation modal
@@ -142,6 +149,15 @@ namespace AccessibleArena.Core.Services
 
         // Controller utility methods
         private MethodInfo _onButtonPaymentSetupMethod;
+
+        // Set filter reflection (StoreSetFilterToggles on controller)
+        private FieldInfo _setFiltersComponentField;        // _setFilters on controller (StoreSetFilterToggles)
+        private Type _setFilterTogglesType;
+        private FieldInfo _setFilterListField;              // _setFilters on StoreSetFilterToggles (List<StoreSetFilterModel>)
+        private PropertyInfo _selectedIndexProp;            // SelectedIndex
+        private MethodInfo _onValueSelectedMethod;          // OnValueSelected(StoreSetFilterModel)
+        private Type _setFilterModelType;
+        private FieldInfo _setSymbolField;                  // SetSymbol (string)
 
         // Store display types for details view
         private Type _storeItemDisplayType;
@@ -367,6 +383,8 @@ namespace AccessibleArena.Core.Services
         {
             if (_navLevel == NavigationLevel.Items && _items.Count > 0)
                 AnnounceCurrentItem();
+            else if (_navLevel == NavigationLevel.SetFilter && _setFilterModels.Count > 0)
+                AnnounceSetFilter();
             else if (_navLevel == NavigationLevel.Tabs && _tabs.Count > 0)
                 AnnounceCurrentTab();
         }
@@ -407,6 +425,23 @@ namespace AccessibleArena.Core.Services
 
             // Controller utility methods
             _onButtonPaymentSetupMethod = controllerType.GetMethod("OnButton_PaymentSetup", PublicInstance);
+
+            // Set filter reflection
+            _setFiltersComponentField = controllerType.GetField("_setFilters", flags);
+            if (_setFiltersComponentField != null)
+            {
+                _setFilterTogglesType = _setFiltersComponentField.FieldType;
+                _setFilterListField = _setFilterTogglesType.GetField("_setFilters", flags);
+                _selectedIndexProp = _setFilterTogglesType.GetProperty("SelectedIndex", PublicInstance);
+                _onValueSelectedMethod = _setFilterTogglesType.GetMethod("OnValueSelected", PublicInstance);
+
+                // Get StoreSetFilterModel type from the list's generic argument
+                if (_setFilterListField != null && _setFilterListField.FieldType.IsGenericType)
+                {
+                    _setFilterModelType = _setFilterListField.FieldType.GetGenericArguments()[0];
+                    _setSymbolField = _setFilterModelType?.GetField("SetSymbol", PublicInstance);
+                }
+            }
 
             // Tab fields
             _tabFields = new FieldInfo[TabFieldNames.Length];
@@ -711,6 +746,76 @@ namespace AccessibleArena.Core.Services
 
         #endregion
 
+        #region Set Filter Discovery
+
+        private const int PacksTabFieldIndex = 2; // _packsTab is at index 2 in TabFieldNames
+
+        private bool IsPacksTab(TabInfo tab) => !tab.IsUtility && tab.FieldIndex == PacksTabFieldIndex;
+
+        private void DiscoverSetFilters()
+        {
+            _setFilterModels.Clear();
+            _setFilterTogglesComponent = null;
+            _currentSetFilterIndex = 0;
+
+            if (_controller == null || _setFiltersComponentField == null) return;
+
+            try
+            {
+                var togglesObj = _setFiltersComponentField.GetValue(_controller);
+                _setFilterTogglesComponent = togglesObj as MonoBehaviour;
+                if (_setFilterTogglesComponent == null) return;
+
+                // Read the list of set filter models
+                if (_setFilterListField != null)
+                {
+                    var list = _setFilterListField.GetValue(_setFilterTogglesComponent);
+                    if (list is System.Collections.IList iList)
+                    {
+                        for (int i = 0; i < iList.Count; i++)
+                        {
+                            if (iList[i] != null)
+                                _setFilterModels.Add(iList[i]);
+                        }
+                    }
+                }
+
+                // Read current selected index
+                if (_selectedIndexProp != null)
+                {
+                    _currentSetFilterIndex = (int)_selectedIndexProp.GetValue(_setFilterTogglesComponent);
+                    if (_currentSetFilterIndex < 0 || _currentSetFilterIndex >= _setFilterModels.Count)
+                        _currentSetFilterIndex = 0;
+                }
+
+                MelonLogger.Msg($"[Store] Discovered {_setFilterModels.Count} set filters, selected index: {_currentSetFilterIndex}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[Store] Error discovering set filters: {ex.Message}");
+            }
+        }
+
+        private string GetSetFilterName(int index)
+        {
+            if (index < 0 || index >= _setFilterModels.Count) return "Unknown";
+
+            try
+            {
+                if (_setSymbolField != null)
+                {
+                    string setCode = _setSymbolField.GetValue(_setFilterModels[index]) as string;
+                    if (!string.IsNullOrEmpty(setCode))
+                        return UITextExtractor.MapSetCodeToName(setCode);
+                }
+            }
+            catch { /* Reflection may fail on different game versions */ }
+
+            return "Unknown";
+        }
+
+        #endregion
+
         #region Item Discovery
 
         private void DiscoverItems()
@@ -918,6 +1023,9 @@ namespace AccessibleArena.Core.Services
             _tabs.Clear();
             _items.Clear();
             _waitingForTabLoad = false;
+            _waitingForSetChange = false;
+            _setFilterModels.Clear();
+            _setFilterTogglesComponent = null;
             _isDetailsViewActive = false;
             _detailsCards.Clear();
             _detailsCardBlocks.Clear();
@@ -971,6 +1079,19 @@ namespace AccessibleArena.Core.Services
 
         protected override string GetActivationAnnouncement()
         {
+            // If on Packs tab, enter SetFilter level
+            if (_currentTabIndex >= 0 && _currentTabIndex < _tabs.Count &&
+                IsPacksTab(_tabs[_currentTabIndex]))
+            {
+                DiscoverSetFilters();
+                if (_setFilterModels.Count > 0)
+                {
+                    _navLevel = NavigationLevel.SetFilter;
+                    string setName = GetSetFilterName(_currentSetFilterIndex);
+                    return $"Store, Packs. {Strings.StoreSetFilterPosition(setName, _currentSetFilterIndex + 1, _setFilterModels.Count)}";
+                }
+            }
+
             // Auto-enter items for the currently active tab
             _navLevel = NavigationLevel.Items;
             DiscoverItems();
@@ -1196,6 +1317,9 @@ namespace AccessibleArena.Core.Services
                 case NavigationLevel.Tabs:
                     HandleTabInput();
                     break;
+                case NavigationLevel.SetFilter:
+                    HandleSetFilterInput();
+                    break;
                 case NavigationLevel.Items:
                     HandleItemInput();
                     break;
@@ -1343,11 +1467,21 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Backspace goes back to tabs
+            // Backspace goes back (to SetFilter for Packs, otherwise to Tabs)
             if (Input.GetKeyDown(KeyCode.Backspace))
             {
                 InputManager.ConsumeKey(KeyCode.Backspace);
-                ReturnToTabs();
+
+                // If on Packs tab with set filters, return to SetFilter level
+                if (_currentTabIndex >= 0 && _currentTabIndex < _tabs.Count &&
+                    IsPacksTab(_tabs[_currentTabIndex]) && _setFilterModels.Count > 0)
+                {
+                    ReturnToSetFilter();
+                }
+                else
+                {
+                    ReturnToTabs();
+                }
                 return;
             }
         }
@@ -1398,9 +1532,21 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Check if this tab is already active - just enter items directly
+            // Check if this tab is already active - enter items or set filter directly
             if (IsTabActive(tab))
             {
+                // Packs tab with set filters: enter SetFilter level
+                if (IsPacksTab(tab))
+                {
+                    DiscoverSetFilters();
+                    if (_setFilterModels.Count > 0)
+                    {
+                        _navLevel = NavigationLevel.SetFilter;
+                        AnnounceSetFilter();
+                        return;
+                    }
+                }
+
                 _navLevel = NavigationLevel.Items;
                 DiscoverItems();
 
@@ -1495,6 +1641,31 @@ namespace AccessibleArena.Core.Services
             DiscoverTabs();
             _currentTabIndex = FindActiveTabIndex();
 
+            // If this was a set filter change, stay at SetFilter level
+            if (_waitingForSetChange)
+            {
+                _waitingForSetChange = false;
+                DiscoverItems();
+                int itemCount = _items.Count;
+                string setName = GetSetFilterName(_currentSetFilterIndex);
+                _announcer.AnnounceInterrupt(Strings.StoreSetFilterItems(setName, itemCount));
+                _navLevel = NavigationLevel.SetFilter;
+                _items.Clear(); // Don't need items at SetFilter level
+                return;
+            }
+
+            // Packs tab: enter SetFilter level instead of Items
+            if (_currentTabIndex >= 0 && _currentTabIndex < _tabs.Count && IsPacksTab(_tabs[_currentTabIndex]))
+            {
+                DiscoverSetFilters();
+                if (_setFilterModels.Count > 0)
+                {
+                    _navLevel = NavigationLevel.SetFilter;
+                    AnnounceSetFilter();
+                    return;
+                }
+            }
+
             // Discover items for the new tab
             _navLevel = NavigationLevel.Items;
             DiscoverItems();
@@ -1520,6 +1691,170 @@ namespace AccessibleArena.Core.Services
                 _announcer.AnnounceInterrupt(Strings.TabNoItems(tabName));
                 _navLevel = NavigationLevel.Tabs;
             }
+        }
+
+        #endregion
+
+        #region Set Filter Navigation
+
+        private void HandleSetFilterInput()
+        {
+            // Left/Right or Up/Down: cycle sets
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) ||
+                Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            {
+                CycleSetFilter(-1);
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D) ||
+                Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            {
+                CycleSetFilter(1);
+                return;
+            }
+
+            // Tab/Shift+Tab
+            if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                CycleSetFilter(shift ? -1 : 1);
+                return;
+            }
+
+            // Home/End: jump to first/last set
+            if (Input.GetKeyDown(KeyCode.Home))
+            {
+                if (_setFilterModels.Count > 0 && _currentSetFilterIndex != 0)
+                {
+                    SelectSetFilter(0);
+                }
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.End))
+            {
+                if (_setFilterModels.Count > 0 && _currentSetFilterIndex != _setFilterModels.Count - 1)
+                {
+                    SelectSetFilter(_setFilterModels.Count - 1);
+                }
+                return;
+            }
+
+            // Enter/Space: enter Items level for current set
+            bool enterPressed = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+            bool spacePressed = InputManager.GetKeyDownAndConsume(KeyCode.Space);
+            if (enterPressed || spacePressed)
+            {
+                InputManager.ConsumeKey(KeyCode.Return);
+                InputManager.ConsumeKey(KeyCode.KeypadEnter);
+                EnterItemsFromSetFilter();
+                return;
+            }
+
+            // Backspace: return to Tabs
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                InputManager.ConsumeKey(KeyCode.Backspace);
+                ReturnToTabs();
+                return;
+            }
+        }
+
+        private void CycleSetFilter(int direction)
+        {
+            if (_setFilterModels.Count == 0) return;
+
+            int newIndex = _currentSetFilterIndex + direction;
+
+            if (newIndex < 0)
+            {
+                _announcer.AnnounceVerbose(Strings.BeginningOfList, AnnouncementPriority.Normal);
+                return;
+            }
+
+            if (newIndex >= _setFilterModels.Count)
+            {
+                _announcer.AnnounceVerbose(Strings.EndOfList, AnnouncementPriority.Normal);
+                return;
+            }
+
+            SelectSetFilter(newIndex);
+        }
+
+        private void SelectSetFilter(int index)
+        {
+            _currentSetFilterIndex = index;
+
+            // Call OnValueSelected on the StoreSetFilterToggles to trigger set change
+            if (_onValueSelectedMethod != null && _setFilterTogglesComponent != null)
+            {
+                try
+                {
+                    _onValueSelectedMethod.Invoke(_setFilterTogglesComponent,
+                        new object[] { _setFilterModels[_currentSetFilterIndex] });
+
+                    string setName = GetSetFilterName(_currentSetFilterIndex);
+                    _announcer.AnnounceInterrupt(Strings.Loading(setName));
+
+                    // Wait for the set change to reload items
+                    _waitingForTabLoad = true;
+                    _waitingForSetChange = true;
+                    _loadCheckTimer = TabLoadCheckInterval;
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Msg($"[Store] Error selecting set filter: {ex.Message}");
+                    AnnounceSetFilter();
+                }
+            }
+            else
+            {
+                AnnounceSetFilter();
+            }
+        }
+
+        private void AnnounceSetFilter()
+        {
+            if (_setFilterModels.Count == 0) return;
+
+            string setName = GetSetFilterName(_currentSetFilterIndex);
+            string announcement = Strings.StoreSetFilterPosition(setName,
+                _currentSetFilterIndex + 1, _setFilterModels.Count);
+            _announcer.AnnounceInterrupt(announcement);
+        }
+
+        private void EnterItemsFromSetFilter()
+        {
+            _navLevel = NavigationLevel.Items;
+            DiscoverItems();
+
+            if (_items.Count > 0)
+            {
+                _currentItemIndex = 0;
+                _currentPurchaseOptionIndex = 0;
+                string setName = GetSetFilterName(_currentSetFilterIndex);
+                _announcer.AnnounceInterrupt(Strings.StoreSetFilterEnterItems(setName, _items.Count));
+                AnnounceCurrentItem();
+            }
+            else
+            {
+                string setName = GetSetFilterName(_currentSetFilterIndex);
+                _announcer.AnnounceInterrupt(Strings.NoItemsAvailable(setName));
+                _navLevel = NavigationLevel.SetFilter;
+            }
+        }
+
+        private void ReturnToSetFilter()
+        {
+            _isDetailsViewActive = false;
+            _detailsCards.Clear();
+            _detailsCardBlocks.Clear();
+            _detailsDescription = null;
+            _navLevel = NavigationLevel.SetFilter;
+            _items.Clear();
+
+            AnnounceSetFilter();
         }
 
         #endregion

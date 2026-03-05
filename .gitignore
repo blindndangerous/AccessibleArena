@@ -35,12 +35,19 @@ temp_*
 tmp_*
 C*temp_*
 Usersfabiaarenatemp_*
+decompiled_*
+
+# Pre-decompiled game type references (proprietary game code, never commit)
+llm-docs/decompiled/
 
 # Game DLLs (proprietary, reference from game install path)
 libs/
 
 # Tools directory (local utilities, not part of the mod)
 tools/
+# But track decompile scripts (useful for LLM workflow)
+!tools/decompile.ps1
+!tools/decompile-all.ps1
 
 # Logs
 logs/

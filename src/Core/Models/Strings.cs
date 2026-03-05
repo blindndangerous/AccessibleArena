@@ -910,6 +910,14 @@ namespace AccessibleArena.Core.Models
         public static string TabItems(string name, int count) => L.Format("TabItems_Format", name, count);
         public static string TabNoItems(string name) => L.Format("TabNoItems_Format", name);
         public static string NoPurchaseOption => L.Get("NoPurchaseOption");
+
+        // Store set filter (Packs tab)
+        public static string StoreSetFilterPosition(string name, int index, int total) =>
+            L.Format("StoreSetFilter_Position_Format", name, index, total);
+        public static string StoreSetFilterItems(string name, int count) =>
+            count == 1 ? L.Format("StoreSetFilter_Items_One", name) : L.Format("StoreSetFilter_Items_Format", name, count);
+        public static string StoreSetFilterEnterItems(string name, int count) =>
+            count == 1 ? L.Format("StoreSetFilter_EnterItems_One", name) : L.Format("StoreSetFilter_EnterItems_Format", name, count);
         public static string NoDetailsAvailable => L.Get("NoDetailsAvailable");
         public static string NoCardDetails => L.Get("NoCardDetails");
         public static string TabsCount(int count) => L.Format("Tabs_Format", count);

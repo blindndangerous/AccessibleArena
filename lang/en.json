@@ -867,5 +867,11 @@
   "Duel_CounterEntryPlural_Format": "{0} {1} counters",
   "Duel_Loyalty_Format": "Loyalty {0}",
 
-  "HelpKCounters": "K: Counter info on focused card"
+  "HelpKCounters": "K: Counter info on focused card",
+
+  "StoreSetFilter_Position_Format": "{0}, {1} of {2} sets",
+  "StoreSetFilter_Items_Format": "{0}. {1} items.",
+  "StoreSetFilter_Items_One": "{0}. 1 item.",
+  "StoreSetFilter_EnterItems_Format": "Packs: {0}. {1} items.",
+  "StoreSetFilter_EnterItems_One": "Packs: {0}. 1 item."
 }
