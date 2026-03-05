@@ -152,6 +152,7 @@ if (justExitedDropdown)
 ```
 
 **BaseNavigator.HandleDropdownNavigation():**
+- **Auto-open guard** (first check): If `!ShouldBlockEnterFromGame` and no Enter pressed, the dropdown was auto-opened (async, not by user). Closes it via `CloseDropdownOnElement()` and returns to normal navigation. If Enter IS pressed, registers the dropdown as user-opened via `OnDropdownOpened()`.
 - Tab/Shift+Tab: Calls `CloseActiveDropdown(silent: true)`, suppresses reentry, then navigates to next/previous element
 - Enter: Calls `SelectDropdownItem()` then `CloseActiveDropdown(silent: true)` (selects, closes, exit transition announces element with value)
 - Escape/Backspace: Calls `CloseActiveDropdown()` (closes dropdown, announces "closed", syncs focus)
@@ -220,12 +221,15 @@ if (justExitedDropdown)
 
 ### Scenario 2: Auto-Opened Dropdown Suppression
 
+Two layers catch auto-opened dropdowns depending on whether MTGA opens them synchronously or asynchronously:
+
+**Layer 1 - Synchronous auto-open (caught in UpdateEventSystemSelection):**
 ```
 [Normal Navigation]
     |
     v Navigator calls UpdateEventSystemSelection() to focus dropdown
 [EventSystem Selection Set]
-    | MTGA auto-opens the dropdown (side effect)
+    | MTGA auto-opens the dropdown synchronously (OnSelect handler)
     | IsDropdownExpanded = true
     v
 [Navigator Detects Auto-Open]
@@ -247,6 +251,29 @@ if (justExitedDropdown)
     | _suppressReentry cleared
     v
 [Normal Navigation]
+```
+
+**Layer 2 - Asynchronous auto-open (caught in HandleDropdownNavigation):**
+```
+[Normal Navigation]
+    |
+    v Navigator calls UpdateEventSystemSelection() to focus dropdown
+[EventSystem Selection Set]
+    | MTGA queues dropdown open for next frame (deferred/coroutine)
+    | IsAnyDropdownExpanded() = false (not yet open)
+    | No auto-open detected - normal announcement
+    v
+[Next Frame]
+    | MTGA opens the dropdown asynchronously
+    | IsDropdownExpanded = true, IsInDropdownMode = true
+    | _blockEnterFromGame = false (OnDropdownOpened was never called)
+    v
+[HandleDropdownNavigation - Auto-Open Guard]
+    | !ShouldBlockEnterFromGame = true AND no Enter pressed
+    | Detected as auto-opened dropdown
+    | CloseDropdownOnElement() + SuppressReentry()
+    v
+[Normal Navigation resumes next frame]
 ```
 
 ### Scenario 3: Tab Between Closed Dropdowns (Auto-Open)

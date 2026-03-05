@@ -720,6 +720,38 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         protected virtual void HandleDropdownNavigation()
         {
+            // Detect auto-opened dropdown: MTGA auto-opens dropdowns when they receive
+            // EventSystem selection via arrow key navigation. If the user didn't press
+            // Enter to open it (ShouldBlockEnterFromGame is false), close it immediately
+            // so arrow keys return to normal element navigation instead of getting stuck
+            // cycling through dropdown items.
+            if (!DropdownStateManager.ShouldBlockEnterFromGame)
+            {
+                // Exception: if Enter is pressed, this is the user intentionally opening
+                // the dropdown. Unity's EventSystem processed the Enter before our Update
+                // ran, so the same keypress arrives here. Register as user-opened.
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                {
+                    InputManager.ConsumeKey(KeyCode.Return);
+                    InputManager.ConsumeKey(KeyCode.KeypadEnter);
+                    var active = DropdownStateManager.ActiveDropdown;
+                    if (active != null)
+                        DropdownStateManager.OnDropdownOpened(active);
+                    _announcer.Announce(Strings.DropdownOpened, AnnouncementPriority.Normal);
+                    return;
+                }
+
+                // Auto-opened dropdown (arrow navigation triggered MTGA's OnSelect).
+                // Close it and return - next frame normal navigation will proceed.
+                MelonLogger.Msg($"[{NavigatorId}] Closing auto-opened dropdown (not user-initiated)");
+                var dropdown = DropdownStateManager.ActiveDropdown;
+                if (dropdown != null)
+                    CloseDropdownOnElement(dropdown);
+                else
+                    DropdownStateManager.SuppressReentry();
+                return;
+            }
+
             // Tab/Shift+Tab: Close current dropdown and navigate to next/previous element.
             // Uses our element list order rather than Unity's spatial navigation order.
             // If the next element is also a dropdown, it auto-opens (standard screen reader behavior).
@@ -757,19 +789,6 @@ namespace AccessibleArena.Core.Services
             {
                 InputManager.ConsumeKey(KeyCode.Return);
                 InputManager.ConsumeKey(KeyCode.KeypadEnter);
-
-                // If _blockEnterFromGame is false, this is the opening Enter leaking through.
-                // Unity's EventSystem opened the dropdown before our Update ran, so the same
-                // Enter keypress arrives here. Register the dropdown and skip selection.
-                if (!DropdownStateManager.ShouldBlockEnterFromGame)
-                {
-                    var active = DropdownStateManager.ActiveDropdown;
-                    if (active != null)
-                        DropdownStateManager.OnDropdownOpened(active);
-                    _announcer.Announce(Strings.DropdownOpened, AnnouncementPriority.Normal);
-                    return;
-                }
-
                 SelectDropdownItem();
                 CloseActiveDropdown(silent: true);
                 return;
@@ -1746,6 +1765,8 @@ namespace AccessibleArena.Core.Services
                 }
                 // DROPDOWN HANDLING:
                 // Set selection, then either keep open (Tab) or close (arrow keys).
+                // Catches synchronous auto-opens; async auto-opens are caught by
+                // HandleDropdownNavigation's !ShouldBlockEnterFromGame guard.
                 else if (UIFocusTracker.IsDropdown(element))
                 {
                     eventSystem.SetSelectedGameObject(element);
