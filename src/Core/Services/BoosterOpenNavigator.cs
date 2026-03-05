@@ -3,8 +3,10 @@ using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using T = AccessibleArena.Core.Constants.GameTypeNames;
 using static AccessibleArena.Core.Utils.ReflectionUtils;
 
@@ -12,13 +14,17 @@ namespace AccessibleArena.Core.Services
 {
     /// <summary>
     /// Navigator for the booster pack card list that appears after opening a pack.
-    /// Detects BoosterOpenToScrollListController and makes cards navigable.
+    /// Uses the controller's _cardsToOpen field as the authoritative source for detection.
     /// </summary>
     public class BoosterOpenNavigator : BaseNavigator
     {
-        private GameObject _scrollListController;
+        private Component _controller;
         private GameObject _revealAllButton;
         private int _totalCards;
+
+        // Cached reflection info (types don't change between scenes)
+        private static FieldInfo _cardsToOpenField;
+        private static PropertyInfo _hiddenProp;
 
         // Single rescan after reveal animation completes (~1.5 seconds)
         private int _rescanFrameCounter;
@@ -48,56 +54,60 @@ namespace AccessibleArena.Core.Services
             var boosterChamber = GameObject.Find("ContentController - BoosterChamber_v2_Desktop_16x9(Clone)");
             if (boosterChamber == null || !boosterChamber.activeInHierarchy)
             {
-                _scrollListController = null;
+                _controller = null;
                 return false;
             }
 
-            // Key check: CardScroller is the definitive indicator of pack contents view
-            // RevealAll button exists on BOTH pack selection and pack contents, so it's not reliable alone
-            bool hasCardScroller = false;
-
-            // Check for CardScroller (only exists when cards are displayed)
-            // IMPORTANT: Use false to only search active objects
-            foreach (Transform child in boosterChamber.GetComponentsInChildren<Transform>(false))
+            // Find the BoosterOpenToScrollListController component
+            var controller = FindScrollListController(boosterChamber);
+            if (controller == null)
             {
-                if (child.name == "CardScroller" && child.gameObject.activeInHierarchy)
-                {
-                    hasCardScroller = true;
-                    MelonLogger.Msg($"[{NavigatorId}] Found CardScroller");
-                    break;
-                }
-            }
-
-            // CardScroller is REQUIRED for pack contents detection
-            // Without it, we're on pack selection screen (not pack contents)
-            if (!hasCardScroller)
-            {
-                _scrollListController = null;
+                _controller = null;
                 return false;
             }
 
-            // Find the scroll list controller
-            var safeArea = boosterChamber.transform.Find("SafeArea");
-            if (safeArea != null)
+            // Check if _cardsToOpen is populated (null = no pack opened, empty = cleared)
+            var cards = GetCardsToOpen(controller);
+            if (cards == null || cards.Count == 0)
             {
-                foreach (Transform child in safeArea)
-                {
-                    if (child.name.Contains("BoosterOpenToScrollListController"))
-                    {
-                        if (child.gameObject.activeInHierarchy)
-                        {
-                            _scrollListController = child.gameObject;
-                            MelonLogger.Msg($"[{NavigatorId}] Found pack contents (RevealAll visible): {child.name}");
-                            return true;
-                        }
-                    }
-                }
+                _controller = null;
+                return false;
             }
 
-            // Fallback: use booster chamber itself as controller reference
-            _scrollListController = boosterChamber;
-            MelonLogger.Msg($"[{NavigatorId}] Found pack contents (RevealAll visible, using booster chamber)");
+            _controller = controller;
+            MelonLogger.Msg($"[{NavigatorId}] Pack opened with {cards.Count} cards");
             return true;
+        }
+
+        /// <summary>
+        /// Find the BoosterOpenToScrollListController component in the booster chamber.
+        /// </summary>
+        private Component FindScrollListController(GameObject boosterChamber)
+        {
+            foreach (var mb in boosterChamber.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb != null && mb.GetType().Name == T.BoosterOpenToScrollListController)
+                    return mb;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Read the _cardsToOpen list from the controller via reflection.
+        /// Returns null if field not found or list is null.
+        /// </summary>
+        private IList GetCardsToOpen(Component controller)
+        {
+            if (_cardsToOpenField == null)
+            {
+                _cardsToOpenField = controller.GetType().GetField("_cardsToOpen", PrivateInstance);
+                if (_cardsToOpenField == null)
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] _cardsToOpen field not found");
+                    return null;
+                }
+            }
+            return _cardsToOpenField.GetValue(controller) as IList;
         }
 
         protected override void DiscoverElements()
@@ -165,6 +175,9 @@ namespace AccessibleArena.Core.Services
             int cardNum = 1;
             foreach (var (cardObj, _) in cardEntries)
             {
+                // Check if card is face-down (hidden) via BoosterCardHolder.Hidden
+                bool isHidden = IsCardHidden(cardObj);
+
                 string cardName = ExtractCardName(cardObj);
                 var cardInfo = CardDetector.ExtractCardInfo(cardObj);
 
@@ -173,7 +186,7 @@ namespace AccessibleArena.Core.Services
                                      (cardInfo.IsValid ? cardInfo.Name : "Unknown card");
 
                 // Log unknown cards for debugging (use F11 on this card for full details)
-                if (displayName == "Unknown card")
+                if (displayName == "Unknown card" && !isHidden)
                 {
                     MelonLogger.Msg($"[{NavigatorId}] Card {cardNum} extraction failed: {cardObj.name} - press F11 while focused for details");
                 }
@@ -185,6 +198,12 @@ namespace AccessibleArena.Core.Services
                 if (isVaultProgress)
                 {
                     label = displayName;
+                }
+                else if (isHidden)
+                {
+                    // Face-down card - don't reveal name, prompt user to flip
+                    label = Strings.HiddenCard;
+                    cardNum++;
                 }
                 else
                 {
@@ -499,6 +518,53 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        /// <summary>
+        /// Check if a card is face-down by reading BoosterCardHolder.Hidden on its parent.
+        /// </summary>
+        private bool IsCardHidden(GameObject cardObj)
+        {
+            // BoosterCardHolder is the parent wrapper of BoosterMetaCardView
+            Transform current = cardObj.transform;
+            while (current != null)
+            {
+                foreach (var mb in current.GetComponents<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == T.BoosterCardHolder)
+                    {
+                        if (_hiddenProp == null)
+                            _hiddenProp = mb.GetType().GetProperty("Hidden", PublicInstance);
+                        if (_hiddenProp != null)
+                        {
+                            var val = _hiddenProp.GetValue(mb);
+                            if (val is bool hidden)
+                                return hidden;
+                        }
+                    }
+                }
+                current = current.parent;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Find the parent BoosterCardHolder GameObject for a card view.
+        /// The holder has the CustomButton that triggers OnClick -> reveal.
+        /// </summary>
+        private GameObject FindBoosterCardHolder(GameObject cardObj)
+        {
+            Transform current = cardObj.transform;
+            while (current != null)
+            {
+                foreach (var mb in current.GetComponents<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == T.BoosterCardHolder)
+                        return current.gameObject;
+                }
+                current = current.parent;
+            }
+            return null;
+        }
+
         private void FindDismissButton(HashSet<GameObject> addedObjects)
         {
             // Look for continue/dismiss/close buttons
@@ -643,6 +709,22 @@ namespace AccessibleArena.Core.Services
             // Handle custom input first (F1 help, etc.)
             if (HandleCustomInput()) return;
 
+            // I key: Extended card info (keyword descriptions + other faces)
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                var extInfoNav = AccessibleArenaMod.Instance?.ExtendedInfoNavigator;
+                var cardNav = AccessibleArenaMod.Instance?.CardNavigator;
+                if (extInfoNav != null && cardNav != null && cardNav.IsActive && cardNav.CurrentCard != null)
+                {
+                    extInfoNav.Open(cardNav.CurrentCard);
+                }
+                else
+                {
+                    _announcer.AnnounceInterrupt(Strings.NoCardToInspect);
+                }
+                return;
+            }
+
             // F11: Dump current card details for debugging (helps identify "Unknown card" issues)
             if (Input.GetKeyDown(KeyCode.F11))
             {
@@ -724,6 +806,21 @@ namespace AccessibleArena.Core.Services
                         ClosePackProperly();
                         TriggerCloseRescan();
                         return;
+                    }
+                    // Hidden card: activate the parent BoosterCardHolder (has the CustomButton)
+                    // to trigger OnClick() -> PlayFlipSound() + RevealCard()
+                    if (elem.GameObject != null && elem.Label == Strings.HiddenCard)
+                    {
+                        var holder = FindBoosterCardHolder(elem.GameObject);
+                        if (holder != null)
+                        {
+                            MelonLogger.Msg($"[{NavigatorId}] Revealing hidden card via BoosterCardHolder");
+                            UIActivator.Activate(holder);
+                            // Rescan after flip animation (~0.5s) to update label with card name
+                            _rescanDone = false;
+                            _rescanFrameCounter = RescanDelayFrames - 60; // ~0.5s from now
+                            return;
+                        }
                     }
                 }
                 // Default: just activate whatever is selected (cards, buttons, etc.)
@@ -857,8 +954,8 @@ namespace AccessibleArena.Core.Services
                 // Iterate through all methods to find close-related ones (IL2CPP compatible)
                 var allMethods = controllerType.GetMethods(AllInstanceFlags);
 
-                System.Reflection.MethodInfo dismissCards = null;
-                System.Reflection.MethodInfo closeMethod = null;
+                MethodInfo dismissCards = null;
+                MethodInfo closeMethod = null;
 
                 foreach (var method in allMethods)
                 {
@@ -911,34 +1008,22 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Find the booster scroll list controller component.
+        /// Get the cached controller, or re-find it if needed.
         /// </summary>
         private Component FindBoosterController()
         {
-            // Search for the scroll list controller in the scene
-            foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
-            {
-                if (mb == null) continue;
-                string typeName = mb.GetType().Name;
-                if (typeName == "BoosterOpenToScrollListController" ||
-                    typeName == "BoosterChamberController" ||
-                    typeName.Contains("BoosterOpen") && typeName.Contains("Controller"))
-                {
-                    MelonLogger.Msg($"[{NavigatorId}] FindBoosterController: Found {typeName}");
-                    return mb;
-                }
-            }
+            if (_controller != null)
+                return _controller;
 
-            // Fallback: check the scroll list controller object
-            if (_scrollListController != null)
+            var boosterChamber = GameObject.Find("ContentController - BoosterChamber_v2_Desktop_16x9(Clone)");
+            if (boosterChamber != null)
             {
-                foreach (var mb in _scrollListController.GetComponents<MonoBehaviour>())
+                var ctrl = FindScrollListController(boosterChamber);
+                if (ctrl != null)
                 {
-                    if (mb != null && mb.GetType().Name.Contains("Controller"))
-                    {
-                        MelonLogger.Msg($"[{NavigatorId}] FindBoosterController (fallback): Found {mb.GetType().Name}");
-                        return mb;
-                    }
+                    MelonLogger.Msg($"[{NavigatorId}] Re-found controller: {ctrl.GetType().Name}");
+                    _controller = ctrl;
+                    return ctrl;
                 }
             }
 
@@ -1018,10 +1103,18 @@ namespace AccessibleArena.Core.Services
 
         protected override bool ValidateElements()
         {
-            // Check if scroll list controller is still active
-            if (_scrollListController == null || !_scrollListController.activeInHierarchy)
+            // Check if controller is still valid and has cards
+            if (_controller == null || !(_controller is MonoBehaviour mb) || !mb.gameObject.activeInHierarchy)
             {
-                MelonLogger.Msg($"[{NavigatorId}] Scroll list controller no longer active");
+                MelonLogger.Msg($"[{NavigatorId}] Controller no longer active");
+                return false;
+            }
+
+            // Also check that _cardsToOpen is still populated (cleared on dismiss)
+            var cards = GetCardsToOpen(_controller);
+            if (cards == null || cards.Count == 0)
+            {
+                MelonLogger.Msg($"[{NavigatorId}] Cards cleared, pack dismissed");
                 return false;
             }
 
@@ -1034,7 +1127,7 @@ namespace AccessibleArena.Core.Services
             {
                 Deactivate();
             }
-            _scrollListController = null;
+            _controller = null;
             _revealAllButton = null;
         }
     }

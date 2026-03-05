@@ -976,6 +976,7 @@ namespace AccessibleArena.Core.Models
         public static string ScreenDecksUnlockedCount(int count) =>
             count == 1 ? L.Get("ScreenDecksUnlocked_One") : L.Format("ScreenDecksUnlocked_Format", count);
         public static string DeckNumber(int n) => L.Format("Deck_Format", n);
+        public static string HiddenCard => L.Get("HiddenCard");
         public static string ScreenPackContents => L.Get("ScreenPackContents");
         public static string ScreenPackContentsCount(int count) =>
             count == 1 ? L.Get("ScreenPackContents_One") : L.Format("ScreenPackContents_Format", count);

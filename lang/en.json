@@ -527,6 +527,7 @@
   "ScreenDecksUnlocked_One": "Decks Unlocked, 1 deck",
   "ScreenDecksUnlocked_Format": "Decks Unlocked, {0} decks",
   "Deck_Format": "Deck {0}",
+  "HiddenCard": "Hidden card, Enter to reveal",
   "ScreenPackContents": "Pack Contents",
   "ScreenPackContents_One": "Pack Contents, 1 card",
   "ScreenPackContents_Format": "Pack Contents, {0} cards",

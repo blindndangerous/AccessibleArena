@@ -517,6 +517,7 @@
   "ScreenDecksUnlocked_One": "Decks freigeschaltet, 1 Deck",
   "ScreenDecksUnlocked_Format": "Decks freigeschaltet, {0} Decks",
   "Deck_Format": "Deck {0}",
+  "HiddenCard": "Verdeckte Karte, Enter zum Aufdecken",
   "ScreenPackContents": "Packungsinhalt",
   "ScreenPackContents_One": "Packungsinhalt, 1 Karte",
   "ScreenPackContents_Format": "Packungsinhalt, {0} Karten",

@@ -25,6 +25,10 @@ namespace AccessibleArena.Core.Constants
         public const string SystemMessageButtonView = "SystemMessageButtonView";
         public const string CustomTMPDropdown = "cTMP_Dropdown";
 
+        // --- Booster Chamber Types ---
+        public const string BoosterOpenToScrollListController = "BoosterOpenToScrollListController";
+        public const string BoosterCardHolder = "BoosterCardHolder";
+
         // --- Card Holder Types ---
         public const string CardPoolHolder = "CardPoolHolder";
         public const string ScrollCardPoolHolder = "ScrollCardPoolHolder";
