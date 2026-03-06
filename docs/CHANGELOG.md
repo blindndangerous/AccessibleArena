@@ -27,6 +27,19 @@ All notable changes to Accessible Arena.
 - Cards ordered commons-first, rare/mythic last for natural dramaturgy
 - I key works during pack openings for extended card info
 
+### New: X-Spell Support (ChooseXNavigator)
+- X-cost spells, "choose any amount", and die roll prompts are now fully accessible
+- Detects the `View_ChooseXInterface` popup automatically during gameplay
+- Up/Down adjusts value by 1, PageUp/PageDown by 5, Enter/Space confirms, Backspace cancels
+- Announces current value, min/max limits, and confirmation
+
+### New: Creature Type Selection Browser
+- KeywordSelection browser (creature type picker) is now navigable
+- Reads all available keywords from the game's data layer, bypassing InfiniteScroll virtualization
+- Tab/Left/Right navigate keywords, Enter toggles selection, Space confirms
+- Home/End jump to first/last keyword
+- Show All button expands to full creature type list
+
 ### Bug Fixes
 - Fixed pack openings showing 0 cards after detection rewrite
 - Fixed reward popups not closing

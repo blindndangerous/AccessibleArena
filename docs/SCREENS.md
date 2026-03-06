@@ -603,6 +603,15 @@ DuelNavigator delegates to specialized sub-navigators for different game phases:
 - Handles library manipulation (scry, surveil, mulligan)
 - Tab cycles through cards, Space confirms
 - Detects via `BrowserScaffold_*` GameObjects
+- **KeywordSelection browser** (creature type picker, e.g. "Choose a creature type"):
+  - Scaffold: `BrowserScaffold_KeywordSelection_Desktop_16x9(Clone)`
+  - Keywords are in a virtualized `InfiniteScroll` with `Toggle` items, not regular cards
+  - Reads keyword data from `KeywordFilter._filteredKeywords` via reflection (data layer, not UI)
+  - Tab/Left/Right navigate keywords, then scaffold buttons (Show All, confirm)
+  - Enter toggles keyword selection (uses filter-then-submit approach for InfiniteScroll compatibility)
+  - Home/End jump to first/last keyword
+  - Deactivates `TMP_InputField` to prevent keyboard focus stealing
+  - `KeywordFilter` type: `Wotc.Mtga.DuelScene.Interactions.KeywordFilter` (Core.dll)
 
 **PlayerPortraitNavigator**
 - V key enters player info zone
@@ -618,6 +627,15 @@ DuelNavigator delegates to specialized sub-navigators for different game phases:
 - Backspace cancels
 - Multi-pick: re-announces after each selection
 - Detects via `ManaColorSelector.IsOpen` property (reflection, 100ms poll)
+
+**ChooseXNavigator**
+- Detects `View_ChooseXInterface` popup for X-cost spells, "choose any amount", and die roll prompts
+- Polls for active `View_ChooseXInterface` with active `_root` every 100ms
+- Up/Down adjusts value by 1, PageUp/PageDown by 5
+- Enter/Space submits, Backspace cancels, Tab re-announces current value
+- Announces min/max limits when arrow buttons are disabled
+- Deactivates CardInfoNavigator on entry to prevent Up/Down arrow conflicts
+- Reflection-cached fields: `_root`, `_upArrowButton`, `_downArrowButton`, `_upFiveArrowButton`, `_downFiveArrowButton`, `_buttonLabel`, `_confirmationButton`
 
 **Priority Order:**
 ManaColorPickerNavigator > BrowserNavigator > CombatNavigator > HotHighlightNavigator > PortraitNavigator > BattlefieldNavigator > ZoneNavigator

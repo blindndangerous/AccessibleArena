@@ -34,6 +34,7 @@ namespace AccessibleArena.Core.Services
         private BattlefieldNavigator _battlefieldNavigator;
         private BrowserNavigator _browserNavigator;
         private ManaColorPickerNavigator _manaColorPicker;
+        private ChooseXNavigator _chooseXNavigator;
         private PlayerPortraitNavigator _portraitNavigator;
         private PriorityController _priorityController;
         private DuelAnnouncer _duelAnnouncer;
@@ -61,6 +62,7 @@ namespace AccessibleArena.Core.Services
 
             _browserNavigator = new BrowserNavigator(announcer);
             _manaColorPicker = new ManaColorPickerNavigator(announcer);
+            _chooseXNavigator = new ChooseXNavigator(announcer);
             _portraitNavigator = new PlayerPortraitNavigator(announcer);
             _priorityController = new PriorityController();
             _duelAnnouncer = new DuelAnnouncer(announcer);
@@ -364,6 +366,11 @@ namespace AccessibleArena.Core.Services
             // Mana color picker (any-color mana sources) - highest priority modal
             _manaColorPicker.Update();
             if (_manaColorPicker.HandleInput())
+                return true;
+
+            // Choose X (X-cost spells, choose amount, die roll) - high priority modal
+            _chooseXNavigator.Update();
+            if (_chooseXNavigator.HandleInput())
                 return true;
 
             // Next, check for browser UI (scry, mulligan, damage assignment, etc.)

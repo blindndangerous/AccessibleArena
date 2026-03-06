@@ -702,6 +702,23 @@ namespace AccessibleArena.Core.Models
         public static string ManaColorPickerInvalidKey => L.Get("ManaColorPicker_InvalidKey");
 
         // ===========================================
+        // CHOOSE X (X-cost spells, choose amount, die roll)
+        // ===========================================
+        public static string ChooseXEntry(string currentValue) => L.Format("ChooseX_Entry_Format", currentValue);
+        public static string ChooseXConfirmed(string value) => L.Format("ChooseX_Confirmed_Format", value);
+        public static string ChooseXCancelled => L.Get("ChooseX_Cancelled");
+        public static string ChooseXAtMax => L.Get("ChooseX_AtMax");
+        public static string ChooseXAtMin => L.Get("ChooseX_AtMin");
+        public static string ChooseXCannotSubmit => L.Get("ChooseX_CannotSubmit");
+
+        // ===========================================
+        // KEYWORD SELECTION BROWSER (creature type picker)
+        // ===========================================
+        public static string KeywordSelectionEntry(int count) => L.Format("KeywordSelection_Entry_Format", count);
+        public static string KeywordSelectionSelected => L.Get("KeywordSelection_Selected");
+        public static string KeywordSelectionToggled(string keyword, string state) => L.Format("KeywordSelection_Toggled_Format", keyword, state);
+
+        // ===========================================
         // SETTINGS MENU
         // ===========================================
         public static string SettingsMenuTitle => L.Get("SettingsMenuTitle");

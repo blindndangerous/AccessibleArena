@@ -869,5 +869,16 @@
   "DamageAssign_Entry_Format": "Schaden zuweisen. {0}, {1} Schaden. {2} Blocker",
   "DamageAssign_Entry_One_Format": "Schaden zuweisen. {0}, {1} Schaden. 1 Blocker",
   "DamageAssign_Assigned_Format": "{0} von {1} zugewiesen",
-  "DamageAssign_Lethal": "tödlich"
+  "DamageAssign_Lethal": "tödlich",
+
+  "ChooseX_Entry_Format": "Wert wählen. Aktuell: {0}. Hoch/Runter zum Anpassen, Eingabe zum Bestätigen, Rücktaste zum Abbrechen",
+  "ChooseX_Confirmed_Format": "Bestätigt: {0}",
+  "ChooseX_Cancelled": "Auswahl abgebrochen",
+  "ChooseX_AtMax": "Maximum erreicht",
+  "ChooseX_AtMin": "Minimum erreicht",
+  "ChooseX_CannotSubmit": "Aktueller Wert kann nicht bestätigt werden",
+
+  "KeywordSelection_Entry_Format": "Schlüsselwort wählen. {0} Optionen. Tab zum Navigieren, Enter zum Auswählen, Leertaste zum Bestätigen",
+  "KeywordSelection_Selected": "ausgewählt",
+  "KeywordSelection_Toggled_Format": "{0}, {1}"
 }

@@ -137,6 +137,13 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | UXEvent | Wotc.Mtga.DuelScene.UXEvents.UXEvent | Core |
 | ButtonPhaseLadder | ButtonPhaseLadder | Core |
 | ManaColorSelector | ManaColorSelector | Core |
+| View_ChooseXInterface | View_ChooseXInterface | Core |
+| DuelSceneBrowserType | DuelSceneBrowserType (enum) | Core |
+| NumericInputVisualState | Wotc.Mtga.DuelScene.Interactions.NumericInputVisualState (enum) | Core |
+| NumericInputType | Wotc.Mtgo.Gre.External.Messaging.NumericInputType (enum) | Gre |
+| NumericInputReq | Wotc.Mtgo.Gre.External.Messaging.NumericInputReq | Gre |
+| PresetManaWheel | Wotc.Mtga.DuelScene.UI.PresetManaWheel | Core |
+| Spinner_OptionSelector | Spinner_OptionSelector | Core |
 
 ## Mastery / Rewards
 

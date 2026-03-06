@@ -874,5 +874,16 @@
   "StoreSetFilter_Items_Format": "{0}. {1} items.",
   "StoreSetFilter_Items_One": "{0}. 1 item.",
   "StoreSetFilter_EnterItems_Format": "Packs: {0}. {1} items.",
-  "StoreSetFilter_EnterItems_One": "Packs: {0}. 1 item."
+  "StoreSetFilter_EnterItems_One": "Packs: {0}. 1 item.",
+
+  "ChooseX_Entry_Format": "Choose value. Current: {0}. Up/Down to adjust, Enter to confirm, Backspace to cancel",
+  "ChooseX_Confirmed_Format": "Confirmed: {0}",
+  "ChooseX_Cancelled": "Selection cancelled",
+  "ChooseX_AtMax": "Maximum reached",
+  "ChooseX_AtMin": "Minimum reached",
+  "ChooseX_CannotSubmit": "Cannot submit current value",
+
+  "KeywordSelection_Entry_Format": "Choose keyword. {0} options. Tab to navigate, Enter to select, Space to confirm",
+  "KeywordSelection_Selected": "selected",
+  "KeywordSelection_Toggled_Format": "{0}, {1}"
 }
