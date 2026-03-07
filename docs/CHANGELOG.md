@@ -12,6 +12,13 @@ All notable changes to Accessible Arena.
 - Removed automatic folder collapsing on Backspace exit — deck folders now stay open
 - New Deck button is no longer hidden when the "My Decks" folder was collapsed
 
+### Fixed: Input Field Behavior in Web Browser
+- Tab between text fields now auto-enters edit mode, matching standard form navigation
+- Backspace in a text field no longer exits the browser
+
+### Fixed: Pack Openings
+- Fixed card names, navigation order, and card details during booster pack opening
+
 ## v0.8.1
 
 ### New: Local Release Script

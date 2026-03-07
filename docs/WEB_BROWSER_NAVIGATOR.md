@@ -104,7 +104,7 @@ Silent rescan: if the element count hasn't changed, the rescan result is discard
 - Arrow Left/Right - Read character at cursor position
 - Enter - Submit form, exit edit mode
 - Escape - Exit edit mode (blocked from reaching game)
-- Tab/Shift+Tab - Exit edit mode, move to next/previous element
+- Tab/Shift+Tab - Move to next/previous element (auto-enters edit mode if it's a text field)
 
 ## Announcements
 

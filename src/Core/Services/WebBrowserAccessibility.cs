@@ -621,11 +621,11 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Tab/Shift+Tab
+            // Tab/Shift+Tab — auto-enter edit mode if landing on a text field
             if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
             {
                 bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-                MoveElement(shift ? -1 : 1);
+                TabNavigate(shift ? -1 : 1);
                 return;
             }
 
@@ -697,12 +697,12 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Tab — exit edit mode and move to next element
+            // Tab — exit edit mode and move to next element (auto-enter if next is also a text field)
             if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
             {
                 bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                 ExitEditMode();
-                MoveElement(shift ? -1 : 1);
+                TabNavigate(shift ? -1 : 1);
                 return;
             }
 
@@ -1050,6 +1050,24 @@ namespace AccessibleArena.Core.Services
 
             _currentIndex = newIndex;
             AnnounceCurrentElement();
+        }
+
+        /// <summary>
+        /// Tab navigation: move to next/previous element, auto-enter edit mode if it's a text field.
+        /// Mirrors BaseNavigator behavior where Tab between input fields keeps you in edit mode.
+        /// </summary>
+        private void TabNavigate(int direction)
+        {
+            MoveElement(direction);
+
+            if (_currentIndex >= 0 && _currentIndex < _elements.Count)
+            {
+                var elem = _elements[_currentIndex];
+                if (elem.Role == "textbox" && !elem.IsBackToArena)
+                {
+                    EnterEditMode(elem);
+                }
+            }
         }
 
         private void AnnounceCurrentElement()
