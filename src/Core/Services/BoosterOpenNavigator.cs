@@ -490,6 +490,13 @@ namespace AccessibleArena.Core.Services
 
                 if (isDismiss && button != _revealAllButton)
                 {
+                    // Skip Dismiss_MainButton - Backspace already closes properly via ClosePackProperly()
+                    if (name.Contains("Dismiss_MainButton"))
+                    {
+                        addedObjects.Add(button);
+                        MelonLogger.Msg($"[{NavigatorId}] Found Dismiss button (hidden from nav): {name}");
+                        continue;
+                    }
                     // Use readable label - ModalFade is the background dismiss area
                     string label;
                     if (name.Contains("ModalFade"))
@@ -1013,6 +1020,7 @@ namespace AccessibleArena.Core.Services
             int oldCount = _elements.Count;
             int oldIndex = _currentIndex;
             GameObject oldObj = IsValidIndex ? _elements[_currentIndex].GameObject : null;
+            string oldLabel = IsValidIndex ? _elements[_currentIndex].Label : null;
 
             _elements.Clear();
             _currentIndex = -1;
@@ -1050,17 +1058,18 @@ namespace AccessibleArena.Core.Services
                     _currentIndex = 0;
                 }
 
-                // Only announce when element count changes (new cards found, cards revealed)
-                if (_elements.Count != oldCount)
+                // Cards first discovered: announce activation text
+                if (_elements.Count != oldCount && oldCount <= 2)
                 {
                     MelonLogger.Msg($"[{NavigatorId}] Rescan: {oldCount} -> {_elements.Count} elements");
                     _announcer.AnnounceInterrupt(GetActivationAnnouncement());
                 }
-                // Announce the current element's new label after a reveal (label changed but same object)
+                // Card revealed (label changed): announce card name
                 else if (restored >= 0 && oldObj != null)
                 {
                     string newLabel = _elements[restored].Label;
-                    _announcer.AnnounceInterrupt(newLabel);
+                    if (newLabel != oldLabel)
+                        _announcer.AnnounceInterrupt(newLabel);
                 }
 
                 // Update card navigation so Up/Down works immediately after reveal
