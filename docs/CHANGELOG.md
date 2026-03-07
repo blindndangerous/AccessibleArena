@@ -4,6 +4,10 @@ All notable changes to Accessible Arena.
 
 ## v0.8.2
 
+### New: Brawl Commander Deck Building
+- Commander empty slot button now activates correctly — filters collection to show only valid commanders
+- Select a legendary creature or planeswalker from the filtered collection to set it as commander
+
 ### Fixed: New Deck Button Always Visible
 - Removed automatic folder collapsing on Backspace exit — deck folders now stay open
 - New Deck button is no longer hidden when the "My Decks" folder was collapsed

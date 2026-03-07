@@ -180,6 +180,19 @@ namespace AccessibleArena.Core.Services
 
                 var pointerResult2 = SimulatePointerClick(element);
 
+                // Special handling for empty slot buttons (commander/companion in Brawl deck builder)
+                // SimulatePointerClick doesn't trigger CustomButton.OnClick because OnPointerUp
+                // requires _mouseOver state. Call Click() directly which bypasses this check.
+                if (element.name == "CustomButton - EmptySlot")
+                {
+                    var customButton = FindComponentByName(element, CustomButtonTypeName);
+                    if (customButton != null)
+                    {
+                        Log($"Empty slot button detected, invoking Click() directly");
+                        TryInvokeMethod(customButton, "Click");
+                    }
+                }
+
                 // Special handling for deck builder MainButton - its onClick listener has NULL target
                 // We need to find the WrapperDeckBuilder component and invoke the method directly
                 // Only apply when the button is NOT inside a popup (e.g. AdvancedFiltersPopup also has a "MainButton")
