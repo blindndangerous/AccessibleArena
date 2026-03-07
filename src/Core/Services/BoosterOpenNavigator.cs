@@ -169,9 +169,7 @@ namespace AccessibleArena.Core.Services
                 FindCardsByComponentType(cardEntries, addedObjects);
             }
 
-            // Sort cards in reverse order (highest index first = rightmost card first)
-            // The rare/mythic is at index 0 (leftmost), commons at higher indices (right)
-            // Reverse order gives the natural "open commons first, rare last" dramaturgy
+            // Sort cards by descending index (common cards first, rare last)
             cardEntries = cardEntries.OrderByDescending(x => x.sortOrder).ToList();
 
             MelonLogger.Msg($"[{NavigatorId}] Found {cardEntries.Count} entries (cards + vault progress)");
@@ -183,12 +181,18 @@ namespace AccessibleArena.Core.Services
                 // Check if card is face-down (hidden) via BoosterCardHolder.Hidden
                 bool isHidden = IsCardHidden(cardObj);
 
-                string cardName = ExtractCardName(cardObj);
                 var cardInfo = CardDetector.ExtractCardInfo(cardObj);
+                string cardName = ExtractCardName(cardObj);
 
-                // Prefer our extracted name, fall back to CardDetector
-                string displayName = !string.IsNullOrEmpty(cardName) ? cardName :
-                                     (cardInfo.IsValid ? cardInfo.Name : "Unknown card");
+                // Prefer model-based name (authoritative, immune to stale/not-yet-populated UI text)
+                // Fall back to UI-extracted name only when model has no data (e.g., vault progress entries)
+                string displayName;
+                if (cardInfo.IsValid && !string.IsNullOrEmpty(cardInfo.Name))
+                    displayName = cardInfo.Name;
+                else if (!string.IsNullOrEmpty(cardName))
+                    displayName = cardName;
+                else
+                    displayName = "Unknown card";
 
                 // Log unknown cards for debugging (use F11 on this card for full details)
                 if (displayName == "Unknown card" && !isHidden)
@@ -1039,6 +1043,13 @@ namespace AccessibleArena.Core.Services
                 else
                     _currentIndex = 0;
 
+                // When cards are first discovered (count jumps from just buttons to cards+buttons),
+                // reset cursor to first card instead of restoring to the old Close button position
+                if (_elements.Count != oldCount && oldCount <= 2)
+                {
+                    _currentIndex = 0;
+                }
+
                 // Only announce when element count changes (new cards found, cards revealed)
                 if (_elements.Count != oldCount)
                 {
@@ -1051,6 +1062,9 @@ namespace AccessibleArena.Core.Services
                     string newLabel = _elements[restored].Label;
                     _announcer.AnnounceInterrupt(newLabel);
                 }
+
+                // Update card navigation so Up/Down works immediately after reveal
+                UpdateCardNavigation();
             }
             else
             {
