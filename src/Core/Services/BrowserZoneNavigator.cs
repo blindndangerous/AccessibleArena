@@ -16,8 +16,8 @@ namespace AccessibleArena.Core.Services
     public enum BrowserZoneType
     {
         None,
-        Top,      // Scry: keep on top / London: keep pile (hand)
-        Bottom    // Scry: put on bottom / London: bottom pile (library)
+        Top,      // Scry: keep on top / London: keep pile (hand) / Split: pile 1
+        Bottom    // Scry: put on bottom / London: bottom pile (library) / Split: pile 2
     }
 
     /// <summary>
@@ -930,17 +930,28 @@ namespace AccessibleArena.Core.Services
             }
             else
             {
-                // Surveil uses local-space center points for graveyard and library zones
-                // Top zone = library (keep), Bottom zone = graveyard (dismiss)
-                // Moving from Top → target is graveyard; from Bottom → target is library
-                string targetFieldName = _currentZone == BrowserZoneType.Top
-                    ? "_graveyardCenterPoint"
-                    : "_libraryCenterPoint";
+                // Surveil/Split: local-space center points for the two zones
+                // Moving from Top → target is bottom; from Bottom → target is top
+                string targetFieldName;
+                if (BrowserDetector.IsSplitBrowser(_browserType))
+                {
+                    // Split uses _topSplitPosition / _bottomSplitPosition
+                    targetFieldName = _currentZone == BrowserZoneType.Top
+                        ? "_bottomSplitPosition"
+                        : "_topSplitPosition";
+                }
+                else
+                {
+                    // Surveil uses _graveyardCenterPoint / _libraryCenterPoint
+                    targetFieldName = _currentZone == BrowserZoneType.Top
+                        ? "_graveyardCenterPoint"
+                        : "_libraryCenterPoint";
+                }
 
                 var centerField = browserType.GetField(targetFieldName, PrivateInstance);
                 if (centerField == null)
                 {
-                    MelonLogger.Warning($"[BrowserZoneNavigator] {targetFieldName} field not found on SurveilBrowser");
+                    MelonLogger.Warning($"[BrowserZoneNavigator] {targetFieldName} field not found on browser");
                     return false;
                 }
 
@@ -1002,26 +1013,28 @@ namespace AccessibleArena.Core.Services
 
         private string GetZoneName(BrowserZoneType zone)
         {
+            if (BrowserDetector.IsSplitBrowser(_browserType))
+            {
+                return zone == BrowserZoneType.Top ? Strings.SelectGroupPile1 : Strings.SelectGroupPile2;
+            }
             if (BrowserDetector.IsLondonBrowser(_browserType))
             {
                 return zone == BrowserZoneType.Top ? Strings.BrowserZone_KeepPile : Strings.BrowserZone_BottomPile;
             }
-            else
-            {
-                return zone == BrowserZoneType.Top ? Strings.BrowserZone_KeepOnTop : Strings.BrowserZone_PutOnBottom;
-            }
+            return zone == BrowserZoneType.Top ? Strings.BrowserZone_KeepOnTop : Strings.BrowserZone_PutOnBottom;
         }
 
         private string GetShortZoneName(BrowserZoneType zone)
         {
+            if (BrowserDetector.IsSplitBrowser(_browserType))
+            {
+                return zone == BrowserZoneType.Top ? Strings.SelectGroupPile1 : Strings.SelectGroupPile2;
+            }
             if (BrowserDetector.IsLondonBrowser(_browserType))
             {
                 return zone == BrowserZoneType.Top ? Strings.BrowserZone_KeepShort : Strings.BrowserZone_BottomShort;
             }
-            else
-            {
-                return zone == BrowserZoneType.Top ? Strings.KeepOnTop : Strings.PutOnBottom;
-            }
+            return zone == BrowserZoneType.Top ? Strings.KeepOnTop : Strings.PutOnBottom;
         }
 
         /// <summary>
@@ -1067,11 +1080,11 @@ namespace AccessibleArena.Core.Services
             var zone = DetectCardZone(card);
             if (zone == BrowserZoneType.Top)
             {
-                return BrowserDetector.IsLondonBrowser(_browserType) ? Strings.BrowserZone_KeepShort : Strings.KeepOnTop;
+                return GetShortZoneName(BrowserZoneType.Top);
             }
             if (zone == BrowserZoneType.Bottom)
             {
-                return BrowserDetector.IsLondonBrowser(_browserType) ? Strings.BrowserZone_BottomShort : Strings.PutOnBottom;
+                return GetShortZoneName(BrowserZoneType.Bottom);
             }
 
             return null;

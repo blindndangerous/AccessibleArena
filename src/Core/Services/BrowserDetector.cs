@@ -231,7 +231,16 @@ namespace AccessibleArena.Core.Services
             if (string.IsNullOrEmpty(browserType)) return false;
             return browserType.Contains("Scry") ||
                    browserType.Contains("Surveil") ||
-                   browserType.Contains("ReadAhead");
+                   browserType.Contains("ReadAhead") ||
+                   browserType == "Split";
+        }
+
+        /// <summary>
+        /// Checks if a browser type is a Split browser (Fact or Fiction pile division).
+        /// </summary>
+        public static bool IsSplitBrowser(string browserType)
+        {
+            return browserType == "Split";
         }
 
         /// <summary>
