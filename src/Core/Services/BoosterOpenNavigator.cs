@@ -85,6 +85,12 @@ namespace AccessibleArena.Core.Services
 
             _controller = controller;
             _expectedCardCount = cards.Count;
+
+            // Clear AutoReveal immediately — before the animation starts spawning cards.
+            // SpawnCard auto-reveals cards with AutoReveal=true and sets Revealed=true,
+            // so we must clear it before any SpawnCard call happens.
+            ClearAutoReveal();
+
             MelonLogger.Msg($"[{NavigatorId}] Pack opened with {cards.Count} cards");
             return true;
         }
@@ -929,8 +935,7 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Auto-skip the card reveal animation so all cards appear at once (face-down).
-        /// Clears AutoReveal on all cards first so they ALL stay hidden for the user to
-        /// flip one by one with Enter, matching the sighted card-by-card reveal experience.
+        /// AutoReveal is already cleared in DetectScreen before the animation starts.
         /// </summary>
         private void TrySkipAnimation()
         {
@@ -963,10 +968,6 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[{NavigatorId}] Auto-skipping pack animation for accessibility");
                 try
                 {
-                    // Clear AutoReveal on all cards so they ALL spawn face-down
-                    // This lets blind users flip each card individually with Enter
-                    ClearAutoReveal();
-
                     _stopAnimMethod.Invoke(_controller, null);
                     _animSkipped = true;
                 }

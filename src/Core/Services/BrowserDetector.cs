@@ -232,7 +232,7 @@ namespace AccessibleArena.Core.Services
             return browserType.Contains("Scry") ||
                    browserType.Contains("Surveil") ||
                    browserType.Contains("ReadAhead") ||
-                   browserType == "Split";
+                   browserType == "SplitGroup";
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         public static bool IsSplitBrowser(string browserType)
         {
-            return browserType == "Split";
+            return browserType == "SplitGroup";
         }
 
         /// <summary>
