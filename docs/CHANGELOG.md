@@ -2,6 +2,12 @@
 
 All notable changes to Accessible Arena.
 
+## Unreleased
+
+### Fixed: Color Challenge Deck Name Refresh
+- Selecting a different color in Color Challenge now triggers a UI rescan
+- The announced deck name updates to reflect the newly selected color's deck
+
 ## v0.8.1
 
 ### New: Local Release Script

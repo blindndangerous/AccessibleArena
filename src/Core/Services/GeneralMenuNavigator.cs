@@ -4932,6 +4932,15 @@ namespace AccessibleArena.Core.Services
             var result = UIActivator.Activate(element);
             _announcer.Announce(result.Message, Models.AnnouncementPriority.Normal);
 
+            // Color Challenge: selecting a color button collapses the blade and updates the deck.
+            // Trigger rescan so element labels refresh with the newly selected deck name.
+            if (_activeContentController == "CampaignGraphContentController" && IsInsideBlade(element))
+            {
+                LogDebug($"[{NavigatorId}] CampaignGraph color button activated - scheduling rescan for deck name refresh");
+                TriggerRescan();
+                return true;
+            }
+
             // Note: Mailbox mail item selection is detected via Harmony patch on OnLetterSelected
             // which announces the mail content directly with actual letter data
 

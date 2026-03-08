@@ -24,9 +24,11 @@ Starting a bot match from the "Recent Played" section does not work properly.
 
 ---
 
-### Color Challenge Deck Name Not Refreshing
+### ~~Color Challenge Deck Name Not Refreshing~~ (Fixed)
 
-When selecting a different color in Color Challenge, the announced deck name does not update to reflect the newly selected color's deck.
+~~When selecting a different color in Color Challenge, the announced deck name does not update to reflect the newly selected color's deck.~~
+
+Fixed: Selecting a color button now triggers a rescan so the deck name refreshes.
 
 ---
 
