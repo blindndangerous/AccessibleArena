@@ -803,5 +803,12 @@
   "ChooseX_CannotSubmit": "Aktueller Wert kann nicht bestätigt werden",
   "KeywordSelection_Entry_Format": "Schlüsselwort wählen. {0} Optionen. Tab zum Navigieren, Enter zum Auswählen, Leertaste zum Bestätigen",
   "KeywordSelection_Selected": "ausgewählt",
-  "KeywordSelection_Toggled_Format": "{0}, {1}"
+  "KeywordSelection_Toggled_Format": "{0}, {1}",
+
+  "SelectGroup_Pile1": "Stapel 1",
+  "SelectGroup_Pile2": "Stapel 2",
+  "SelectGroup_FaceDown": "Verdeckte Karte",
+  "SelectGroup_ChoosePile_Format": "Wähle {0} ({1} Karten)",
+  "SelectGroup_Entry_Format": "Wähle einen Stapel. Stapel 1: {0} Karten. Stapel 2: {1} Karten",
+  "SelectGroup_CardInPile_Format": "{0}, {1}, {2} von {3}"
 }

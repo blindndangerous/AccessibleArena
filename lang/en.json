@@ -893,5 +893,12 @@
 
   "KeywordSelection_Entry_Format": "Choose keyword. {0} options. Tab to navigate, Enter to select, Space to confirm",
   "KeywordSelection_Selected": "selected",
-  "KeywordSelection_Toggled_Format": "{0}, {1}"
+  "KeywordSelection_Toggled_Format": "{0}, {1}",
+
+  "SelectGroup_Pile1": "Pile 1",
+  "SelectGroup_Pile2": "Pile 2",
+  "SelectGroup_FaceDown": "Face-down card",
+  "SelectGroup_ChoosePile_Format": "Choose {0} ({1} cards)",
+  "SelectGroup_Entry_Format": "Choose a pile. Pile 1: {0} cards. Pile 2: {1} cards",
+  "SelectGroup_CardInPile_Format": "{0}, {1}, {2} of {3}"
 }

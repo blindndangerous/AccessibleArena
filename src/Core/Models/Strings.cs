@@ -728,6 +728,16 @@ namespace AccessibleArena.Core.Models
         public static string KeywordSelectionToggled(string keyword, string state) => L.Format("KeywordSelection_Toggled_Format", keyword, state);
 
         // ===========================================
+        // SELECTGROUP BROWSER (Fact or Fiction pile selection)
+        // ===========================================
+        public static string SelectGroupPile1 => L.Get("SelectGroup_Pile1");
+        public static string SelectGroupPile2 => L.Get("SelectGroup_Pile2");
+        public static string SelectGroupFaceDown => L.Get("SelectGroup_FaceDown");
+        public static string SelectGroupChoosePile(string pileName, int cardCount) => L.Format("SelectGroup_ChoosePile_Format", pileName, cardCount);
+        public static string SelectGroupEntry(int pile1Count, int pile2Count) => L.Format("SelectGroup_Entry_Format", pile1Count, pile2Count);
+        public static string SelectGroupCardInPile(string cardName, string pileName, int index, int total) => L.Format("SelectGroup_CardInPile_Format", cardName, pileName, index, total);
+
+        // ===========================================
         // SETTINGS MENU
         // ===========================================
         public static string SettingsMenuTitle => L.Get("SettingsMenuTitle");

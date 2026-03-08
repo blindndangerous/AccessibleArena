@@ -60,7 +60,7 @@ namespace AccessibleArena.Core.Services
             // Trusts game's HotHighlight system to show correct items based on game state
             _hotHighlightNavigator = new HotHighlightNavigator(announcer, _zoneNavigator);
 
-            _browserNavigator = new BrowserNavigator(announcer);
+            _browserNavigator = new BrowserNavigator(announcer, _zoneNavigator);
             _manaColorPicker = new ManaColorPickerNavigator(announcer);
             _chooseXNavigator = new ChooseXNavigator(announcer);
             _portraitNavigator = new PlayerPortraitNavigator(announcer);

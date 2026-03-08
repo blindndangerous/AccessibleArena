@@ -334,8 +334,8 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right arrows for navigating cards within current zone
-            // Skip if current zone is Battlefield - that's handled by BattlefieldNavigator
-            if (_currentZone != ZoneType.Battlefield)
+            // Skip if current zone is Battlefield or Browser - handled by their own navigators
+            if (_currentZone != ZoneType.Battlefield && _currentZone != ZoneType.Browser)
             {
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -372,9 +372,9 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
-            // Up/Down arrows - consume for non-Battlefield zones to prevent menu navigation
-            // Battlefield has its own Up/Down handling in BattlefieldNavigator
-            if (_currentZone != ZoneType.Battlefield)
+            // Up/Down arrows - consume for non-Battlefield/Browser zones to prevent menu navigation
+            // Battlefield and Browser have their own Up/Down handling
+            if (_currentZone != ZoneType.Battlefield && _currentZone != ZoneType.Browser)
             {
                 if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
                 {
@@ -395,40 +395,45 @@ namespace AccessibleArena.Core.Services
             }
 
             // Home/End for jumping to first/last card in zone
-            if (Input.GetKeyDown(KeyCode.Home))
+            // Skip for Browser - handled by BrowserNavigator
+            if (_currentZone != ZoneType.Browser)
             {
-                ReclaimZoneOwnership();
-                RefreshIfDirty();
-                ClearEventSystemSelection();
-                if (HasCardsInCurrentZone())
+                if (Input.GetKeyDown(KeyCode.Home))
                 {
-                    FirstCard();
+                    ReclaimZoneOwnership();
+                    RefreshIfDirty();
+                    ClearEventSystemSelection();
+                    if (HasCardsInCurrentZone())
+                    {
+                        FirstCard();
+                    }
+                    else
+                    {
+                        _announcer.AnnounceInterrupt(Strings.ZoneEmpty(GetZoneName(_currentZone)));
+                    }
+                    return true;
                 }
-                else
-                {
-                    _announcer.AnnounceInterrupt(Strings.ZoneEmpty(GetZoneName(_currentZone)));
-                }
-                return true;
-            }
 
-            if (Input.GetKeyDown(KeyCode.End))
-            {
-                ReclaimZoneOwnership();
-                RefreshIfDirty();
-                ClearEventSystemSelection();
-                if (HasCardsInCurrentZone())
+                if (Input.GetKeyDown(KeyCode.End))
                 {
-                    LastCard();
+                    ReclaimZoneOwnership();
+                    RefreshIfDirty();
+                    ClearEventSystemSelection();
+                    if (HasCardsInCurrentZone())
+                    {
+                        LastCard();
+                    }
+                    else
+                    {
+                        _announcer.AnnounceInterrupt(Strings.ZoneEmpty(GetZoneName(_currentZone)));
+                    }
+                    return true;
                 }
-                else
-                {
-                    _announcer.AnnounceInterrupt(Strings.ZoneEmpty(GetZoneName(_currentZone)));
-                }
-                return true;
             }
 
             // Enter key - play/activate current card
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            // Skip for Browser - handled by BrowserNavigator
+            if (_currentZone != ZoneType.Browser && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
             {
                 RefreshIfDirty();
                 if (HasCardsInCurrentZone())

@@ -22,6 +22,7 @@ namespace AccessibleArena.Core.Services
     {
         private readonly IAnnouncementService _announcer;
         private readonly BrowserZoneNavigator _zoneNavigator;
+        private readonly ZoneNavigator _duelZoneNavigator;
 
         // Browser state
         private bool _isActive;
@@ -56,6 +57,14 @@ namespace AccessibleArena.Core.Services
         private int _currentZoneButtonIndex = -1;
         private bool _onZoneSelector; // true when focus is on the zone selector element
 
+        // SelectGroup browser state (Fact or Fiction pile selection)
+        private bool _isSelectGroup;
+        private object _selectGroupBrowserRef;
+        private List<object> _pile1CDCs = new List<object>(); // top group CDCs
+        private List<object> _pile2CDCs = new List<object>(); // bottom group CDCs
+        private Dictionary<GameObject, (int pile, int indexInPile, int pileTotal)> _selectGroupCardMap
+            = new Dictionary<GameObject, (int, int, int)>();
+
         // KeywordSelection browser state (creature type picker)
         private bool _isKeywordSelection;
         private MonoBehaviour _keywordFilterRef;
@@ -85,10 +94,11 @@ namespace AccessibleArena.Core.Services
             AccessibleArenaMod.Instance?.CardNavigator?.Deactivate();
         }
 
-        public BrowserNavigator(IAnnouncementService announcer)
+        public BrowserNavigator(IAnnouncementService announcer, ZoneNavigator duelZoneNavigator)
         {
             _announcer = announcer;
             _zoneNavigator = new BrowserZoneNavigator(announcer);
+            _duelZoneNavigator = duelZoneNavigator;
         }
 
         #region Public Properties
@@ -183,6 +193,9 @@ namespace AccessibleArena.Core.Services
 
             MelonLogger.Msg($"[BrowserNavigator] Entering browser: {browserInfo.BrowserType}");
 
+            // Claim Browser zone ownership so other navigators yield Left/Right/Enter
+            _duelZoneNavigator?.SetCurrentZone(ZoneType.Browser, "BrowserNavigator");
+
             // Activate zone navigator for zone-based browsers
             if (browserInfo.IsZoneBased)
             {
@@ -197,6 +210,13 @@ namespace AccessibleArena.Core.Services
             {
                 _isAssignDamage = true;
                 CacheAssignDamageState();
+            }
+
+            // Detect SelectGroup browser (Fact or Fiction pile selection)
+            if (browserInfo.BrowserType == "SelectGroup")
+            {
+                _isSelectGroup = true;
+                CacheSelectGroupState();
             }
 
             // Detect KeywordSelection browser (creature type picker)
@@ -246,6 +266,13 @@ namespace AccessibleArena.Core.Services
             _totalDamageCached = false;
             _assignerIndex = 0;
             _assignerTotal = 0;
+
+            // Clear SelectGroup state
+            _isSelectGroup = false;
+            _selectGroupBrowserRef = null;
+            _pile1CDCs.Clear();
+            _pile2CDCs.Clear();
+            _selectGroupCardMap.Clear();
 
             // Clear KeywordSelection state
             _isKeywordSelection = false;
@@ -326,7 +353,15 @@ namespace AccessibleArena.Core.Services
             // Zone-based browsers: delegate C/D/arrows/Enter to zone navigator
             if (_browserInfo.IsZoneBased)
             {
-                if (_zoneNavigator.HandleInput())
+                // C/D always reclaim Browser ownership (browser zone hotkeys)
+                if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.D))
+                {
+                    _duelZoneNavigator?.SetCurrentZone(ZoneType.Browser, "BrowserNavigator");
+                }
+
+                // Only delegate arrows/Enter when Browser zone owns focus
+                bool browserOwnsForZone = _duelZoneNavigator == null || _duelZoneNavigator.CurrentZone == ZoneType.Browser;
+                if (browserOwnsForZone && _zoneNavigator.HandleInput())
                 {
                     return true;
                 }
@@ -421,6 +456,9 @@ namespace AccessibleArena.Core.Services
             {
                 bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
+                // Reclaim Browser zone ownership (user may have navigated to graveyard/battlefield)
+                _duelZoneNavigator?.SetCurrentZone(ZoneType.Browser, "BrowserNavigator");
+
                 // Multi-zone: Tab wraps back to zone selector at boundaries
                 if (_isMultiZone && _zoneButtons.Count > 0)
                 {
@@ -487,8 +525,14 @@ namespace AccessibleArena.Core.Services
                     return true;
                 }
 
+                // SelectGroup: Tab cycles buttons only (cards are Left/Right)
+                if (_isSelectGroup && _browserButtons.Count > 0)
+                {
+                    if (shift) NavigateToPreviousButton();
+                    else NavigateToNextButton();
+                }
                 // OptionalAction: unified cycle through cards → choice buttons → wrap
-                if (_browserInfo.IsOptionalAction && _browserCards.Count > 0 && _browserButtons.Count > 0)
+                else if (_browserInfo.IsOptionalAction && _browserCards.Count > 0 && _browserButtons.Count > 0)
                 {
                     if (shift) NavigateToPreviousItem();
                     else NavigateToNextItem();
@@ -507,7 +551,9 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right arrows - card/button navigation (for non-zone browsers)
-            if (!_browserInfo.IsZoneBased || _zoneNavigator.CurrentZone == BrowserZoneType.None)
+            // Only when Browser zone owns focus (not when user navigated to graveyard/battlefield)
+            bool browserOwnsZone = _duelZoneNavigator == null || _duelZoneNavigator.CurrentZone == ZoneType.Browser;
+            if (browserOwnsZone && (!_browserInfo.IsZoneBased || _zoneNavigator.CurrentZone == BrowserZoneType.None))
             {
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -530,7 +576,8 @@ namespace AccessibleArena.Core.Services
 
             // Up/Down arrows - card details (delegate to CardInfoNavigator)
             // AssignDamage handles Up/Down in HandleAssignDamageInput above
-            if (!_isAssignDamage && (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)))
+            // Only when Browser zone owns focus
+            if (browserOwnsZone && !_isAssignDamage && (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)))
             {
                 if (_browserCards.Count > 0 && _currentCardIndex >= 0)
                 {
@@ -544,7 +591,8 @@ namespace AccessibleArena.Core.Services
             }
 
             // Enter - activate current card or button
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            // Only when Browser zone owns focus
+            if (browserOwnsZone && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
             {
                 // Zone navigator handles Enter only when actually navigating in a zone (with selected card)
                 if (_browserInfo.IsZoneBased && _zoneNavigator.CurrentZone != BrowserZoneType.None
@@ -609,6 +657,23 @@ namespace AccessibleArena.Core.Services
                     }
                 }
                 MelonLogger.Msg($"[BrowserNavigator] Found {_browserButtons.Count} workflow action buttons");
+                return;
+            }
+
+            // SelectGroup: discover cards from cached pile CDCs (includes face-down cards)
+            if (_isSelectGroup && (_pile1CDCs.Count > 0 || _pile2CDCs.Count > 0))
+            {
+                DiscoverSelectGroupCards();
+                // Discover buttons in scaffold
+                if (_browserInfo.BrowserGameObject != null)
+                    FindButtonsInContainer(_browserInfo.BrowserGameObject);
+                if (_browserButtons.Count == 0)
+                    DiscoverPromptButtons();
+                // Filter invisible buttons
+                _browserButtons.RemoveAll(b =>
+                    !UIElementClassifier.IsVisibleViaCanvasGroup(b) &&
+                    !UITextExtractor.HasActualText(b));
+                MelonLogger.Msg($"[BrowserNavigator] SelectGroup: {_pile1CDCs.Count} pile 1, {_pile2CDCs.Count} pile 2, {_browserCards.Count} cards, {_browserButtons.Count} buttons");
                 return;
             }
 
@@ -988,8 +1053,13 @@ namespace AccessibleArena.Core.Services
 
             string message;
 
+            // Special announcement for SelectGroup (Fact or Fiction)
+            if (_isSelectGroup)
+            {
+                message = Strings.SelectGroupEntry(_pile1CDCs.Count, _pile2CDCs.Count);
+            }
             // Special announcement for KeywordSelection
-            if (_isKeywordSelection)
+            else if (_isKeywordSelection)
             {
                 int kwCount = GetKeywordCount();
                 message = Strings.KeywordSelectionEntry(kwCount);
@@ -1071,6 +1141,13 @@ namespace AccessibleArena.Core.Services
             if (_isAssignDamage)
             {
                 AnnounceAssignDamageCard(card);
+                return;
+            }
+
+            // SelectGroup: custom announcement with pile membership
+            if (_isSelectGroup)
+            {
+                AnnounceSelectGroupCard(card);
                 return;
             }
 
@@ -1302,7 +1379,20 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            string label = UITextExtractor.GetButtonText(button, button.name);
+            // SelectGroup: override GroupA/GroupB button labels with pile name and count
+            string label;
+            if (_isSelectGroup && button.name == "GroupAButton")
+            {
+                label = Strings.SelectGroupChoosePile(Strings.SelectGroupPile1, _pile1CDCs.Count);
+            }
+            else if (_isSelectGroup && button.name == "GroupBButton")
+            {
+                label = Strings.SelectGroupChoosePile(Strings.SelectGroupPile2, _pile2CDCs.Count);
+            }
+            else
+            {
+                label = UITextExtractor.GetButtonText(button, button.name);
+            }
             string position = _browserButtons.Count > 1 ? $", {_currentButtonIndex + 1} of {_browserButtons.Count}" : "";
 
             _announcer.Announce($"{label}{position}", AnnouncementPriority.High);
@@ -1965,6 +2055,200 @@ namespace AccessibleArena.Core.Services
             else
             {
                 _announcer.Announce(Strings.NoButtonsAvailable, AnnouncementPriority.Normal);
+            }
+        }
+
+        #endregion
+
+        #region SelectGroup Browser
+
+        /// <summary>
+        /// Caches state for the SelectGroup browser: browser ref, pile 1 and pile 2 CDC lists.
+        /// </summary>
+        private void CacheSelectGroupState()
+        {
+            try
+            {
+                // Find GameManager → BrowserManager → CurrentBrowser
+                MonoBehaviour gameManager = null;
+                foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == "GameManager")
+                    {
+                        gameManager = mb;
+                        break;
+                    }
+                }
+
+                if (gameManager == null)
+                {
+                    MelonLogger.Msg("[BrowserNavigator] SelectGroup: GameManager not found");
+                    return;
+                }
+
+                var bmProp = gameManager.GetType().GetProperty("BrowserManager", ReflFlags);
+                var browserManager = bmProp?.GetValue(gameManager);
+                if (browserManager == null)
+                {
+                    MelonLogger.Msg("[BrowserNavigator] SelectGroup: BrowserManager not found");
+                    return;
+                }
+
+                var cbProp = browserManager.GetType().GetProperty("CurrentBrowser", ReflFlags);
+                var currentBrowser = cbProp?.GetValue(browserManager);
+                if (currentBrowser == null || !currentBrowser.GetType().Name.Contains("SelectGroup"))
+                {
+                    MelonLogger.Msg($"[BrowserNavigator] SelectGroup: CurrentBrowser is {currentBrowser?.GetType().Name ?? "null"}");
+                    return;
+                }
+
+                _selectGroupBrowserRef = currentBrowser;
+                MelonLogger.Msg($"[BrowserNavigator] SelectGroup: Found browser {currentBrowser.GetType().Name}");
+
+                // Call GetCardGroups() → List<List<DuelScene_CDC>>
+                var getCardGroupsMethod = currentBrowser.GetType().GetMethod("GetCardGroups", ReflFlags);
+                if (getCardGroupsMethod == null)
+                {
+                    MelonLogger.Msg("[BrowserNavigator] SelectGroup: GetCardGroups method not found");
+                    return;
+                }
+
+                var groups = getCardGroupsMethod.Invoke(currentBrowser, null);
+                if (groups is IList groupList && groupList.Count >= 2)
+                {
+                    var pile1 = groupList[0] as IList;
+                    var pile2 = groupList[1] as IList;
+
+                    _pile1CDCs.Clear();
+                    _pile2CDCs.Clear();
+
+                    if (pile1 != null)
+                    {
+                        foreach (var cdc in pile1)
+                            _pile1CDCs.Add(cdc);
+                    }
+                    if (pile2 != null)
+                    {
+                        foreach (var cdc in pile2)
+                            _pile2CDCs.Add(cdc);
+                    }
+
+                    MelonLogger.Msg($"[BrowserNavigator] SelectGroup: Pile 1 has {_pile1CDCs.Count} cards, Pile 2 has {_pile2CDCs.Count} cards");
+                }
+                else
+                {
+                    MelonLogger.Msg("[BrowserNavigator] SelectGroup: GetCardGroups returned unexpected result");
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[BrowserNavigator] SelectGroup cache error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Discovers cards from cached SelectGroup pile CDCs.
+        /// Includes face-down cards that would normally be filtered out.
+        /// Orders: pile 1 cards first, then pile 2 cards.
+        /// Also populates _selectGroupCardMap for fast pile lookup.
+        /// </summary>
+        private void DiscoverSelectGroupCards()
+        {
+            _selectGroupCardMap.Clear();
+
+            // Process pile 1 CDCs
+            for (int i = 0; i < _pile1CDCs.Count; i++)
+            {
+                AddSelectGroupCard(_pile1CDCs[i], 1, i, _pile1CDCs.Count);
+            }
+            // Process pile 2 CDCs
+            for (int i = 0; i < _pile2CDCs.Count; i++)
+            {
+                AddSelectGroupCard(_pile2CDCs[i], 2, i, _pile2CDCs.Count);
+            }
+        }
+
+        private void AddSelectGroupCard(object cdc, int pileNumber, int indexInPile, int pileTotal)
+        {
+            if (cdc == null) return;
+
+            try
+            {
+                // CDC is a MonoBehaviour (DuelScene_CDC), get its gameObject
+                var goProp = cdc.GetType().GetProperty("gameObject", BindingFlags.Public | BindingFlags.Instance);
+                var go = goProp?.GetValue(cdc) as GameObject;
+                if (go == null) return;
+
+                if (!go.activeInHierarchy) return;
+                if (BrowserDetector.IsDuplicateCard(go, _browserCards)) return;
+
+                string pileLabel = pileNumber == 1 ? "Pile 1" : "Pile 2";
+                string cardName = CardDetector.GetCardName(go);
+                // Include face-down cards (don't filter by IsValidCardName)
+                if (string.IsNullOrEmpty(cardName) || !BrowserDetector.IsValidCardName(cardName))
+                {
+                    MelonLogger.Msg($"[BrowserNavigator] SelectGroup: Face-down card in {pileLabel}: {go.name}");
+                }
+                else
+                {
+                    MelonLogger.Msg($"[BrowserNavigator] SelectGroup: Card in {pileLabel}: {cardName}");
+                }
+
+                _browserCards.Add(go);
+                _selectGroupCardMap[go] = (pileNumber, indexInPile + 1, pileTotal);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[BrowserNavigator] SelectGroup: Error adding card from pile {pileNumber}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Announces a card in the SelectGroup browser with pile membership.
+        /// </summary>
+        private void AnnounceSelectGroupCard(GameObject card)
+        {
+            if (card == null) return;
+
+            // Try to get card name; use face-down label if extraction fails
+            var info = CardDetector.ExtractCardInfo(card);
+            string cardName = info.Name;
+            bool isFaceDown = string.IsNullOrEmpty(cardName) || !BrowserDetector.IsValidCardName(cardName);
+            if (isFaceDown)
+            {
+                cardName = Strings.SelectGroupFaceDown;
+            }
+
+            // Look up pile membership from cached map
+            string pileName;
+            int pileIndex = 1, pileTotal = 1;
+            if (_selectGroupCardMap.TryGetValue(card, out var pileInfo))
+            {
+                pileName = pileInfo.pile == 1 ? Strings.SelectGroupPile1 : Strings.SelectGroupPile2;
+                pileIndex = pileInfo.indexInPile;
+                pileTotal = pileInfo.pileTotal;
+            }
+            else
+            {
+                pileName = Strings.SelectGroupPile1; // fallback
+            }
+
+            string announcement;
+            if (pileTotal <= 1)
+            {
+                announcement = $"{cardName}, {pileName}";
+            }
+            else
+            {
+                announcement = Strings.SelectGroupCardInPile(cardName, pileName, pileIndex, pileTotal);
+            }
+
+            _announcer.Announce(announcement, AnnouncementPriority.High);
+
+            // Prepare card details for Up/Down navigation (if face-up)
+            if (!isFaceDown)
+            {
+                AccessibleArenaMod.Instance?.CardNavigator?.PrepareForCard(card, ZoneType.Library);
             }
         }
 
