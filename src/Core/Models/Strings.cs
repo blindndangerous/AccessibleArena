@@ -1116,6 +1116,7 @@ namespace AccessibleArena.Core.Models
                 case Services.ElementGrouping.ElementGroup.FriendSectionIncoming: return L.Get("GroupFriendSectionIncoming");
                 case Services.ElementGrouping.ElementGroup.FriendSectionOutgoing: return L.Get("GroupFriendSectionOutgoing");
                 case Services.ElementGrouping.ElementGroup.FriendSectionBlocked: return L.Get("GroupFriendSectionBlocked");
+                case Services.ElementGrouping.ElementGroup.FriendSectionChallenges: return L.Get("GroupFriendSectionChallenges");
                 case Services.ElementGrouping.ElementGroup.FriendsPanelProfile: return L.Get("GroupFriendsPanelProfile");
                 case Services.ElementGrouping.ElementGroup.ChallengeMain: return L.Get("GroupChallengeMain");
                 default: return L.Get("GroupOther");
@@ -1254,5 +1255,7 @@ namespace AccessibleArena.Core.Models
         public static string FriendActionDecline => L.Get("FriendActionDecline");
         public static string FriendActionRevoke => L.Get("FriendActionRevoke");
         public static string FriendActionUnblock => L.Get("FriendActionUnblock");
+        public static string FriendActionAddFriend => L.Get("FriendActionAddFriend");
+        public static string FriendActionOpenChallenge => L.Get("FriendActionOpenChallenge");
     }
 }

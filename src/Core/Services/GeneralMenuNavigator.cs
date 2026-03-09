@@ -2233,7 +2233,7 @@ namespace AccessibleArena.Core.Services
             EnsureAllSocialTilesExist(socialPanel);
 
             // Step 2: Scan for tile components (now including newly created ones)
-            string[] tileTypeNames = { "FriendTile", "InviteOutgoingTile", "InviteIncomingTile", "BlockTile" };
+            string[] tileTypeNames = { "FriendTile", "InviteOutgoingTile", "InviteIncomingTile", "BlockTile", T.IncomingChallengeRequestTile, T.CurrentChallengeTile };
             int scanned = 0;
             int added = 0;
 
@@ -2365,7 +2365,7 @@ namespace AccessibleArena.Core.Services
             var flags = AllInstanceFlags;
 
             // Open all collapsed sections by setting _isOpen directly (avoids triggering sound effects)
-            foreach (var sectionName in new[] { "SectionBlocks", "SectionIncomingInvites", "SectionOutgoingInvites", "SectionFriends" })
+            foreach (var sectionName in new[] { "SectionBlocks", "SectionIncomingInvites", "SectionOutgoingInvites", "SectionFriends", "SectionIncomingChallengeRequest" })
             {
                 var sectionField = widgetType.GetField(sectionName, flags);
                 if (sectionField == null) continue;
@@ -2389,6 +2389,7 @@ namespace AccessibleArena.Core.Services
             // The game's virtualized list only creates tiles within the viewport.
             // Blocked section is at the bottom and collapsed, so tiles never get created.
             EnsureBlockedTilesExist(widget, widgetType, flags);
+            EnsureChallengeTilesExist(widget, widgetType, flags);
         }
 
         /// <summary>
@@ -2484,6 +2485,35 @@ namespace AccessibleArena.Core.Services
             catch (Exception ex)
             {
                 MelonLogger.Warning($"[{NavigatorId}] Error ensuring blocked tiles: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Ensure challenge tiles (IncomingChallengeRequestTile, CurrentChallengeTile) are created.
+        /// The game uses a virtualized scroll view for challenges. Calling UpdateChallengeList()
+        /// on the FriendsWidget forces tile creation based on viewport bounds.
+        /// </summary>
+        private void EnsureChallengeTilesExist(Component widget, Type widgetType, BindingFlags flags)
+        {
+            try
+            {
+                // Set scroll to top so all tiles are in the viewport for creation
+                var scrollField = widgetType.GetField("ChallengeListScroll", PublicInstance);
+                var scrollRect = scrollField?.GetValue(widget) as ScrollRect;
+                if (scrollRect != null)
+                    scrollRect.verticalNormalizedPosition = 1f;
+
+                // Call UpdateChallengeList() to force tile creation
+                var updateMethod = widgetType.GetMethod("UpdateChallengeList", AllInstanceFlags);
+                if (updateMethod != null)
+                {
+                    updateMethod.Invoke(widget, null);
+                    MelonLogger.Msg($"[{NavigatorId}] Called UpdateChallengeList to ensure challenge tiles");
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[{NavigatorId}] Error ensuring challenge tiles: {ex.Message}");
             }
         }
 

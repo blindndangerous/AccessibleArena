@@ -32,6 +32,11 @@ namespace AccessibleArena.Core.Services
         private const string ActionAccept = "accept";
         private const string ActionDecline = "decline";
         private const string ActionUnblock = "unblock";
+        private const string ActionAcceptChallenge = "acceptChallenge";
+        private const string ActionDeclineChallenge = "declineChallenge";
+        private const string ActionBlockChallenger = "blockChallenger";
+        private const string ActionAddFriendChallenger = "addFriendChallenger";
+        private const string ActionOpenChallenge = "openChallenge";
 
         // Known social tile component type names
         private static readonly string[] SocialTileTypeNames = new[]
@@ -39,7 +44,9 @@ namespace AccessibleArena.Core.Services
             T.FriendTile,
             T.InviteOutgoingTile,
             T.InviteIncomingTile,
-            T.BlockTile
+            T.BlockTile,
+            T.IncomingChallengeRequestTile,
+            T.CurrentChallengeTile
         };
 
         // Cached reflection per tile type (keyed by type to handle multiple tile types)
@@ -59,11 +66,17 @@ namespace AccessibleArena.Core.Services
             public FieldInfo ButtonReject;       // InviteIncomingTile: _buttonReject (Button)
             public FieldInfo ButtonBlock;        // InviteIncomingTile: _buttonBlock (Button)
             public FieldInfo ButtonRemoveBlock;  // BlockTile: _buttonRemoveBlock (Button)
+            public FieldInfo ButtonAddFriend;    // IncomingChallengeRequestTile: _buttonAddFriend (Button)
             public FieldInfo CallbackOpenChat;   // Action<SocialEntity>
             public FieldInfo CallbackRemoveBlock; // BlockTile: Callback_RemoveBlock (Action<Block>)
             public PropertyInfo FriendProp;      // FriendTile: Friend (SocialEntity)
             public PropertyInfo InviteProp;      // InviteOutgoingTile/InviteIncomingTile: Invite
             public PropertyInfo BlockProp;       // BlockTile: Block
+
+            // Challenge tile fields
+            public FieldInfo SenderName;         // IncomingChallengeRequestTile: _senderName (TMP_Text)
+            public FieldInfo TitleText;          // CurrentChallengeTile: _titleText (Localize)
+            public FieldInfo OpenChallengeButton; // CurrentChallengeTile: _openChallengeScreenButton (CustomButton)
         }
 
         /// <summary>
@@ -76,6 +89,21 @@ namespace AccessibleArena.Core.Services
             if (tile == null) return null;
 
             var cache = GetCache(tile);
+            string typeName = tile.GetType().Name;
+
+            // IncomingChallengeRequestTile: read _senderName (TMP_Text)
+            if (typeName == T.IncomingChallengeRequestTile)
+            {
+                string senderName = ReadTMPField(tile, cache.SenderName);
+                return senderName;
+            }
+
+            // CurrentChallengeTile: read _titleText (Localize)
+            if (typeName == T.CurrentChallengeTile)
+            {
+                string title = ReadLocalizeField(tile, cache.TitleText);
+                return title;
+            }
 
             string name = ReadTMPField(tile, cache.LabelName);
 
@@ -158,6 +186,17 @@ namespace AccessibleArena.Core.Services
             {
                 actions.Add((Strings.FriendActionUnblock, ActionUnblock));
             }
+            else if (typeName == T.IncomingChallengeRequestTile)
+            {
+                actions.Add((Strings.FriendActionAccept, ActionAcceptChallenge));
+                actions.Add((Strings.FriendActionDecline, ActionDeclineChallenge));
+                actions.Add((Strings.FriendActionBlock, ActionBlockChallenger));
+                actions.Add((Strings.FriendActionAddFriend, ActionAddFriendChallenger));
+            }
+            else if (typeName == T.CurrentChallengeTile)
+            {
+                actions.Add((Strings.FriendActionOpenChallenge, ActionOpenChallenge));
+            }
 
             return actions;
         }
@@ -212,6 +251,21 @@ namespace AccessibleArena.Core.Services
                         if (cache.ButtonRemoveBlock != null)
                             return ClickButton(tile, cache.ButtonRemoveBlock);
                         return TryInvokeMethod(tile, actionId);
+
+                    case ActionAcceptChallenge:
+                        return ClickButton(tile, cache.ButtonAccept);
+
+                    case ActionDeclineChallenge:
+                        return ClickButton(tile, cache.ButtonReject);
+
+                    case ActionBlockChallenger:
+                        return ClickButton(tile, cache.ButtonBlock);
+
+                    case ActionAddFriendChallenger:
+                        return ClickButton(tile, cache.ButtonAddFriend);
+
+                    case ActionOpenChallenge:
+                        return ClickCustomButton(tile, cache.OpenChallengeButton);
 
                     default:
                         MelonLogger.Warning($"[FriendInfoProvider] Unknown action: {actionId}");
@@ -357,11 +411,15 @@ namespace AccessibleArena.Core.Services
                 ButtonReject = type.GetField("_buttonReject", flags),
                 ButtonBlock = type.GetField("_buttonBlock", flags),
                 ButtonRemoveBlock = type.GetField("_buttonRemoveBlock", flags),
+                ButtonAddFriend = type.GetField("_buttonAddFriend", flags),
                 CallbackOpenChat = type.GetField("Callback_OpenChat", flags),
                 CallbackRemoveBlock = type.GetField("Callback_RemoveBlock", flags),
                 FriendProp = type.GetProperty("Friend", flags),
                 InviteProp = type.GetProperty("Invite", flags),
-                BlockProp = type.GetProperty("Block", flags)
+                BlockProp = type.GetProperty("Block", flags),
+                SenderName = type.GetField("_senderName", flags),
+                TitleText = type.GetField("_titleText", flags),
+                OpenChallengeButton = type.GetField("_openChallengeScreenButton", flags)
             };
 
             _caches[type] = cache;
@@ -439,6 +497,39 @@ namespace AccessibleArena.Core.Services
             button.onClick?.Invoke();
             MelonLogger.Msg($"[FriendInfoProvider] Clicked button: {buttonField.Name}");
             return true;
+        }
+
+        /// <summary>
+        /// Click a CustomButton field. CustomButton uses OnClick (UnityEvent) instead of Button.onClick.
+        /// </summary>
+        private static bool ClickCustomButton(Component tile, FieldInfo buttonField)
+        {
+            if (buttonField == null)
+            {
+                MelonLogger.Warning($"[FriendInfoProvider] CustomButton field not found on {tile.GetType().Name}");
+                return false;
+            }
+
+            var customButton = buttonField.GetValue(tile) as Component;
+            if (customButton == null)
+            {
+                MelonLogger.Warning($"[FriendInfoProvider] CustomButton value is null: {buttonField.Name}");
+                return false;
+            }
+
+            // CustomButton.OnClick is a UnityEvent, invoke it
+            var onClickProp = customButton.GetType().GetProperty("OnClick", PublicInstance);
+            var onClickEvent = onClickProp?.GetValue(customButton);
+            if (onClickEvent != null)
+            {
+                var invokeMethod = onClickEvent.GetType().GetMethod("Invoke", Type.EmptyTypes);
+                invokeMethod?.Invoke(onClickEvent, null);
+                MelonLogger.Msg($"[FriendInfoProvider] Clicked CustomButton: {buttonField.Name}");
+                return true;
+            }
+
+            MelonLogger.Warning($"[FriendInfoProvider] Could not find OnClick on CustomButton: {buttonField.Name}");
+            return false;
         }
 
         /// <summary>

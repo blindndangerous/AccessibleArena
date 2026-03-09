@@ -191,6 +191,11 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         FriendSectionBlocked,
 
         /// <summary>
+        /// Friends panel: Challenge requests section (incoming and active challenges).
+        /// </summary>
+        FriendSectionChallenges,
+
+        /// <summary>
         /// Friends panel: Local player profile (username#number + status).
         /// Single-element standalone group for sharing your username.
         /// </summary>
@@ -215,6 +220,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 || group == ElementGroup.FriendSectionIncoming
                 || group == ElementGroup.FriendSectionOutgoing
                 || group == ElementGroup.FriendSectionBlocked
+                || group == ElementGroup.FriendSectionChallenges
                 || group == ElementGroup.FriendsPanelProfile
                 || group == ElementGroup.PlayBladeTabs
                 || group == ElementGroup.PlayBladeContent
@@ -243,7 +249,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 || group == ElementGroup.FriendSectionFriends
                 || group == ElementGroup.FriendSectionIncoming
                 || group == ElementGroup.FriendSectionOutgoing
-                || group == ElementGroup.FriendSectionBlocked;
+                || group == ElementGroup.FriendSectionBlocked
+                || group == ElementGroup.FriendSectionChallenges;
         }
 
         /// <summary>
@@ -255,7 +262,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             return group == ElementGroup.FriendSectionFriends
                 || group == ElementGroup.FriendSectionIncoming
                 || group == ElementGroup.FriendSectionOutgoing
-                || group == ElementGroup.FriendSectionBlocked;
+                || group == ElementGroup.FriendSectionBlocked
+                || group == ElementGroup.FriendSectionChallenges;
         }
 
         /// <summary>

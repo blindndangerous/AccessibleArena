@@ -4,7 +4,14 @@ All notable changes to Accessible Arena.
 
 ## v0.8.3
 
-(changes pending)
+### New: Challenge Tiles in Friends Panel
+- Incoming challenge requests now appear in a "Challenges" group when browsing the friends panel
+- Active challenges (ones you created) also appear in the same group
+- Navigate challenge entries with Up/Down, cycle actions with Left/Right
+- Incoming challenge actions: Accept, Decline, Block, Add Friend
+- Active challenge action: Open (reopens the challenge screen)
+- Challenge section force-opens and tiles are created via UpdateChallengeList on panel scan
+- Localized group name and action labels for all 12 languages
 
 ## v0.8.2
 

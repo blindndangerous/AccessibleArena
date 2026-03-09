@@ -1,5 +1,6 @@
 using UnityEngine;
 using MelonLoader;
+using T = AccessibleArena.Core.Constants.GameTypeNames;
 
 namespace AccessibleArena.Core.Services.ElementGrouping
 {
@@ -473,6 +474,16 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (parentPath.Contains("Button_AddFriend") || name.Contains("Button_AddFriend"))
                 return ElementGroup.FriendsPanelAddFriend;
 
+            // Challenge tiles: IncomingChallengeRequestTile / CurrentChallengeTile
+            // These live outside the SocialEntittiesListItem pattern, in separate sections.
+            if (parentPath.Contains("SectionIncomingChallengeRequest") || parentPath.Contains("ActiveChallengeAnchor"))
+            {
+                // Only accept the primary clickable element for each tile
+                if (IsPrimaryChallengeTileElement(element))
+                    return ElementGroup.FriendSectionChallenges;
+                return ElementGroup.Unknown;
+            }
+
             // Friend entries: Backer_Hitbox inside SocialEntittiesListItem_* within Bucket_*_CONTAINER
             // Use bucket container names for section detection - more reliable than component type matching
             // since different tile types exist (FriendTile, InviteOutgoingTile, InviteIncomingTile, etc.)
@@ -525,6 +536,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     return ElementGroup.FriendSectionOutgoing;
                 if (tileName == "InviteIncomingTile")
                     return ElementGroup.FriendSectionIncoming;
+                if (tileName == T.IncomingChallengeRequestTile || tileName == T.CurrentChallengeTile)
+                    return ElementGroup.FriendSectionChallenges;
 
                 MelonLogger.Msg($"[ElementGroupAssigner] Social tile fallback matched {tileName} but no section determined, path={tilePath}");
             }
@@ -561,6 +574,41 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Check if an element is the primary clickable for a challenge tile.
+        /// IncomingChallengeRequestTile has sub-buttons (accept/reject/block/addFriend) handled by actions.
+        /// CurrentChallengeTile has _openChallengeScreenButton as the primary clickable.
+        /// </summary>
+        private static bool IsPrimaryChallengeTileElement(GameObject element)
+        {
+            // The tile's own GameObject or the CustomButton on it are the primary clickables
+            var tile = FriendInfoProvider.FindFriendTile(element);
+            if (tile == null) return false;
+
+            // If we ARE the tile itself, accept
+            if (element == tile.gameObject) return true;
+
+            string tileName = tile.GetType().Name;
+
+            // CurrentChallengeTile: the _openChallengeScreenButton (CustomButton) is the main clickable
+            if (tileName == T.CurrentChallengeTile)
+                return true;
+
+            // IncomingChallengeRequestTile: only accept _contextClickButton (CustomButton), not sub-buttons
+            if (tileName == T.IncomingChallengeRequestTile)
+            {
+                // Accept CustomButton elements (the context click area), reject sub-buttons
+                foreach (var comp in element.GetComponents<MonoBehaviour>())
+                {
+                    if (comp != null && comp.GetType().Name == T.CustomButton)
+                        return true;
+                }
+                return false;
+            }
+
+            return false;
         }
 
         /// <summary>

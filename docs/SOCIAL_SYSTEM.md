@@ -19,6 +19,7 @@ The friends panel uses the element grouping system with overlay filtering. When 
 - **Sent Requests** - List of outgoing friend invites (navigable section)
 - **Incoming Requests** - List of incoming friend invites (navigable section)
 - **Blocked** - List of blocked users (navigable section)
+- **Challenges** - Incoming challenge requests and active challenges (navigable section)
 - **Your Profile** - Standalone element showing your full username#number and status
 
 Only sections with entries appear. Empty sections are absent.
@@ -57,6 +58,15 @@ Only sections with entries appear. Empty sections are absent.
 ### BlockTile (blocked users)
 - **Unblock** - Removes the block
 
+### IncomingChallengeRequestTile (incoming challenge requests)
+- **Accept** - Accepts the challenge and opens the challenge screen
+- **Decline** - Declines the challenge request
+- **Block** - Blocks the challenger
+- **Add Friend** - Sends a friend request to the challenger
+
+### CurrentChallengeTile (active challenge you created)
+- **Open** - Reopens the challenge screen
+
 ---
 
 ## Friend Entry Labels
@@ -65,6 +75,8 @@ Each friend entry displays: **"name, status"**
 
 - FriendTile: name from `_labelName` (TMP_Text) + status from `_labelStatus` (Localize component)
 - InviteOutgoingTile: name from `_labelName` (TMP_Text) + date from `_labelDateSent` (Localize component)
+- IncomingChallengeRequestTile: name from `_senderName` (TMP_Text)
+- CurrentChallengeTile: title from `_titleText` (Localize component)
 
 The `Localize` component is not a TMP_Text. To read its displayed text, find the TMP_Text on the same GameObject or its children.
 
@@ -97,6 +109,13 @@ SocialUI_V2_Desktop_16x9(Clone)
         ...
       Bucket_Blocked_CONTAINER
         ...
+      ChallengeListScroll (separate ScrollRect for challenges)
+        ActiveChallengeAnchor
+          [CurrentChallengeTile]       ← navigable element (Challenges section)
+        SectionIncomingChallengeRequest
+          [IncomingChallengeRequestTile_0]  ← navigable element (Challenges section)
+          [IncomingChallengeRequestTile_1]
+            ...
 ```
 
 Navigable elements are `Backer_Hitbox` (CustomButton) children. The tile component (`FriendTile`, `InviteOutgoingTile`, etc.) is on the parent `SocialEntittiesListItem_*` GameObject.
@@ -107,7 +126,7 @@ Navigable elements are `Backer_Hitbox` (CustomButton) children. The tile compone
 
 ### Files
 
-- **`ElementGroup.cs`** - 7 enum values: `FriendsPanelChallenge`, `FriendsPanelAddFriend`, `FriendsPanelProfile`, `FriendSectionFriends`, `FriendSectionIncoming`, `FriendSectionOutgoing`, `FriendSectionBlocked`
+- **`ElementGroup.cs`** - 8 enum values: `FriendsPanelChallenge`, `FriendsPanelAddFriend`, `FriendsPanelProfile`, `FriendSectionFriends`, `FriendSectionIncoming`, `FriendSectionOutgoing`, `FriendSectionBlocked`, `FriendSectionChallenges`
 - **`ElementGroupAssigner.cs`** - `DetermineFriendPanelGroup()` maps elements to groups via parentPath bucket detection + profile button instance ID matching
 - **`GroupedNavigator.cs`** - Friend section groups exempt from single-element standalone rule
 - **`OverlayDetector.cs`** - `FriendsPanel` overlay when social panel is open
@@ -127,6 +146,9 @@ Elements inside the social panel are assigned groups based on parentPath pattern
 - `SocialEntittiesListItem` + `Bucket_SentRequests` → `FriendSectionOutgoing`
 - `SocialEntittiesListItem` + `Bucket_IncomingRequests` → `FriendSectionIncoming`
 - `SocialEntittiesListItem` + `Bucket_Blocked` → `FriendSectionBlocked`
+- `SectionIncomingChallengeRequest` in path → `FriendSectionChallenges`
+- `ActiveChallengeAnchor` in path → `FriendSectionChallenges`
+- Tile type fallback: `IncomingChallengeRequestTile` / `CurrentChallengeTile` → `FriendSectionChallenges`
 
 Unmatched social panel elements return `Unknown` (hidden via fallthrough guard).
 
@@ -170,6 +192,26 @@ Social tile types live in **Core.dll** (no namespace), NOT Assembly-CSharp.dll.
 - `Callback_RemoveBlock` (Action\<Block\>) - unblock callback
 - `Block` (Block property) - the block entity with `BlockedPlayer.DisplayName`
 
+**IncomingChallengeRequestTile fields:**
+- `_senderName` (TMP_Text) - challenger display name (rich text formatted)
+- `_challengeTitle` (Localize) - localized title with username parameter
+- `_contextClickButton` (CustomButton) - the main clickable element
+- `_buttonAccept` (Button) - accept challenge
+- `_buttonReject` (Button) - decline challenge
+- `_buttonBlock` (Button) - block the challenger
+- `_buttonAddFriend` (Button) - add challenger as friend
+- `Callback_Accept`, `Callback_Reject` (Action\<Guid\>) - invoked with `IncomingChallengeId`
+- `Callback_Block`, `Callback_AddFriend` (Action\<string\>) - invoked with `ChallengeSenderFullDisplayName`
+- `IncomingChallengeId` (Guid property) - the challenge's unique ID
+- `ChallengeSenderFullDisplayName` (string property) - sender's full display name
+
+**CurrentChallengeTile fields:**
+- `_titleText` (Localize) - localized title with owner username
+- `_subTitleText` (Localize) - localized subtitle
+- `_openChallengeScreenButton` (CustomButton) - opens challenge screen
+- `OnOpenChallengeScreen` (Action\<Guid\>) - callback invoked with `_challengeId`
+- `_challengeId` (private Guid field) - the active challenge's ID
+
 **FriendsWidget fields (for local player profile):**
 - `StatusButton` (CustomButton) - toggles presence status dropdown; identified by instance ID for `FriendsPanelProfile` group
 - `UsernameText` (TMP_Text) - shows `_socialManager.LocalPlayer.DisplayName` (name without #number)
@@ -189,6 +231,10 @@ The `FriendsWidget` uses a **virtualized scroll view** for performance:
 - `SectionBlocks.IsOpen = false` by default (collapsed)
 - The mod force-creates BlockTile instances via reflection on FriendsWidget
 - BlockTile has NO CustomButton/Backer_Hitbox - discovered via fallback tile scan
+- Challenge tiles use a separate `ChallengeListScroll` ScrollRect
+- `UpdateChallengeList()` on FriendsWidget creates/updates challenge tiles based on viewport bounds
+- The mod sets `verticalNormalizedPosition = 1f` before calling to ensure tiles are in viewport
+- `SectionIncomingChallengeRequest` is force-opened alongside other sections
 
 ### Panel Toggle
 

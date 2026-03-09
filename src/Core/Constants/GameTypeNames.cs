@@ -67,6 +67,8 @@ namespace AccessibleArena.Core.Constants
         public const string InviteOutgoingTile = "InviteOutgoingTile";
         public const string InviteIncomingTile = "InviteIncomingTile";
         public const string BlockTile = "BlockTile";
+        public const string IncomingChallengeRequestTile = "IncomingChallengeRequestTile";
+        public const string CurrentChallengeTile = "CurrentChallengeTile";
         public const string FriendsWidget = "FriendsWidget";
 
         // --- Fully-Qualified Type Names (for FindType lookups) ---
