@@ -804,7 +804,6 @@
   "KeywordSelection_Entry_Format": "Schlüsselwort wählen. {0} Optionen. Tab zum Navigieren, Enter zum Auswählen, Leertaste zum Bestätigen",
   "KeywordSelection_Selected": "ausgewählt",
   "KeywordSelection_Toggled_Format": "{0}, {1}",
-
   "SelectGroup_Pile1": "Stapel 1",
   "SelectGroup_Pile2": "Stapel 2",
   "SelectGroup_FaceDown": "Verdeckte Karte",
