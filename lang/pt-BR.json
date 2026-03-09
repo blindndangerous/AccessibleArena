@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: Alternar carta entre zonas",
   "HelpSpaceConfirm": "Espaço: Confirmar seleção",
   "HelpCategoryDebug": "Teclas de depuração (desenvolvedores)",
-  "HelpF4Refresh": "F4: Atualizar navegador atual",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: Exportar detalhes da carta para o log (abertura de pacotes)",
   "HelpF12UIDump": "F12: Exportar hierarquia da interface para o log",
 

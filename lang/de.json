@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: Karte zwischen Zonen umschalten",
   "HelpSpaceConfirm": "Leertaste: Auswahl bestätigen",
   "HelpCategoryDebug": "Debug-Tasten (Entwickler)",
-  "HelpF4Refresh": "F4: Aktuellen Navigator aktualisieren",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: Kartendetails ins Protokoll schreiben (Packungsöffnung)",
   "HelpF12UIDump": "F12: UI-Hierarchie ins Protokoll schreiben",
 

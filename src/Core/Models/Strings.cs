@@ -838,9 +838,10 @@ namespace AccessibleArena.Core.Models
         public static string HelpEnterToggle => L.Get("HelpEnterToggle");
         public static string HelpSpaceConfirm => L.Get("HelpSpaceConfirm");
 
+        public static string HelpF4Friends => L.Get("HelpF4Friends");
+
         // Debug keys
         public static string HelpCategoryDebug => L.Get("HelpCategoryDebug");
-        public static string HelpF4Refresh => L.Get("HelpF4Refresh");
         public static string HelpF11CardDump => L.Get("HelpF11CardDump");
         public static string HelpF12UIDump => L.Get("HelpF12UIDump");
 

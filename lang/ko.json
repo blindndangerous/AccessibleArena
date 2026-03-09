@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: 카드를 구역 간 전환",
   "HelpSpaceConfirm": "Space: 선택 확정",
   "HelpCategoryDebug": "디버그 키 (개발자용)",
-  "HelpF4Refresh": "F4: 현재 네비게이터 새로고침",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: 카드 상세를 로그에 출력 (팩 개봉 시)",
   "HelpF12UIDump": "F12: UI 계층을 로그에 출력",
 

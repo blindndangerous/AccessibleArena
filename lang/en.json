@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: Toggle card between zones",
   "HelpSpaceConfirm": "Space: Confirm selection",
   "HelpCategoryDebug": "Debug keys (developers)",
-  "HelpF4Refresh": "F4: Refresh current navigator",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: Dump card details to log (pack opening)",
   "HelpF12UIDump": "F12: Dump UI hierarchy to log",
 

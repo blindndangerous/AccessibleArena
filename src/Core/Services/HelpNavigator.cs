@@ -49,6 +49,7 @@ namespace AccessibleArena.Core.Services
                 Strings.HelpF1Help,
                 Strings.HelpF2Settings,
                 Strings.HelpF3Context,
+                Strings.HelpF4Friends,
                 Strings.HelpCtrlRRepeat,
                 Strings.HelpBackspace,
 
@@ -80,6 +81,7 @@ namespace AccessibleArena.Core.Services
                 Strings.HelpXExile,
                 Strings.HelpSStack,
                 Strings.HelpDLibrary,
+                Strings.HelpTipCommandZone,
 
                 // Duel information
                 Strings.HelpCategoryDuelInfo,
@@ -125,7 +127,6 @@ namespace AccessibleArena.Core.Services
 
                 // Debug keys
                 Strings.HelpCategoryDebug,
-                Strings.HelpF4Refresh,
                 Strings.HelpF11CardDump,
                 Strings.HelpF12UIDump,
 
@@ -136,7 +137,6 @@ namespace AccessibleArena.Core.Services
                 Strings.HelpTipCombatBlocking,
                 Strings.HelpTipExtendedInfo,
                 Strings.HelpTipManaColorPicker,
-                Strings.HelpTipCommandZone,
                 Strings.HelpTipFullControlPhases
             };
         }

@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: Alternar carta entre zonas",
   "HelpSpaceConfirm": "Espacio: Confirmar selección",
   "HelpCategoryDebug": "Teclas de depuración (desarrolladores)",
-  "HelpF4Refresh": "F4: Actualizar navegador actual",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: Volcar detalles de carta al registro (apertura de sobres)",
   "HelpF12UIDump": "F12: Volcar jerarquía de UI al registro",
 

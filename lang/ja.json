@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: カードをゾーン間で切り替え",
   "HelpSpaceConfirm": "Space: 選択を確定",
   "HelpCategoryDebug": "デバッグキー（開発者向け）",
-  "HelpF4Refresh": "F4: 現在のナビゲーターを更新",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: カード詳細をログに出力（パック開封時）",
   "HelpF12UIDump": "F12: UI階層をログに出力",
 

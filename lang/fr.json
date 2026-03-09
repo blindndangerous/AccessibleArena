@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Entrée : Basculer la carte entre les zones",
   "HelpSpaceConfirm": "Espace : Confirmer la sélection",
   "HelpCategoryDebug": "Touches de débogage (développeurs)",
-  "HelpF4Refresh": "F4 : Rafraîchir le navigateur actuel",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11 : Écrire les détails de carte dans le journal (ouverture de booster)",
   "HelpF12UIDump": "F12 : Écrire la hiérarchie UI dans le journal",
 

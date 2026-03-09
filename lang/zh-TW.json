@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter：在區域間切換卡牌",
   "HelpSpaceConfirm": "Space：確認選取",
   "HelpCategoryDebug": "除錯鍵（開發者）",
-  "HelpF4Refresh": "F4：重新整理目前導覽器",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11：將卡牌詳情輸出至記錄檔（開包時）",
   "HelpF12UIDump": "F12：將UI層級輸出至記錄檔",
 

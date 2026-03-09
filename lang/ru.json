@@ -276,7 +276,7 @@
   "HelpEnterToggle": "Enter: Переключить карту между зонами",
   "HelpSpaceConfirm": "Пробел: Подтвердить выбор",
   "HelpCategoryDebug": "Отладочные клавиши (разработчики)",
-  "HelpF4Refresh": "F4: Обновить текущий навигатор",
+  "HelpF4Friends": "F4: Friends panel",
   "HelpF11CardDump": "F11: Вывести детали карты в лог (открытие бустеров)",
   "HelpF12UIDump": "F12: Вывести иерархию интерфейса в лог",
 
