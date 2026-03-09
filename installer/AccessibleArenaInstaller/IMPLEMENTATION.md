@@ -268,7 +268,7 @@ Common errors handled:
 - Use `CreateProcessAsUser` API to launch as the normal user
 - Show a warning when the checkbox is checked explaining this limitation
 
-**Status:** Documented, not yet fixed. Users should launch MTGA manually after installation.
+**Status:** Partially mitigated by launching via MTGALauncher instead of MTGA.exe directly (see Version 1.7 changelog). The admin context issue may still apply but is less impactful since the launcher handles game updates before starting.
 
 ---
 
@@ -426,6 +426,13 @@ en, de, fr, es, it, pt-BR, ru, pl, ja, ko, zh-CN, zh-TW
 4. Rebuild - the wildcard `<EmbeddedResource Include="Locales\*.json" />` picks it up automatically
 
 ## Changelog
+
+### Version 1.7
+- Launch MTGA via launcher instead of game executable
+  - Previously launched `MTGA.exe` directly, which skipped the game's update process
+  - If the game had a pending update, it would fail to start or crash
+  - Now launches `MTGALauncher\MTGALauncher.exe`, which checks for and applies game updates before starting
+  - Falls back to `MTGA.exe` if the launcher executable is not found
 
 ### Version 1.6
 - Hide MelonLoader console window by default

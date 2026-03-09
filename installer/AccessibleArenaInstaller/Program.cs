@@ -18,6 +18,7 @@ namespace AccessibleArenaInstaller
     {
         public const string DefaultMtgaPath = @"C:\Program Files\Wizards of the Coast\MTGA";
         public const string MtgaExeName = "MTGA.exe";
+        public const string MtgaLauncherPath = @"MTGALauncher\MTGALauncher.exe";
 
         [STAThread]
         static void Main(string[] args)

@@ -2,6 +2,10 @@
 
 All notable changes to Accessible Arena.
 
+## v0.8.3
+
+(changes pending)
+
 ## v0.8.2
 
 ### New: Brawl Commander Deck Building

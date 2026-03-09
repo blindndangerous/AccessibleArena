@@ -535,11 +535,20 @@ namespace AccessibleArenaInstaller
         {
             try
             {
-                string exePath = Path.Combine(_mtgaPath, Program.MtgaExeName);
-                if (File.Exists(exePath))
+                string launcherPath = Path.Combine(_mtgaPath, Program.MtgaLauncherPath);
+                if (File.Exists(launcherPath))
                 {
-                    Logger.Info($"Launching MTGA: {exePath}");
-                    System.Diagnostics.Process.Start(exePath);
+                    Logger.Info($"Launching MTGA via launcher: {launcherPath}");
+                    System.Diagnostics.Process.Start(launcherPath);
+                }
+                else
+                {
+                    string exePath = Path.Combine(_mtgaPath, Program.MtgaExeName);
+                    if (File.Exists(exePath))
+                    {
+                        Logger.Info($"Launcher not found, falling back to: {exePath}");
+                        System.Diagnostics.Process.Start(exePath);
+                    }
                 }
             }
             catch (Exception ex)
