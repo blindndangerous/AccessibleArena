@@ -21,6 +21,11 @@ All notable changes to Accessible Arena.
 - Covers Space/Backspace usage, combat blocking workflow, extended card info (I key), mana color picker, command zone shortcuts, full control and phase stops
 - Added to all 12 locale files
 
+### Fixed: Color Challenge Backspace Navigation
+- Backspace now re-expands the color list when a color is selected (blade collapsed)
+- Backspace from the color list (blade expanded) still navigates Home
+- Previously Backspace always went Home regardless of blade state
+
 ## v0.8.2
 
 ### New: Brawl Commander Deck Building
