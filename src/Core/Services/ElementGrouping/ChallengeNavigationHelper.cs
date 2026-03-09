@@ -258,13 +258,10 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (name == "UnifiedChallenge_MainButton")
             {
                 string playerName = GetLocalPlayerName();
-                string statusText = GetChallengeStatusText();
 
                 string result = label;
                 if (!string.IsNullOrEmpty(playerName))
                     result = $"{playerName}: {result}";
-                if (!string.IsNullOrEmpty(statusText))
-                    result = $"{result}. {statusText}";
 
                 return result;
             }

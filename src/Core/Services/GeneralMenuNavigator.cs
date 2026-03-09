@@ -970,7 +970,7 @@ namespace AccessibleArena.Core.Services
             _currentIndex = -1;
             DiscoverElements();
 
-            // Inject virtual groups based on context
+            // Inject virtual groups/elements based on context
             if (_activeContentController == "WrapperDeckBuilder")
             {
                 InjectDeckInfoGroup();
@@ -979,6 +979,7 @@ namespace AccessibleArena.Core.Services
             {
                 InjectEventInfoGroup();
             }
+            InjectChallengeStatusElement();
             if (_elements.Count > 0)
             {
                 _currentIndex = 0;
@@ -2151,6 +2152,10 @@ namespace AccessibleArena.Core.Services
             if (obj.name == "MainButton_Leave")
                 return false;
 
+            // Exclude unlabeled enemy player card background in challenge screen (no opponent yet)
+            if (obj.name == "Clicker")
+                return false;
+
             // In mail content view, filter out buttons that have no actual text content
             // (e.g., "SecondaryButton_v2" which only shows its object name)
             if (_isInMailDetailView && _overlayDetector.GetActiveOverlay() == ElementGroup.MailboxContent)
@@ -3033,7 +3038,7 @@ namespace AccessibleArena.Core.Services
 
             DiscoverElements();
 
-            // Inject virtual groups based on context
+            // Inject virtual groups/elements based on context
             if (_activeContentController == "WrapperDeckBuilder")
             {
                 InjectDeckInfoGroup();
@@ -3042,6 +3047,7 @@ namespace AccessibleArena.Core.Services
             {
                 InjectEventInfoGroup();
             }
+            InjectChallengeStatusElement();
             // Try to find the previously selected object in the new element list
             if (previousSelection != null)
             {
@@ -4808,13 +4814,20 @@ namespace AccessibleArena.Core.Services
                 // Activate the current element
                 var currentElement = _groupedNavigator.CurrentElement;
 
-                // Virtual DeckBuilderInfo elements (no GameObject) - refresh and re-announce on Enter
+                // Virtual elements (no GameObject) - re-announce on Enter
                 var currentGroupInfo = _groupedNavigator.CurrentGroup;
                 if (currentElement.HasValue && currentElement.Value.GameObject == null
-                    && currentGroupInfo.HasValue && currentGroupInfo.Value.Group == ElementGroup.DeckBuilderInfo)
+                    && currentGroupInfo.HasValue)
                 {
-                    RefreshDeckInfoSubNav();
-                    AnnounceDeckInfoEntry(includeRowName: true);
+                    if (currentGroupInfo.Value.Group == ElementGroup.DeckBuilderInfo)
+                    {
+                        RefreshDeckInfoSubNav();
+                        AnnounceDeckInfoEntry(includeRowName: true);
+                        return true;
+                    }
+
+                    // Generic virtual element (e.g., challenge status text) - re-announce
+                    _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
                     return true;
                 }
 
@@ -5418,6 +5431,24 @@ namespace AccessibleArena.Core.Services
         #region Event Page Info Virtual Group
 
         /// <summary>
+        /// Appends the challenge status text as a virtual element at the end of ChallengeMain.
+        /// Shows contextual guidance like "Waiting for opponent" or "Select a deck".
+        /// </summary>
+        private void InjectChallengeStatusElement()
+        {
+            if (_challengeHelper == null || !_challengeHelper.IsActive)
+                return;
+
+            string statusText = _challengeHelper.GetChallengeStatusText();
+            if (string.IsNullOrEmpty(statusText))
+                return;
+
+            _groupedNavigator.AppendElementToGroup(
+                ElementGrouping.ElementGroup.ChallengeMain,
+                statusText
+            );
+        }
+
         /// Injects event info blocks as standalone virtual elements into the grouped navigator.
         /// Each block becomes its own standalone group, directly navigable with Up/Down
         /// without needing to enter a subgroup.

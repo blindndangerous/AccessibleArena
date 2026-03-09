@@ -274,7 +274,7 @@ All spinners + buttons on the main challenge screen:
 - **Invite** button (in enemy player card, when no opponent invited)
 - **Status** button (`UnifiedChallenge_MainButton`) - shows ready/waiting/invalid deck status, prefixed with local player name
 
-**Hidden:** `MainButton_Leave` is filtered from navigation in `ShouldShowElement` - Backspace handles leaving via `GameObject.Find`.
+**Hidden:** `MainButton_Leave` and `Clicker` are filtered from navigation in `ShouldShowElement`. `MainButton_Leave` is handled via Backspace. `Clicker` is the unlabeled enemy player card background shown when no opponent has joined (replaced by `BlockPlayer_SecondaryButton` when opponent is present).
 
 ### Level 2: Deck Selection (folder-based)
 
@@ -441,39 +441,22 @@ Investigation of missing elements and settings on the challenge screen that the 
 - **Starting Player spinner** (`_startingPlayerSpinner`) - Random / Challenger / Opponent. Always visible.
 - **Select Deck / Deck display** - Opens deck selector on Enter
 - **Invite button** (enemy player card, `_noPlayerInviteButton`) - Opens invite popup
-- **Main status button** (`UnifiedChallenge_MainButton`) - Enhanced with player name prefix
+- **Main status button** (`UnifiedChallenge_MainButton`) - Enhanced with player name prefix (e.g., "jean stiletto#89866: Bereit"). Shows only the button's native label (Ready/Waiting/etc.), not the status text.
+- **Challenge status text** - Virtual element at end of ChallengeMain list, reads `_challengeStatusText` (e.g., "Warte auf einen Gegner", "Warte, bis alle Spieler bereit sind"). Also announced via polling when it changes.
 - **Player status summary** - Announced once on challenge open via `GetPlayerStatusSummary()`
+- **Player status polling** - Detects opponent join/leave, status text changes, countdown start/cancel via 1-second polling
 
 ---
 
 ## Missing Elements - Not Yet Implemented
 
-### Priority 1: Challenge Status Text (High Impact)
+### ~~Priority 1: Challenge Status Text~~ (DONE)
 
-`_challengeStatusText` (Localize) sits below the main button and shows crucial contextual guidance. It is NOT a button, so the mod never reads it.
+Implemented as a virtual element appended to ChallengeMain group. Reads `_challengeStatusText` and shows it as the last navigable item. Also announced via polling when it changes.
 
-**Status text values by state:**
-- `"MainNav/Challenges/MainButton/NoInvitesDescription"` - "Invite an opponent" (no invites sent, waiting for opponent)
-- `"MainNav/Challenges/MainButtonDescription/Waiting"` - "Waiting for an opponent" (invite sent, pending)
-- `"MainNav/Challenges/MainButtonDescription/SelectDeck"` - "Select a deck" / "Create or choose a valid deck"
-- `"MainNav/Challenges/MainButtonDescription/Ready"` / `"MainNav/Challenges/MainButtonDescription/Unready"` - "Waiting for all players to select valid deck and ready"
-- `"MainNav/Challenges/MainButtonDescription/WaitingForHost"` - "Waiting for Host to start game"
-- `"MainNav/Challenges/MainButton/StartingMatch"` - "Starting" (countdown active)
-- `"MainNav/Challenges/MainButtonDescription/Cancel"` - "Starting" (can still cancel)
+### ~~Priority 2: Player Status Change Notifications~~ (DONE)
 
-**Approach:** Read `_challengeStatusText` and include it in the main button announcement, or announce it separately when challenge data changes.
-
-### Priority 2: Player Status Change Notifications (High Impact)
-
-The mod reads player status **once** on challenge open. It does NOT re-announce when:
-- Opponent joins the challenge
-- Opponent readies up / unreadies
-- Opponent leaves or gets kicked
-- Opponent's deck becomes valid/invalid
-
-**Game mechanism:** `PVPChallengeController.RegisterForChallengeChanges(Action<PVPChallengeData>)` fires on every state change. `UnifiedChallengeBladeWidget` already subscribes to this via `OnChallengeDataChanged`.
-
-**Approach:** Subscribe to challenge data changes (or poll) and announce meaningful transitions (opponent joined, ready state changed, etc.).
+Implemented via 1-second polling in `ChallengeNavigationHelper.Update()`. Detects opponent join/leave and status text changes. Announces transitions like "Gegner beigetreten: Name" and status text updates.
 
 ### Priority 3: Match Start Countdown Timer (High Impact)
 

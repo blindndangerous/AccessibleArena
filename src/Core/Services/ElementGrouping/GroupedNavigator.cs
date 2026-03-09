@@ -1362,6 +1362,27 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         }
 
         /// <summary>
+        /// Append a virtual element (no GameObject) to an existing group.
+        /// Used to add informational text blocks inside a group's element list.
+        /// </summary>
+        public void AppendElementToGroup(ElementGroup groupType, string label)
+        {
+            for (int i = 0; i < _groups.Count; i++)
+            {
+                if (_groups[i].Group == groupType)
+                {
+                    _groups[i].Elements.Add(new GroupedElement
+                    {
+                        GameObject = null,
+                        Label = label,
+                        Group = groupType
+                    });
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
         /// Update the label of an element within a group.
         /// Used to refresh virtual element labels with fresh data.
         /// Handles struct semantics by writing back to the list index.
