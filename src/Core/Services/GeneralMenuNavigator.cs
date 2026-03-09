@@ -979,7 +979,6 @@ namespace AccessibleArena.Core.Services
             {
                 InjectEventInfoGroup();
             }
-
             if (_elements.Count > 0)
             {
                 _currentIndex = 0;
@@ -2999,7 +2998,6 @@ namespace AccessibleArena.Core.Services
             {
                 InjectEventInfoGroup();
             }
-
             // Try to find the previously selected object in the new element list
             if (previousSelection != null)
             {
@@ -3561,6 +3559,12 @@ namespace AccessibleArena.Core.Services
             }
 
             LogDebug($"[{NavigatorId}] Discovered {_elements.Count} navigable elements");
+
+            // Enrich color button labels before grouping (so grouped navigator gets enriched labels)
+            if (_activeContentController == "CampaignGraphContentController")
+            {
+                EnrichColorChallengeLabels();
+            }
 
             // Organize elements into groups for hierarchical navigation
             if (_groupedNavigationEnabled && _elements.Count > 0)
@@ -4920,6 +4924,13 @@ namespace AccessibleArena.Core.Services
             var result = UIActivator.Activate(element);
             _announcer.Announce(result.Message, Models.AnnouncementPriority.Normal);
 
+            // Color Challenge: activating a color button changes the track, so rescan
+            // to refresh info blocks and deck name
+            if (_activeContentController == "CampaignGraphContentController")
+            {
+                TriggerRescan();
+            }
+
             // Note: Mailbox mail item selection is detected via Harmony patch on OnLetterSelected
             // which announces the mail content directly with actual letter data
 
@@ -5396,6 +5407,37 @@ namespace AccessibleArena.Core.Services
                 // Subsequent blocks insert after the last EventInfo
                 insertAfter = ElementGrouping.ElementGroup.EventInfo;
             }
+        }
+
+        /// <summary>
+        /// Enrich color button labels with track progress from the Color Challenge strategy.
+        /// Runs after element discovery — matches already-extracted element labels against
+        /// localized color names and appends progress summaries.
+        /// </summary>
+        private void EnrichColorChallengeLabels()
+        {
+            var trackSummaries = EventAccessor.GetAllTrackSummaries();
+            if (trackSummaries == null || trackSummaries.Count == 0)
+            {
+                LogDebug($"[{NavigatorId}] No Color Challenge track summaries available");
+                return;
+            }
+
+            int enriched = 0;
+            for (int i = 0; i < _elements.Count; i++)
+            {
+                var elem = _elements[i];
+                if (string.IsNullOrEmpty(elem.Label)) continue;
+
+                if (trackSummaries.TryGetValue(elem.Label, out string summary))
+                {
+                    elem.Label = $"{elem.Label}, {summary}";
+                    _elements[i] = elem;
+                    enriched++;
+                }
+            }
+
+            MelonLogger.Msg($"[{NavigatorId}] EnrichColorChallengeLabels: enriched {enriched} of {_elements.Count} elements");
         }
 
         #endregion

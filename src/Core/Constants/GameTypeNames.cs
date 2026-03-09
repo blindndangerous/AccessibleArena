@@ -39,8 +39,13 @@ namespace AccessibleArena.Core.Constants
         public const string HomePageContentController = "HomePageContentController";
         public const string EventPageContentController = "EventPageContentController";
         public const string PacketSelectContentController = "PacketSelectContentController";
+        public const string CampaignGraphContentController = "CampaignGraphContentController";
         public const string LearnToPlayControllerV2 = "LearnToPlayControllerV2";
         public const string DeckManagerController = "DeckManagerController";
+
+        // --- Color Challenge Types ---
+        public const string CampaignGraphTrackModule = "CampaignGraphTrackModule";
+        public const string CampaignGraphObjectiveBubble = "CampaignGraphObjectiveBubble";
 
         // --- Panel / Blade Types ---
         public const string PlayBladeController = "PlayBladeController";

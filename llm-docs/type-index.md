@@ -82,6 +82,7 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | HomePageContentController | HomePageContentController | Core |
 | EventPageContentController | EventPageContentController | Core |
 | PacketSelectContentController | PacketSelectContentController | Core |
+| CampaignGraphContentController | CampaignGraphContentController | Core |
 | LearnToPlayControllerV2 | LearnToPlayControllerV2 | Core |
 | DeckManagerController | DeckManagerController | Core |
 | PlayBladeController | PlayBladeController | Core |
@@ -154,6 +155,16 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | RewardDisplayData | RewardDisplayData | Core |
 | ProgressionTracksContentController | ProgressionTracksContentController | Core |
 | ContentController_PrizeWall | ContentController_PrizeWall | Core |
+
+## Color Challenge (Campaign Graph)
+
+| Short Name | Full Namespace | DLL |
+|---|---|---|
+| CampaignGraphContentController | CampaignGraphContentController | Core |
+| CampaignGraphTrackModule | CampaignGraphTrackModule | Core |
+| CampaignGraphObjectiveBubble | CampaignGraphObjectiveBubble | Core |
+| IColorChallengeStrategy | (interface, from _strategy field on controller) | Core |
+| Client_ColorChallengeMatchNode | (from strategy.CurrentTrack.Nodes) | Core |
 
 ## Codex / Learn to Play
 
@@ -228,3 +239,6 @@ Some types have members that are fields (not properties) - reflection with `GetP
 - **ClientSetMetadata**: has `SetCode` (string), no display name field
 - **Set name localization**: Use `Languages.ActiveLocProvider.GetLocalizedText("General/Sets/" + setCode)` — see `docs/SET_NAME_LOCALIZATION.md`
 - **cTMP_Dropdown**: extends `Selectable`, NOT `TMP_Dropdown` - use type name reflection
+- **CampaignGraphContentController**: `_strategy` (private field) → IColorChallengeStrategy. Strategy has `CurrentTrack` property → track with `Name`, `Completed`, `UnlockedMatchNodeCount`, `Nodes` (list of Client_ColorChallengeMatchNode)
+- **Client_ColorChallengeMatchNode**: `Id` (string field), `IsPvpMatch` (bool field), `DeckUpgradeData` (field, null if none), `Reward` (field → RewardDisplayData with `MainText`/`RewardText` fields)
+- **CampaignGraphObjectiveBubble**: `ID` (public property), `_circleText` (private TMP field, roman numeral), `_animator` (private, use GetBool for "Locked"/"Completed"/"Selected"), `_notificationPopup` (private, has `_titleLabel`/`_descriptionLabel` Localize fields)
