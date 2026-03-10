@@ -117,6 +117,8 @@ namespace AccessibleArena.Patches
             // for card playing, target selection, player info zone, etc.
             // Also block Ctrl - prevents game's native full control toggle from firing
             // when blind users press Ctrl to silence NVDA speech. Our mod uses P/Shift+P instead.
+            // Also block Tab - prevents the game from toggling the chat/social panel,
+            // which steals InputField focus and breaks Space/keyboard input.
             if (IsInDuelScene())
             {
                 if (key == KeyCode.Return || key == KeyCode.KeypadEnter)
@@ -124,6 +126,10 @@ namespace AccessibleArena.Patches
                     return true;
                 }
                 if (key == KeyCode.LeftControl || key == KeyCode.RightControl)
+                {
+                    return true;
+                }
+                if (key == KeyCode.Tab)
                 {
                     return true;
                 }
