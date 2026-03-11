@@ -178,9 +178,15 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Check if a panel should be excluded from popup handling.
-        /// Override to filter benign overlays that aren't real popups.
+        /// Override to add navigator-specific exclusions (base filters universal decorative overlays).
         /// </summary>
-        protected virtual bool IsPopupExcluded(PanelInfo panel) => false;
+        protected virtual bool IsPopupExcluded(PanelInfo panel)
+        {
+            if (panel == null) return false;
+            // RewardPopup3DIcon: decorative 3D reward preview (spinning coin/card animation).
+            // Not interactive - only contains HitBox dismiss areas, no real buttons.
+            return panel.Name.Contains("RewardPopup3DIcon");
+        }
 
         /// <summary>Build the initial screen announcement</summary>
         protected virtual string GetActivationAnnouncement()

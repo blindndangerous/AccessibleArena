@@ -291,13 +291,11 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         protected override bool IsPopupExcluded(PanelInfo panel)
         {
-            if (panel == null) return false;
+            if (base.IsPopupExcluded(panel)) return true;
             string name = panel.Name;
             // ObjectivePopup: daily quest overlay
             // FullscreenZFBrowser: embedded browser canvas
-            // RewardPopup3DIcon: 3D reward preview shown on level hover (card art decoration)
-            return name.Contains("ObjectivePopup") || name.Contains("FullscreenZFBrowser") ||
-                   name.Contains("RewardPopup3DIcon");
+            return name.Contains("ObjectivePopup") || name.Contains("FullscreenZFBrowser");
         }
 
         protected override void OnPopupClosed()
