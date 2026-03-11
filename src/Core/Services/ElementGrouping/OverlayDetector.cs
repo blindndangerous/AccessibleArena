@@ -87,6 +87,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         {
             if (obj == null) return false;
             string name = obj.name;
+            if (BaseNavigator.IsDecorativePanel(name)) return false;
             return name.Contains("Popup") || name.Contains("SystemMessageView") || name.Contains("ChallengeInviteWindow");
         }
 

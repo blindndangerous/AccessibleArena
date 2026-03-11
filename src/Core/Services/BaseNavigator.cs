@@ -177,15 +177,24 @@ namespace AccessibleArena.Core.Services
         protected virtual void OnPopupClosed() { }
 
         /// <summary>
+        /// Check if a panel name belongs to a decorative (non-interactive) overlay.
+        /// Used by both popup mode handling and overlay element filtering.
+        /// </summary>
+        internal static bool IsDecorativePanel(string name)
+        {
+            // RewardPopup3DIcon: 3D reward preview (spinning coin/card animation).
+            // Not interactive - only contains HitBox dismiss areas, no real buttons.
+            return name.Contains("RewardPopup3DIcon");
+        }
+
+        /// <summary>
         /// Check if a panel should be excluded from popup handling.
         /// Override to add navigator-specific exclusions (base filters universal decorative overlays).
         /// </summary>
         protected virtual bool IsPopupExcluded(PanelInfo panel)
         {
             if (panel == null) return false;
-            // RewardPopup3DIcon: decorative 3D reward preview (spinning coin/card animation).
-            // Not interactive - only contains HitBox dismiss areas, no real buttons.
-            return panel.Name.Contains("RewardPopup3DIcon");
+            return IsDecorativePanel(panel.Name);
         }
 
         /// <summary>Build the initial screen announcement</summary>
