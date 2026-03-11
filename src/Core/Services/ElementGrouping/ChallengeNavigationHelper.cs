@@ -50,6 +50,10 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         private const float PollIntervalSeconds = 1.0f;
         private bool _pollingInitialized;
 
+        // Element indices for label updates during polling
+        private int _opponentElementIndex = -1;
+        private int _mainButtonElementIndex = -1;
+
         /// <summary>
         /// Whether currently in a challenge context.
         /// Uses the context flag set by OnChallengeOpened/OnChallengeClosed.
@@ -178,6 +182,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         {
             _groupedNavigator.SetChallengeContext(false);
             _pollingInitialized = false;
+            _opponentElementIndex = -1;
+            _mainButtonElementIndex = -1;
             MelonLogger.Msg("[ChallengeHelper] Challenge closed, cleared context");
         }
 
@@ -254,12 +260,14 @@ namespace AccessibleArena.Core.Services.ElementGrouping
 
             string name = element.name;
 
-            // Main challenge button: prefix with player name + append status text
+            // Main challenge button: show player name + actual player status (not button text)
             if (name == "UnifiedChallenge_MainButton")
             {
                 string playerName = GetLocalPlayerName();
+                string status = GetLocalPlayerStatus();
 
-                string result = label;
+                // Use actual player status if available, fall back to button label
+                string result = !string.IsNullOrEmpty(status) ? status : label;
                 if (!string.IsNullOrEmpty(playerName))
                     result = $"{playerName}: {result}";
 
@@ -533,6 +541,30 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 }
                 _lastStatusText = currentStatusText;
             }
+
+            // Refresh opponent virtual element label
+            if (_opponentElementIndex >= 0)
+            {
+                string newOpponentLabel = BuildOpponentLabel(enemyDisplay);
+                _groupedNavigator.UpdateElementLabel(
+                    ElementGroup.ChallengeMain, _opponentElementIndex, newOpponentLabel);
+            }
+
+            // Refresh main button label (local player name + current button text)
+            if (_mainButtonElementIndex >= 0)
+            {
+                var mainButtonGO = _groupedNavigator.GetElementFromGroup(
+                    ElementGroup.ChallengeMain, _mainButtonElementIndex);
+                if (mainButtonGO != null)
+                {
+                    string refreshed = GetRefreshedMainButtonLabel(mainButtonGO);
+                    if (!string.IsNullOrEmpty(refreshed))
+                    {
+                        _groupedNavigator.UpdateElementLabel(
+                            ElementGroup.ChallengeMain, _mainButtonElementIndex, refreshed);
+                    }
+                }
+            }
         }
 
         private EnemyState GetEnemyState(object enemyDisplay)
@@ -600,6 +632,28 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             catch (Exception ex)
             {
                 MelonLogger.Msg($"[ChallengeHelper] Error getting local player name: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get the local player's actual status text from _playerStatus (e.g., "Bereit", "Nicht bereit").
+        /// This is different from the main button text which is always an action label.
+        /// </summary>
+        public string GetLocalPlayerStatus()
+        {
+            try
+            {
+                InitReflection();
+                var display = FindChallengeDisplay();
+                if (display == null) return null;
+
+                var localDisplay = _localPlayerField?.GetValue(display);
+                return GetPlayerStatus(localDisplay);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[ChallengeHelper] Error getting local player status: {ex.Message}");
                 return null;
             }
         }
@@ -709,6 +763,104 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 MelonLogger.Msg($"[ChallengeHelper] Error getting player status: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Set the element indices for opponent virtual element and main button
+        /// within the ChallengeMain group. Called by GeneralMenuNavigator after injection.
+        /// </summary>
+        public void SetElementIndices(int opponentIndex, int mainButtonIndex)
+        {
+            _opponentElementIndex = opponentIndex;
+            _mainButtonElementIndex = mainButtonIndex;
+        }
+
+        /// <summary>
+        /// Get the opponent status label for display as a virtual element.
+        /// Format matches the main button style: "Name: Status" or "Gegner: Nicht eingeladen".
+        /// </summary>
+        public string GetOpponentStatusLabel()
+        {
+            try
+            {
+                InitReflection();
+                var display = FindChallengeDisplay();
+                if (display == null)
+                    return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeNotInvited}";
+
+                var enemyDisplay = _enemyPlayerField?.GetValue(display);
+                return BuildOpponentLabel(enemyDisplay);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[ChallengeHelper] Error getting opponent status label: {ex.Message}");
+                return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeNotInvited}";
+            }
+        }
+
+        private string BuildOpponentLabel(object enemyDisplay)
+        {
+            if (enemyDisplay == null)
+                return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeNotInvited}";
+
+            var noPlayerObj = _noPlayerField?.GetValue(enemyDisplay) as GameObject;
+            var invitedObj = _playerInvitedField?.GetValue(enemyDisplay) as GameObject;
+
+            if (noPlayerObj != null && noPlayerObj.activeSelf)
+                return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeNotInvited}";
+
+            if (invitedObj != null && invitedObj.activeSelf)
+                return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeInvited}";
+
+            // Opponent has joined - show name + status
+            string name = GetEnemyName(enemyDisplay);
+            string status = GetPlayerStatus(enemyDisplay);
+
+            if (string.IsNullOrEmpty(name))
+                return $"{Models.Strings.ChallengeOpponent}: {Models.Strings.ChallengeInvited}";
+
+            if (!string.IsNullOrEmpty(status))
+                return $"{name}: {status}";
+            return name;
+        }
+
+        /// <summary>
+        /// Read the _playerStatus Localize text from a ChallengePlayerDisplay.
+        /// </summary>
+        private static string GetPlayerStatus(object playerDisplay)
+        {
+            if (playerDisplay == null || _playerDisplayType == null) return null;
+
+            var statusField = _playerDisplayType.GetField("_playerStatus", PrivateInstance);
+            if (statusField == null) return null;
+
+            var statusComponent = statusField.GetValue(playerDisplay) as Component;
+            if (statusComponent == null || !statusComponent.gameObject.activeInHierarchy)
+                return null;
+
+            return UITextExtractor.GetText(statusComponent.gameObject);
+        }
+
+        /// <summary>
+        /// Rebuild the main button label with current player name and actual player status.
+        /// Falls back to the button's native text if status is unavailable.
+        /// </summary>
+        public string GetRefreshedMainButtonLabel(GameObject mainButton)
+        {
+            if (mainButton == null) return null;
+
+            string status = GetLocalPlayerStatus();
+            if (string.IsNullOrEmpty(status))
+            {
+                // Fall back to button text
+                status = UITextExtractor.GetText(mainButton);
+            }
+            if (string.IsNullOrEmpty(status)) return null;
+
+            string playerName = GetLocalPlayerName();
+            if (!string.IsNullOrEmpty(playerName))
+                return $"{playerName}: {status}";
+            return status;
         }
 
         private static void InitReflection()

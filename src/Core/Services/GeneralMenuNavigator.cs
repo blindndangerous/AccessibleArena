@@ -5439,6 +5439,9 @@ namespace AccessibleArena.Core.Services
             if (_challengeHelper == null || !_challengeHelper.IsActive)
                 return;
 
+            // Inject opponent status as virtual element before the status text
+            InjectOpponentStatusElement();
+
             string statusText = _challengeHelper.GetChallengeStatusText();
             if (string.IsNullOrEmpty(statusText))
                 return;
@@ -5447,6 +5450,43 @@ namespace AccessibleArena.Core.Services
                 ElementGrouping.ElementGroup.ChallengeMain,
                 statusText
             );
+        }
+
+        /// <summary>
+        /// Injects opponent status as a virtual element in ChallengeMain and tracks
+        /// element indices for the opponent element and main button for polling updates.
+        /// </summary>
+        private void InjectOpponentStatusElement()
+        {
+            if (_challengeHelper == null || !_challengeHelper.IsActive)
+                return;
+
+            // Find main button index before appending virtual elements
+            int mainButtonIdx = -1;
+            var group = _groupedNavigator.GetGroupByType(ElementGrouping.ElementGroup.ChallengeMain);
+            if (group.HasValue)
+            {
+                for (int i = 0; i < group.Value.Count; i++)
+                {
+                    var go = group.Value.Elements[i].GameObject;
+                    if (go != null && go.name == "UnifiedChallenge_MainButton")
+                    {
+                        mainButtonIdx = i;
+                        break;
+                    }
+                }
+            }
+
+            // Append opponent status virtual element
+            string opponentLabel = _challengeHelper.GetOpponentStatusLabel();
+            int opponentIdx = _groupedNavigator.GetGroupElementCount(
+                ElementGrouping.ElementGroup.ChallengeMain);
+            _groupedNavigator.AppendElementToGroup(
+                ElementGrouping.ElementGroup.ChallengeMain,
+                opponentLabel
+            );
+
+            _challengeHelper.SetElementIndices(opponentIdx, mainButtonIdx);
         }
 
         /// Injects event info blocks as standalone virtual elements into the grouped navigator.
