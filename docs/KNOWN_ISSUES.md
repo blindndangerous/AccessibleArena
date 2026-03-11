@@ -6,12 +6,6 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ## Active Bugs
 
-### Spell Resolved Announcement Too Early or Repeated
-
-"Spell resolved" announcement sometimes fires too early or multiple times for a single spell.
-
----
-
 ### Bot Match Not Working From Recent Played
 
 Starting a bot match from the "Recent Played" section does not work properly.

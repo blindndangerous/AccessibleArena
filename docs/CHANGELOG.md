@@ -4,6 +4,10 @@ All notable changes to Accessible Arena.
 
 ## v0.8.3
 
+### Fix: Spell cast and resolved announcements now in correct order
+- Previously, "Spell resolved" could be announced before "Cast [card name]" when the opponent auto-passes
+- Both announcements now use the same frame delay, ensuring cast is always announced first
+
 ### Fix: Vehicles now show power and toughness
 - Vehicle cards (e.g., Gleiter der Reisenden, Ortungsrad-Kundschafter) now display power/toughness in card info blocks
 - Previously, P/T extraction was limited to creatures only — vehicles were skipped even though they have P/T on the card model

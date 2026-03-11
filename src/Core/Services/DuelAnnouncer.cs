@@ -518,7 +518,8 @@ namespace AccessibleArena.Core.Services
                     else if (diff < 0)
                     {
                         _lastSpellResolvedTime = DateTime.Now;
-                        return Strings.Duel_SpellResolved;
+                        MelonCoroutines.Start(AnnounceSpellResolvedDelayed());
+                        return null;
                     }
                 }
             }
@@ -2255,6 +2256,15 @@ namespace AccessibleArena.Core.Services
         #endregion
 
         #region Helper Methods
+
+        private IEnumerator AnnounceSpellResolvedDelayed()
+        {
+            yield return null;
+            yield return null;
+            yield return null;
+
+            _announcer.Announce(Strings.Duel_SpellResolved, AnnouncementPriority.Normal);
+        }
 
         private IEnumerator AnnounceStackCardDelayed()
         {
