@@ -2,6 +2,15 @@
 
 All notable changes to Accessible Arena.
 
+## v0.8.3
+
+### Fix: Play blade navigation when opened from a home screen objective
+- When pressing Enter on a tracked Sparked-Rank achievement (Progress > Objectives), the Play blade now navigates correctly, matching the behavior of Play > Play
+- Backspace now correctly closes the blade and returns to the objectives screen
+- Root cause: the `EventBlade` panel type (fired by `HomePageContentController.IsEventBladeActive`) was not calling `SetPlayBladeState`, so the mod never knew the blade had opened
+- Fix: `HarmonyPanelDetector` now sets `PlayBladeState=1` when `EventBlade` opens and `PlayBladeState=0` when it closes
+- Added `OnPlayBladeStateChanged` subscription in `GeneralMenuNavigator` as a direct, debounce-proof signal for blade state changes
+
 ## v0.8.2
 
 ### New: Brawl Commander Deck Building
