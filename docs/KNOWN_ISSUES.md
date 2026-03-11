@@ -12,23 +12,9 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ---
 
-### Battlefield Cards Splitting Into Two Stacks
-
-Cards on the battlefield sometimes split into two separate stacks/rows when they should be grouped together.
-
----
-
 ### Bot Match Not Working From Recent Played
 
 Starting a bot match from the "Recent Played" section does not work properly.
-
----
-
-### ~~Color Challenge Deck Name Not Refreshing~~ (Fixed)
-
-~~When selecting a different color in Color Challenge, the announced deck name does not update to reflect the newly selected color's deck.~~
-
-Fixed: Selecting a color button now triggers a rescan so the deck name refreshes. Backspace from a selected color now re-expands the color list instead of going Home.
 
 ---
 
@@ -144,12 +130,6 @@ Adding cards to a deck reportedly moves the user out of the Collection group to 
 
 ---
 
-### Color Challenge Broken
-
-Color Challenge mode may be broken. Exact symptoms and reproduction steps unknown.
-
----
-
 ## Technical Debt
 
 ### Code Archaeology
@@ -245,7 +225,6 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 ### Upcoming
 
 1. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
-2. X spell support - spells with variable costs (e.g., Fireball, Walking Ballista) require the player to choose a value for X. Currently no accessible way to set the X value. Needs investigation into how the game presents the X cost input and how to make it navigable.
 3. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
 4. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
 5. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
