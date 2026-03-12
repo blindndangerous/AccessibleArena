@@ -31,6 +31,9 @@ namespace AccessibleArena.Core.Services
         // Cache to avoid logging spam
         private bool _lastPopupState = false;
 
+        // Track dropdown mode to rescan after format change
+        private bool _wasInDropdownMode = false;
+
         private struct FilterRow
         {
             public string Name;           // "Types", "Rarity", "Actions"
@@ -95,6 +98,7 @@ namespace AccessibleArena.Core.Services
             // Build rows based on parent path patterns
             var typesRow = new FilterRow { Name = "Types", Items = new List<FilterItem>() };
             var rarityRow = new FilterRow { Name = "Rarity", Items = new List<FilterItem>() };
+            var setsRow = new FilterRow { Name = "Sets", Items = new List<FilterItem>() };
             var actionsRow = new FilterRow { Name = "Actions", Items = new List<FilterItem>() };
 
             // Find all interactable elements in the popup
@@ -136,6 +140,14 @@ namespace AccessibleArena.Core.Services
                 else if (path.Contains("Column_1/COLLECTION/"))
                 {
                     actionsRow.Items.Add(item);
+                }
+                else if (path.Contains("Column_2/SETS_LEGAL/"))
+                {
+                    if (toggle.gameObject.name == "Button_Check")
+                    {
+                        item.Label = "All Sets";
+                    }
+                    setsRow.Items.Add(item);
                 }
 
                 MelonLogger.Msg($"[{NavigatorId}] Toggle: {label} - Path: {path}");
@@ -196,6 +208,7 @@ namespace AccessibleArena.Core.Services
             // Sort items within rows by horizontal position (left to right)
             SortRowByPosition(typesRow);
             SortRowByPosition(rarityRow);
+            SortRowByPosition(setsRow);
             SortRowByPosition(actionsRow);
 
             // Add non-empty rows
@@ -203,6 +216,8 @@ namespace AccessibleArena.Core.Services
                 _rows.Add(typesRow);
             if (rarityRow.Items.Count > 0)
                 _rows.Add(rarityRow);
+            if (setsRow.Items.Count > 0)
+                _rows.Add(setsRow);
             if (actionsRow.Items.Count > 0)
                 _rows.Add(actionsRow);
 
@@ -215,11 +230,15 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
-            // Set initial position
+            // Set initial position (preserve across rescans)
             if (_rows.Count > 0)
             {
-                _currentRowIndex = 0;
-                _currentItemIndex = _rows[0].Items.Count > 0 ? 0 : -1;
+                // Clamp to valid range (rows/items may have changed after format switch)
+                if (_currentRowIndex < 0 || _currentRowIndex >= _rows.Count)
+                    _currentRowIndex = 0;
+                int maxItem = _rows[_currentRowIndex].Items.Count - 1;
+                if (_currentItemIndex < 0 || _currentItemIndex > maxItem)
+                    _currentItemIndex = maxItem >= 0 ? 0 : -1;
             }
             else
             {
@@ -314,7 +333,18 @@ namespace AccessibleArena.Core.Services
             // Check if a dropdown is open - use BaseNavigator's full dropdown handling
             if (DropdownStateManager.IsInDropdownMode)
             {
+                _wasInDropdownMode = true;
                 HandleDropdownNavigation();
+                return;
+            }
+
+            // After exiting dropdown mode, rescan to pick up changes (e.g. format change updates set list)
+            if (_wasInDropdownMode)
+            {
+                _wasInDropdownMode = false;
+                MelonLogger.Msg($"[{NavigatorId}] Dropdown closed, rescanning for updated filters");
+                ForceRescan();
+                AnnounceCurrentPosition(true);
                 return;
             }
 
