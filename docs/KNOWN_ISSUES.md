@@ -244,18 +244,16 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 6. Better handling of number announcements while tabbing - possibly change how Tab changes focus to reduce noisy or redundant number readouts
 7. Player username announcements
 8. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
-9. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
-10. Better group announcements - improve how element groups are announced when entering/switching groups
-11. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
-12. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-13. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-14. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
-15. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
-16. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-17. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
-18. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
-19. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
-20. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
+9. Better group announcements - improve how element groups are announced when entering/switching groups
+10. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
+11. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
+12. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
+13. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
+14. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+15. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+16. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
+17. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
+18. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
 
 ### Tutorial System
 
@@ -293,6 +291,8 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 3. Improve deck submenus - better navigation and announcements for deck actions (rename, delete, duplicate, export, import)
 4. Improve left battlefield announcements - clearer and more informative readouts when navigating the left (friendly) battlefield rows
 5. Improve player zone entries - better labels and more useful information for properties shown in the player info zone (V key)
+6. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
+7. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
 
 ### Low Priority / v1.1
 
