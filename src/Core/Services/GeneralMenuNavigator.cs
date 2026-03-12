@@ -141,6 +141,7 @@ namespace AccessibleArena.Core.Services
 
         // Rescan timing
         private float _rescanDelay;
+        private bool _suppressRescanAnnouncement;
 
         // Page rescan: frame counter after page scroll (waits for animation + card data update)
         private int _pendingPageRescanFrames;
@@ -3098,6 +3099,13 @@ namespace AccessibleArena.Core.Services
             if (_groupedNavigationEnabled && _groupedNavigator.PositionWasRestored)
                 return;
 
+            // Skip announcement when HandleGroupedBackspace already announced (e.g., folder exit)
+            if (_suppressRescanAnnouncement)
+            {
+                _suppressRescanAnnouncement = false;
+                return;
+            }
+
             // Announce the change
             string announcement = GetActivationAnnouncement();
             _announcer.Announce(announcement, Models.AnnouncementPriority.High);
@@ -4917,6 +4925,7 @@ namespace AccessibleArena.Core.Services
                 var currentGroup = _groupedNavigator.CurrentGroup;
                 bool wasFolderGroup = currentGroup.HasValue && currentGroup.Value.IsFolderGroup;
                 bool wasPlayBladeContext = _groupedNavigator.IsPlayBladeContext;
+                string folderName = wasFolderGroup ? currentGroup.Value.DisplayName : null;
 
                 if (_groupedNavigator.ExitGroup())
                 {
@@ -4937,11 +4946,13 @@ namespace AccessibleArena.Core.Services
                         // In PlayBlade context, go back to folders list after exiting a folder
                         else if (wasPlayBladeContext)
                         {
-                            _groupedNavigator.RequestFoldersEntry();
-                            LogDebug($"[{NavigatorId}] PlayBlade folder exit - requesting folders list entry");
+                            _groupedNavigator.RequestFoldersEntry(folderName);
+                            LogDebug($"[{NavigatorId}] PlayBlade folder exit - requesting folders list entry (restore to: {folderName})");
                         }
 
                         // Always rescan after folder exit to update navigation state
+                        // Suppress the rescan announcement since we announce immediately below
+                        _suppressRescanAnnouncement = true;
                         TriggerRescan();
                     }
 

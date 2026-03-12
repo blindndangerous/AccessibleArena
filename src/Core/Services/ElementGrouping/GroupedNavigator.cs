@@ -110,6 +110,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         /// Set when a play mode is activated in PlayBlade context.
         /// </summary>
         private bool _pendingFoldersEntry = false;
+        private string _pendingFoldersEntryRestoreFolder = null;
 
         /// <summary>
         /// Specific folder name to auto-enter after entering PlayBladeFolders.
@@ -368,13 +369,14 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         /// Request auto-entry into PlayBladeFolders group after next rescan.
         /// Call when a play mode is activated in PlayBlade context.
         /// </summary>
-        public void RequestFoldersEntry()
+        public void RequestFoldersEntry(string restoreToFolder = null)
         {
             _pendingFoldersEntry = true;
+            _pendingFoldersEntryRestoreFolder = restoreToFolder;
             _pendingFirstFolderEntry = false;
             _pendingPlayBladeContentEntry = false;
             _pendingPlayBladeTabsEntry = false;
-            MelonLogger.Msg("[GroupedNavigator] Requested PlayBladeFolders auto-entry");
+            MelonLogger.Msg($"[GroupedNavigator] Requested PlayBladeFolders auto-entry{(restoreToFolder != null ? $" (restore to: {restoreToFolder})" : "")}");
         }
 
         /// <summary>
@@ -1026,6 +1028,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (_pendingFoldersEntry)
             {
                 _pendingFoldersEntry = false;
+                string restoreFolder = _pendingFoldersEntryRestoreFolder;
+                _pendingFoldersEntryRestoreFolder = null;
                 // Find PlayBladeFolders group and auto-enter it
                 bool foundFolders = false;
                 for (int i = 0; i < _groups.Count; i++)
@@ -1037,7 +1041,19 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                             _currentGroupIndex = i;
                             _navigationLevel = NavigationLevel.InsideGroup;
                             _currentElementIndex = 0;
-                            MelonLogger.Msg($"[GroupedNavigator] Auto-entered PlayBladeFolders with {_groups[i].Count} folders");
+                            // Restore to specific folder if requested (e.g., after exiting a folder with backspace)
+                            if (restoreFolder != null)
+                            {
+                                for (int j = 0; j < _groups[i].Elements.Count; j++)
+                                {
+                                    if (_groups[i].Elements[j].FolderName == restoreFolder)
+                                    {
+                                        _currentElementIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            MelonLogger.Msg($"[GroupedNavigator] Auto-entered PlayBladeFolders with {_groups[i].Count} folders at index {_currentElementIndex}");
                             foundFolders = true;
                         }
                         else

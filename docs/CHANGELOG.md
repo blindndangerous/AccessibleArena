@@ -10,6 +10,10 @@ All notable changes to Accessible Arena.
 ### Fix: Card info navigation at zone boundaries
 - Arrow Down now correctly reads card detail blocks after hitting end or beginning of a row, instead of re-reading the card name
 
+### Fix: Play Blade backspace navigation
+- Leaving a deck folder with Backspace no longer re-announces the entire screen and jumps to the first element
+- Position is now correctly restored to the folder you exited from
+
 ## v0.8.3
 
 ### Fix: Friends panel and invite popup closing
