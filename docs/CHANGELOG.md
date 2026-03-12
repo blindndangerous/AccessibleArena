@@ -11,11 +11,17 @@ All notable changes to Accessible Arena.
 - InviteFriendPopup now closes on Backspace via FriendInvitePanel.Close()
 - Removed non-functional send button from invite popup; press Enter in the input field to send requests
 
-### Fix: Challenge and invite popup closing
+### Improved: Challenging friends now fully functional
+- Diverse issues fixed and challenge screen cleaned up
 - Backspace now reliably closes the invite popup via dismiss overlay detection (game's own close mechanism)
 - Cancelling the "leave challenge?" confirmation no longer breaks challenge navigation state
 - After cancelling leave, user is automatically re-entered into the challenge group
 - Dismiss overlay detection now finds CustomButton-based overlays (not just standard Unity Buttons)
+
+### Experimental: Chat support
+- Allows sending chat messages to friends
+- Tab to switch between conversations
+- This is an early implementation and will need improvements — may break in some situations
 
 ### Fix: Spell cast and resolved announcements now in correct order
 - Previously, "Spell resolved" could be announced before "Cast [card name]" when the opponent auto-passes
