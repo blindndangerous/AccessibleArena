@@ -131,9 +131,12 @@ namespace AccessibleArena
             string newName = GetSafeGameObjectName(newElement);
             DebugConfig.LogIf(DebugConfig.LogFocusTracking, "FocusChanged", $"Old: {oldName}, New: {newName}");
 
-            // If focus moved away from current card, deactivate card navigation
-            // Skip when CurrentCard is null (blocks-only mode, e.g. packet info) - owner manages lifecycle
-            if (_cardInfoNavigator.IsActive && _cardInfoNavigator.CurrentCard != null && _cardInfoNavigator.CurrentCard != newElement)
+            // If focus moved to a DIFFERENT element, deactivate card navigation.
+            // Skip when CurrentCard is null (blocks-only mode, e.g. packet info) - owner manages lifecycle.
+            // Skip when newElement is null - that's a navigator clearing selection as an intermediate step
+            // (e.g., ClearEventSystemSelection before Left/Right navigation), not the user leaving the card.
+            if (_cardInfoNavigator.IsActive && _cardInfoNavigator.CurrentCard != null
+                && newElement != null && _cardInfoNavigator.CurrentCard != newElement)
             {
                 DebugConfig.LogIf(DebugConfig.LogFocusTracking, "FocusChanged", "Deactivating card navigator");
                 _cardInfoNavigator.Deactivate();
