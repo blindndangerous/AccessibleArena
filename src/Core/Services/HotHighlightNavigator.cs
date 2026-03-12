@@ -258,6 +258,45 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
+            // Backspace - undo/cancel during mana payment or auto-tap mode
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                // 1. Try UndoButton (undo a specific mana tap)
+                var undoButton = FindUndoButton();
+                if (undoButton != null)
+                {
+                    MelonLogger.Msg("[HotHighlightNavigator] Backspace - clicking UndoButton");
+                    UIActivator.SimulatePointerClick(undoButton);
+                    _announcer.Announce(Strings.SpellCancelled, AnnouncementPriority.Normal);
+                    return true;
+                }
+
+                // 2. Try secondary button (Cancel in dual-button layout)
+                var secondaryButton = FindSecondaryButton();
+                if (secondaryButton != null && IsButtonVisible(secondaryButton))
+                {
+                    string text = GetButtonTextWithMana(secondaryButton);
+                    MelonLogger.Msg($"[HotHighlightNavigator] Backspace - clicking secondary button: {text}");
+                    UIActivator.SimulatePointerClick(secondaryButton);
+                    _announcer.Announce(text ?? Strings.SpellCancelled, AnnouncementPriority.Normal);
+                    return true;
+                }
+
+                // 3. No highlights and only primary button = Cancel (e.g. 0 lands to pay)
+                if (_items.Count == 0)
+                {
+                    var primaryButton = FindPrimaryButton();
+                    if (primaryButton != null && IsButtonVisible(primaryButton))
+                    {
+                        string text = GetButtonTextWithMana(primaryButton);
+                        MelonLogger.Msg($"[HotHighlightNavigator] Backspace - clicking sole primary button: {text}");
+                        UIActivator.SimulatePointerClick(primaryButton);
+                        _announcer.Announce(text ?? Strings.SpellCancelled, AnnouncementPriority.Normal);
+                        return true;
+                    }
+                }
+            }
+
             return false;
         }
 
@@ -768,7 +807,16 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private string GetPrimaryButtonText()
         {
-            var button = FindPrimaryButton();
+            return GetButtonTextWithMana(FindPrimaryButton());
+        }
+
+        /// <summary>
+        /// Gets button text with mana sprite tags converted to readable names.
+        /// Unlike UITextExtractor.GetButtonText which strips all tags (losing mana info),
+        /// this method parses sprite tags into readable mana symbol names first.
+        /// </summary>
+        private string GetButtonTextWithMana(GameObject button)
+        {
             if (button == null) return null;
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
@@ -776,7 +824,7 @@ namespace AccessibleArena.Core.Services
             {
                 string text = tmpText.text?.Trim();
                 if (!string.IsNullOrEmpty(text) && text != "Ctrl")
-                    return text;
+                    return CardDetector.ReplaceSpriteTagsWithText(text);
             }
 
             var uiText = button.GetComponentInChildren<Text>();
@@ -784,7 +832,7 @@ namespace AccessibleArena.Core.Services
             {
                 string text = uiText.text?.Trim();
                 if (!string.IsNullOrEmpty(text) && text != "Ctrl")
-                    return text;
+                    return CardDetector.ReplaceSpriteTagsWithText(text);
             }
 
             return null;
@@ -819,6 +867,18 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Finds the game's UndoButton if it exists and is visible.
+        /// Present during mana payment / auto-tap when the player can undo the cast.
+        /// </summary>
+        private GameObject FindUndoButton()
+        {
+            var go = GameObject.Find("UndoButton");
+            if (go != null && go.activeInHierarchy && IsButtonVisible(go))
+                return go;
+            return null;
+        }
+
+        /// <summary>
         /// Language-agnostic heuristic: short text without spaces = keyboard hints (Strg, Ctrl, Z, etc.)
         /// </summary>
         private bool IsMeaningfulButtonText(string text)
@@ -847,10 +907,10 @@ namespace AccessibleArena.Core.Services
         private void DiscoverPromptButtons()
         {
             var primaryButton = FindPrimaryButton();
-            string primaryText = UITextExtractor.GetButtonText(primaryButton);
+            string primaryText = GetButtonTextWithMana(primaryButton);
 
             var secondaryButton = FindSecondaryButton();
-            string secondaryText = UITextExtractor.GetButtonText(secondaryButton);
+            string secondaryText = GetButtonTextWithMana(secondaryButton);
 
             // Only add when BOTH have meaningful text (sacrifice vs pay mana, etc.)
             if (!IsMeaningfulButtonText(primaryText) || !IsMeaningfulButtonText(secondaryText))
@@ -897,8 +957,8 @@ namespace AccessibleArena.Core.Services
 
             var primaryButton = FindPrimaryButton();
             var secondaryButton = FindSecondaryButton();
-            string primaryText = UITextExtractor.GetButtonText(primaryButton);
-            string secondaryText = UITextExtractor.GetButtonText(secondaryButton);
+            string primaryText = GetButtonTextWithMana(primaryButton);
+            string secondaryText = GetButtonTextWithMana(secondaryButton);
 
             if (IsMeaningfulButtonText(primaryText) && IsMeaningfulButtonText(secondaryText)
                 && IsButtonVisible(primaryButton) && IsButtonVisible(secondaryButton))
@@ -1076,7 +1136,7 @@ namespace AccessibleArena.Core.Services
                 {
                     string text = tmp.text?.Trim();
                     if (!string.IsNullOrEmpty(text))
-                        return text;
+                        return CardDetector.ReplaceSpriteTagsWithText(text);
                 }
             }
             return null;

@@ -630,7 +630,7 @@ namespace AccessibleArena.Core.Services
 
         #region Text Utilities
 
-        private static string ParseManaCost(string rawManaCost)
+        internal static string ParseManaCost(string rawManaCost)
         {
             var symbols = new List<string>();
 
@@ -647,7 +647,7 @@ namespace AccessibleArena.Core.Services
             return string.Join(", ", symbols);
         }
 
-        private static string ConvertManaSymbol(string symbol)
+        internal static string ConvertManaSymbol(string symbol)
         {
             if (symbol.StartsWith("x"))
                 symbol = symbol.Substring(1);
@@ -685,6 +685,27 @@ namespace AccessibleArena.Core.Services
                         return num.ToString();
                     return symbol;
             }
+        }
+
+        /// <summary>
+        /// Replaces sprite tags in text with readable mana symbol names.
+        /// Handles both <sprite="..." name="..."> tags and any surrounding text.
+        /// Used for parsing auto-tap button text that mixes prose with mana icons.
+        /// </summary>
+        internal static string ReplaceSpriteTagsWithText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+
+            // Replace sprite tags with readable mana names
+            text = Regex.Replace(text, @"<sprite=[^>]*name=""([^""]+)""[^>]*>", match =>
+            {
+                string symbol = match.Groups[1].Value;
+                return ConvertManaSymbol(symbol);
+            });
+
+            // Clean up remaining rich text tags
+            text = UITextExtractor.StripRichText(text);
+            return text.Trim();
         }
 
         private static string CleanText(string text)

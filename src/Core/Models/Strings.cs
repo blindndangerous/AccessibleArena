@@ -455,7 +455,19 @@ namespace AccessibleArena.Core.Models
         public static string SpellCast => L.Get("SpellCast");
         public static string SpellCastPrefix => L.Get("SpellCastPrefix");
         public static string SpellUnknown => L.Get("SpellUnknown");
+        public static string SpellCancelled => L.Get("SpellCancelled");
         public static string ResolveStackFirst => L.Get("ResolveStackFirst");
+
+        // Cast action type prefixes (Adventure, MDFC, Split, etc.)
+        public static string CastAdventure => L.Get("CastAdventure");
+        public static string CastMdfc => L.Get("CastMdfc");
+        public static string CastSplitLeft => L.Get("CastSplitLeft");
+        public static string CastSplitRight => L.Get("CastSplitRight");
+        public static string CastPrototype => L.Get("CastPrototype");
+        public static string CastDisturb => L.Get("CastDisturb");
+        public static string CastRoom => L.Get("CastRoom");
+        public static string CastOmen => L.Get("CastOmen");
+        public static string PlayedLand => L.Get("PlayedLand");
 
         // Ability announcements (for triggered/activated abilities on stack)
         public static string AbilityTriggered => L.Get("AbilityTriggered");

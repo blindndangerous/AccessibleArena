@@ -40,6 +40,7 @@ namespace AccessibleArena.Core.Services
         private ZoneNavigator _zoneNavigator;
         private BattlefieldNavigator _battlefieldNavigator;
         private DateTime _lastSpellResolvedTime = DateTime.MinValue;
+        private DateTime _lastStackUndoTime = DateTime.MinValue;
 
         // Track user's turn count (game turn number counts each half-turn, we want full cycles)
         private int _userTurnCount = 0;
@@ -1576,6 +1577,13 @@ namespace AccessibleArena.Core.Services
                 return Strings.Duel_ReturnedToHandFromExile(ownerPrefix, cardName);
             }
 
+            // From stack with Undo = spell cancelled (player took back)
+            if (fromZone == "Stack" && reason == "Undo")
+            {
+                _lastStackUndoTime = DateTime.Now;
+                return Strings.SpellCancelled;
+            }
+
             return null;
         }
 
@@ -2263,6 +2271,10 @@ namespace AccessibleArena.Core.Services
             yield return null;
             yield return null;
 
+            // If an undo happened recently, the stack decrease was from cancellation, not resolution
+            if ((DateTime.Now - _lastStackUndoTime).TotalMilliseconds < 500)
+                yield break;
+
             _announcer.Announce(Strings.Duel_SpellResolved, AnnouncementPriority.Normal);
         }
 
@@ -2306,8 +2318,9 @@ namespace AccessibleArena.Core.Services
             }
             else
             {
-                // Original behavior for spells
-                parts.Add($"{Strings.SpellCastPrefix} {info.Name ?? Strings.SpellUnknown}");
+                // Determine action-type-specific cast prefix from ObjectType
+                string castPrefix = GetCastPrefix(cardObj);
+                parts.Add($"{castPrefix} {info.Name ?? Strings.SpellUnknown}");
 
                 if (!string.IsNullOrEmpty(info.PowerToughness))
                     parts.Add(info.PowerToughness);
@@ -2323,6 +2336,65 @@ namespace AccessibleArena.Core.Services
                 parts.Add(info.RulesText);
 
             return string.Join(", ", parts);
+        }
+
+        /// <summary>
+        /// Gets an action-type-specific cast prefix based on the card's ObjectType.
+        /// Returns localized prefixes for Adventure, MDFC back face, Split halves, etc.
+        /// Falls back to the generic "Cast" prefix if ObjectType is not special.
+        /// </summary>
+        private string GetCastPrefix(GameObject cardObj)
+        {
+            try
+            {
+                var cdcComponent = CardModelProvider.GetDuelSceneCDC(cardObj);
+                if (cdcComponent == null) return Strings.SpellCastPrefix;
+
+                var model = CardModelProvider.GetCardModel(cdcComponent);
+                if (model == null) return Strings.SpellCastPrefix;
+
+                var modelType = model.GetType();
+                var objectTypeVal = CardModelProvider.GetModelPropertyValue(model, modelType, "ObjectType");
+                if (objectTypeVal == null) return Strings.SpellCastPrefix;
+
+                // ObjectType is GameObjectType enum - use int comparison to avoid referencing the enum type
+                // Note: On the stack, ObjectType is typically Card(1) even for adventure/MDFC faces.
+                // The specific prefixes will activate if the game provides a non-Card ObjectType.
+                int objectTypeInt = (int)objectTypeVal;
+
+                // Check if this is a land being played (not cast)
+                var cardTypes = CardModelProvider.GetModelPropertyValue(model, modelType, "CardTypes") as IEnumerable;
+                if (cardTypes != null)
+                {
+                    foreach (var ct in cardTypes)
+                    {
+                        if (ct?.ToString() == "Land")
+                            return Strings.PlayedLand;
+                    }
+                }
+
+                // GameObjectType enum values from GreProtobuf.dll:
+                // Adventure=10, Mdfcback=11, DisturbBack=12, PrototypeFacet=14,
+                // RoomLeft=15, RoomRight=16, Omen=17, SplitLeft=6, SplitRight=7
+                switch (objectTypeInt)
+                {
+                    case 10: return Strings.CastAdventure;
+                    case 11: return Strings.CastMdfc;
+                    case 12: return Strings.CastDisturb;
+                    case 14: return Strings.CastPrototype;
+                    case 15:
+                    case 16: return Strings.CastRoom;
+                    case 17: return Strings.CastOmen;
+                    case 6: return Strings.CastSplitLeft;
+                    case 7: return Strings.CastSplitRight;
+                    default: return Strings.SpellCastPrefix;
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[DuelAnnouncer] Error getting cast prefix: {ex.Message}");
+                return Strings.SpellCastPrefix;
+            }
         }
 
         private GameObject GetTopStackCard()
