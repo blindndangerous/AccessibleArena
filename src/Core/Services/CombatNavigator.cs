@@ -35,6 +35,10 @@ namespace AccessibleArena.Core.Services
         // Track if we were in blockers phase last frame (to reset on phase change)
         private bool _wasInBlockersPhase = false;
 
+        // Throttle blocker scanning (expensive FindObjectsOfType + GetComponentsInChildren)
+        private const float BlockerScanIntervalSeconds = 0.15f;
+        private float _lastBlockerScanTime;
+
         public bool IsInCombatPhase => _duelAnnouncer.IsInDeclareAttackersPhase || _duelAnnouncer.IsInDeclareBlockersPhase;
 
         public CombatNavigator(IAnnouncementService announcer, DuelAnnouncer duelAnnouncer)
@@ -167,16 +171,22 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Finds all CDC (card) GameObjects on the battlefield matching a predicate.
+        /// Uses DuelHolderCache to avoid full scene scan.
         /// </summary>
         private List<GameObject> FindCardsByPredicate(System.Func<GameObject, bool> predicate)
         {
             var results = new List<GameObject>();
-            foreach (var go in GameObject.FindObjectsOfType<GameObject>())
+            var holder = DuelHolderCache.GetHolder("BattlefieldCardHolder");
+            if (holder == null) return results;
+
+            foreach (Transform child in holder.GetComponentsInChildren<Transform>(true))
             {
-                if (go == null || !go.activeInHierarchy || !go.name.StartsWith("CDC "))
+                if (child == null || !child.gameObject.activeInHierarchy)
                     continue;
-                if (predicate(go))
-                    results.Add(go);
+                if (!child.name.StartsWith("CDC "))
+                    continue;
+                if (predicate(child.gameObject))
+                    results.Add(child.gameObject);
             }
             return results;
         }
@@ -251,6 +261,11 @@ namespace AccessibleArena.Core.Services
             // Only track during blockers phase
             if (!isInBlockersPhase)
                 return;
+
+            // Throttle: blocker scans are expensive, only run every ~150ms
+            if (Time.time - _lastBlockerScanTime < BlockerScanIntervalSeconds)
+                return;
+            _lastBlockerScanTime = Time.time;
 
             // Get current assigned blockers (IsBlocking active)
             var currentAssigned = FindAssignedBlockers();

@@ -31,6 +31,15 @@ namespace AccessibleArena.Core.Services
         private static readonly Dictionary<string, MemberInfo> _instanceMemberCache = new Dictionary<string, MemberInfo>();
         private static readonly HashSet<string> _instanceMemberSearched = new HashSet<string>();
 
+        // Model-level PropertyInfo cache (for GetCardCategory, GetModelInstanceId, GetModelGrpId)
+        private static PropertyInfo _controllerNumProp;
+        private static PropertyInfo _isBasicLandProp;
+        private static PropertyInfo _isLandButNotBasicProp;
+        private static PropertyInfo _cardTypesProp;
+        private static PropertyInfo _instanceIdProp;
+        private static PropertyInfo _grpIdProp;
+        private static bool _modelPropsSearched;
+
         #endregion
 
         /// <summary>
@@ -44,6 +53,13 @@ namespace AccessibleArena.Core.Services
             _zoneTypePropSearched = false;
             _instanceMemberCache.Clear();
             _instanceMemberSearched.Clear();
+            _controllerNumProp = null;
+            _isBasicLandProp = null;
+            _isLandButNotBasicProp = null;
+            _cardTypesProp = null;
+            _instanceIdProp = null;
+            _grpIdProp = null;
+            _modelPropsSearched = false;
         }
 
         #region Generic Instance Accessors
@@ -126,6 +142,26 @@ namespace AccessibleArena.Core.Services
 
         #endregion
 
+        #region Model Property Cache
+
+        /// <summary>
+        /// Ensures model-level PropertyInfo objects are cached. Called once per model type.
+        /// The model type is constant for the entire duel so these are looked up once and reused.
+        /// </summary>
+        private static void EnsureModelPropsSearched(Type modelType)
+        {
+            if (_modelPropsSearched) return;
+            _modelPropsSearched = true;
+            _controllerNumProp = modelType.GetProperty("ControllerNum");
+            _isBasicLandProp = modelType.GetProperty("IsBasicLand");
+            _isLandButNotBasicProp = modelType.GetProperty("IsLandButNotBasic");
+            _cardTypesProp = modelType.GetProperty("CardTypes");
+            _instanceIdProp = modelType.GetProperty("InstanceId");
+            _grpIdProp = modelType.GetProperty("GrpId");
+        }
+
+        #endregion
+
         #region Attachments
 
         /// <summary>
@@ -158,17 +194,17 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Gets the InstanceId from a card's model.
+        /// Gets the InstanceId from a card's model. Uses cached PropertyInfo.
         /// </summary>
         private static uint GetModelInstanceId(object model)
         {
             if (model == null) return 0;
             try
             {
-                var prop = model.GetType().GetProperty("InstanceId");
-                if (prop != null)
+                EnsureModelPropsSearched(model.GetType());
+                if (_instanceIdProp != null)
                 {
-                    var val = prop.GetValue(model);
+                    var val = _instanceIdProp.GetValue(model);
                     if (val is uint id) return id;
                 }
             }
@@ -177,17 +213,17 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Gets the GrpId from a card's model.
+        /// Gets the GrpId from a card's model. Uses cached PropertyInfo.
         /// </summary>
         private static uint GetModelGrpId(object model)
         {
             if (model == null) return 0;
             try
             {
-                var prop = model.GetType().GetProperty("GrpId");
-                if (prop != null)
+                EnsureModelPropsSearched(model.GetType());
+                if (_grpIdProp != null)
                 {
-                    var val = prop.GetValue(model);
+                    var val = _grpIdProp.GetValue(model);
                     if (val is uint id) return id;
                 }
             }
@@ -512,34 +548,31 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Collects all DuelScene_CDC card models from a named card holder zone.
+        /// Uses DuelHolderCache to avoid full scene scan via FindObjectsOfType.
         /// Returns list of (model, instanceId, grpId) for scanning relationships.
         /// </summary>
         private static List<(object model, uint instanceId, uint grpId)> GetAllCardModelsInHolder(string holderNameContains)
         {
             var results = new List<(object model, uint instanceId, uint grpId)>();
 
-            foreach (var go in GameObject.FindObjectsOfType<GameObject>())
+            var holder = DuelHolderCache.GetHolder(holderNameContains);
+            if (holder == null) return results;
+
+            foreach (var child in holder.GetComponentsInChildren<Transform>(true))
             {
-                if (go == null || !go.activeInHierarchy) continue;
-                if (!go.name.Contains(holderNameContains)) continue;
+                if (child == null || !child.gameObject.activeInHierarchy) continue;
 
-                foreach (var child in go.GetComponentsInChildren<Transform>(true))
-                {
-                    if (child == null || !child.gameObject.activeInHierarchy) continue;
+                var cdc = CardModelProvider.GetDuelSceneCDC(child.gameObject);
+                if (cdc == null) continue;
 
-                    var cdc = CardModelProvider.GetDuelSceneCDC(child.gameObject);
-                    if (cdc == null) continue;
+                var model = CardModelProvider.GetCardModel(cdc);
+                if (model == null) continue;
 
-                    var model = CardModelProvider.GetCardModel(cdc);
-                    if (model == null) continue;
+                uint instanceId = GetModelInstanceId(model);
+                if (instanceId == 0) continue;
 
-                    uint instanceId = GetModelInstanceId(model);
-                    if (instanceId == 0) continue;
-
-                    uint grpId = GetModelGrpId(model);
-                    results.Add((model, instanceId, grpId));
-                }
-                break;
+                uint grpId = GetModelGrpId(model);
+                results.Add((model, instanceId, grpId));
             }
 
             return results;
@@ -769,34 +802,27 @@ namespace AccessibleArena.Core.Services
                 {
                     try
                     {
-                        var modelType = model.GetType();
+                        EnsureModelPropsSearched(model.GetType());
 
                         // Check ownership from ControllerNum
-                        var controllerProp = modelType.GetProperty("ControllerNum");
-                        if (controllerProp != null)
+                        if (_controllerNumProp != null)
                         {
-                            var controller = controllerProp.GetValue(model);
+                            var controller = _controllerNumProp.GetValue(model);
                             isOpponent = controller?.ToString() == "Opponent";
                         }
 
                         // Check IsBasicLand property
-                        var isBasicLandProp = modelType.GetProperty("IsBasicLand");
-                        if (isBasicLandProp != null && (bool)isBasicLandProp.GetValue(model))
+                        if (_isBasicLandProp != null && (bool)_isBasicLandProp.GetValue(model))
                             isLand = true;
 
                         // Check IsLandButNotBasic property
-                        if (!isLand)
-                        {
-                            var isLandNotBasicProp = modelType.GetProperty("IsLandButNotBasic");
-                            if (isLandNotBasicProp != null && (bool)isLandNotBasicProp.GetValue(model))
-                                isLand = true;
-                        }
+                        if (!isLand && _isLandButNotBasicProp != null && (bool)_isLandButNotBasicProp.GetValue(model))
+                            isLand = true;
 
                         // Check CardTypes for Creature and Land
-                        var cardTypesProp = modelType.GetProperty("CardTypes");
-                        if (cardTypesProp != null)
+                        if (_cardTypesProp != null)
                         {
-                            var cardTypes = cardTypesProp.GetValue(model) as IEnumerable;
+                            var cardTypes = _cardTypesProp.GetValue(model) as IEnumerable;
                             if (cardTypes != null)
                             {
                                 foreach (var cardType in cardTypes)

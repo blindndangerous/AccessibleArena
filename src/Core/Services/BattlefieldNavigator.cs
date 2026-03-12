@@ -34,6 +34,8 @@ namespace AccessibleArena.Core.Services
         private string _watchedStateBefore;
         private float _watchStartTime;
         private const float WatchTimeoutSeconds = 3f;
+        private const float WatchCheckIntervalSeconds = 0.1f;
+        private float _lastWatchCheckTime;
 
         // Row order from top (enemy side) to bottom (player side) for Shift+Up/Down navigation
         private static readonly BattlefieldRow[] RowOrder = {
@@ -279,7 +281,10 @@ namespace AccessibleArena.Core.Services
             }
 
             // Find all cards in battlefield
+            // Use HashSet for O(1) ancestor lookup instead of O(n) IsChildOf checks per card.
+            // GetComponentsInChildren is depth-first, so parent cards are always found before children.
             var cards = new List<GameObject>();
+            var foundCardIds = new HashSet<int>();
             foreach (Transform child in battlefieldHolder.GetComponentsInChildren<Transform>(true))
             {
                 if (child == null || !child.gameObject.activeInHierarchy)
@@ -288,9 +293,22 @@ namespace AccessibleArena.Core.Services
                 var go = child.gameObject;
                 if (CardDetector.IsCard(go))
                 {
-                    // Avoid duplicates (parent-child relationships)
-                    if (!cards.Any(c => c.transform.IsChildOf(go.transform) || go.transform.IsChildOf(c.transform)))
+                    // Walk up parent chain to check if this is a child of an already-found card
+                    bool isChildOfExistingCard = false;
+                    Transform ancestor = go.transform.parent;
+                    while (ancestor != null && ancestor != battlefieldHolder.transform)
                     {
+                        if (foundCardIds.Contains(ancestor.gameObject.GetInstanceID()))
+                        {
+                            isChildOfExistingCard = true;
+                            break;
+                        }
+                        ancestor = ancestor.parent;
+                    }
+
+                    if (!isChildOfExistingCard)
+                    {
+                        foundCardIds.Add(go.GetInstanceID());
                         cards.Add(go);
                     }
                 }
@@ -344,7 +362,8 @@ namespace AccessibleArena.Core.Services
                 else row = BattlefieldRow.PlayerNonCreatures;
             }
 
-            MelonLogger.Msg($"[BattlefieldNavigator] Card: {cardName}, IsCreature: {isCreature}, IsLand: {isLand}, IsOpponent: {isOpponent} -> {row}");
+            DebugConfig.LogIf(DebugConfig.LogCardInfo, "BattlefieldNavigator",
+                $"Card: {cardName}, IsCreature: {isCreature}, IsLand: {isLand}, IsOpponent: {isOpponent} -> {row}");
             return row;
         }
 
@@ -586,6 +605,11 @@ namespace AccessibleArena.Core.Services
                 _watchedCard = null;
                 return;
             }
+
+            // Throttle: only check every ~100ms instead of every frame
+            if (Time.time - _lastWatchCheckTime < WatchCheckIntervalSeconds)
+                return;
+            _lastWatchCheckTime = Time.time;
 
             string stateAfter = GetCardStateSnapshot(_watchedCard);
             if (stateAfter != _watchedStateBefore)
