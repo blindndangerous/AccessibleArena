@@ -1777,19 +1777,20 @@ namespace AccessibleArena.Core.Services
         {
             LogDebug($"[{NavigatorId}] Closing Social panel");
             var socialPanel = GameObject.Find("SocialUI_V2_Desktop_16x9(Clone)");
-            if (socialPanel != null)
-            {
-                var closeButton = FindCloseButtonInPanel(socialPanel);
-                if (closeButton != null)
-                {
-                    _announcer.AnnounceVerbose(Models.Strings.NavigatingBack, Models.AnnouncementPriority.High);
-                    UIActivator.Activate(closeButton);
-                    TriggerRescan();
-                    return true;
-                }
-            }
+            if (socialPanel == null) return TryGenericBackButton();
 
-            return TryGenericBackButton();
+            var socialUI = socialPanel.GetComponent("SocialUI");
+            if (socialUI == null) return TryGenericBackButton();
+
+            var minimizeMethod = socialUI.GetType().GetMethod("Minimize", AllInstanceFlags);
+            if (minimizeMethod == null) return TryGenericBackButton();
+
+            minimizeMethod.Invoke(socialUI, null);
+            LogDebug($"[{NavigatorId}] Called SocialUI.Minimize()");
+            _announcer.AnnounceVerbose(Models.Strings.NavigatingBack, Models.AnnouncementPriority.High);
+            ReportPanelClosed(socialPanel);
+            TriggerRescan();
+            return true;
         }
 
         /// <summary>
