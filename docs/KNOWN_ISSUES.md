@@ -24,6 +24,24 @@ Incoming direct challenges cannot be accepted. The accept button or interaction 
 
 ---
 
+### Blocking Sometimes Announces "0 0"
+
+During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information.
+
+---
+
+### Backspace Does Not Handle Undo Situations Correctly
+
+Pressing Backspace during certain game states (e.g., after selecting a card to play, during mana payment, or mid-targeting) does not always undo the action cleanly. The mod may not detect that the game has reverted to the previous state, leading to stale announcements or navigation getting out of sync.
+
+---
+
+### No Feedback When Card Cannot Be Played
+
+When attempting to play a card that cannot be played (e.g., insufficient mana, invalid target, wrong phase), the game silently rejects the action. The mod does not extract or announce the reason for the failure, leaving the user with no feedback about what went wrong.
+
+---
+
 ## Game Behavior (Not Fixable by Mod)
 
 ### Resolution Dropdown Shows Native Display Resolution Until Changed
@@ -218,32 +236,69 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 ### Upcoming
 
-1. Battlefield navigation performance improvements - optimize card scanning, caching, and row organization for faster response on complex board states
-2. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
-3. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
-4. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
-5. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
-6. Extended tutorial for mod users - explain Space/Backspace behavior (confirm/cancel), the blocking system during combat, and I shortcut for extended card info and keyword descriptions
-7. Better handling of number announcements while tabbing - possibly change how Tab changes focus to reduce noisy or redundant number readouts
-8. Player username announcements
-9. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
-10. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
-11. Better group announcements - improve how element groups are announced when entering/switching groups
-12. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
-13. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-14. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-15. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
-16. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
-18. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-19. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+1. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
+2. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
+3. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
+4. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
+5. Tutorial system for mod users (see detailed section below)
+6. Better handling of number announcements while tabbing - possibly change how Tab changes focus to reduce noisy or redundant number readouts
+7. Player username announcements
+8. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
+9. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
+10. Better group announcements - improve how element groups are announced when entering/switching groups
+11. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
+12. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
+13. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
+14. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
+15. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
+16. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+17. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+18. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
+19. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
+20. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
+
+### Tutorial System
+
+**Goal:** Help blind players learn the mod's controls and the game's mechanics through accessible, context-sensitive guidance.
+
+**1. Text readability for existing tutorial messages**
+- The game's built-in tutorial (Color Challenge) displays popup messages with instructions and lore
+- These are currently not reliably read by the screen reader
+- Detect tutorial message panels and announce their text content automatically
+- Ensure multi-step tutorials (e.g., "click your creature", "now click the enemy") are announced at each step
+
+**2. Custom tutorial message system**
+- Framework for triggering mod-specific tutorial messages at appropriate moments
+- Messages should be dismissible (Backspace/Enter) and not block gameplay
+- Track which messages the user has already seen (persist across sessions via settings)
+- First-launch tutorial covering basic navigation concepts
+
+**3. Looping animation detection**
+- The game sometimes enters looping animations waiting for user action (e.g., attack arrow hovering, target selection active) with no audio or text cue
+- Detect when the game is stuck in such a loop and prompt the user with what action is expected
+- Example: "The game is waiting for you to select a target. Use battlefield navigation (B) to choose a creature, then press Enter."
+- Example: "Declare attackers phase. Press Space to confirm attacks or Backspace to cancel."
+
+**4. Contextual explanations for mod-specific controls**
+- F1 and F2 menus: explain that F1 opens the help overlay with all shortcuts and F2 opens the mod settings menu
+- Blocking: explain how to assign blockers during Declare Blockers step (navigate to attacker, press Enter, select blocker)
+- Mana costs: explain how mana payment works when a card requires specific colors, and how the mana color picker (Tab/number keys) appears for any-color sources
+- Confirming with Space: explain that Space acts as the primary confirm/pass/next button during duels (pass priority, confirm attacks, submit choices)
+- Backspace behavior: explain that Backspace is the universal cancel/back/dismiss key (cancel targeting, decline attacks, close popups, go back in menus)
+
+### Polish
+
+1. Check all tutorial messages for completeness and correctness - review every context-sensitive tutorial tip for accuracy, missing steps, and outdated references
+2. Add tutorial messages to deck building screen, player zone, and multi-zone browser - these screens currently lack onboarding guidance for new users
+3. Improve deck submenus - better navigation and announcements for deck actions (rename, delete, duplicate, export, import)
+4. Improve left battlefield announcements - clearer and more informative readouts when navigating the left (friendly) battlefield rows
+5. Improve player zone entries - better labels and more useful information for properties shown in the player info zone (V key)
 
 ### Low Priority / v1.1
 
 1. Auto version checking and auto update - check for new mod versions on launch and optionally auto-update. May be too problematic to implement reliably.
-2. ~~Pack expansion selection~~ - DONE (v0.8): set filter navigation in Store Packs tab with localized set names
-3. ~~Card flipping during pack opening~~ - DONE (v0.8): all cards spawn face-down, user reveals one by one with Enter, animation auto-skipped for accessibility
-4. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
-5. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
-6. Achievement screen - accessible navigation and reading of achievement progress and rewards
-7. Improving deck actions workflow - streamline the deck management actions (rename, delete, duplicate, etc.) for better screen reader accessibility
+2. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
+3. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
+4. Achievement screen - accessible navigation and reading of achievement progress and rewards
+5. Improving deck actions workflow - streamline the deck management actions (rename, delete, duplicate, etc.) for better screen reader accessibility
 
