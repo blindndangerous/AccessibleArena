@@ -399,6 +399,7 @@
   "NoSearchResults": "Keine Suchergebnisse",
   "BrowserHint": "Tab zum Ansehen, Enter zum Oben behalten",
   "EnterToSelect": "Enter zum Auswählen",
+  "LetterSearch_NoMatch_Format": "Kein Treffer für {0}",
   "TabToNavigate": "Tab zum Navigieren",
   "TextField": "Textfeld",
   "HasCharacters_Format": "hat {0} Zeichen",

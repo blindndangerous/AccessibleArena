@@ -1329,13 +1329,13 @@ namespace AccessibleArena.Core.Services
         private void HandleTabInput()
         {
             // Up/Down navigate tabs
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveTab(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveTab(1);
                 return;
@@ -1400,13 +1400,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Up/Down navigate items
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveItem(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveItem(1);
                 return;
@@ -1421,13 +1421,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right cycle purchase options
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 CyclePurchaseOption(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 CyclePurchaseOption(1);
                 return;
@@ -1700,15 +1700,15 @@ namespace AccessibleArena.Core.Services
         private void HandleSetFilterInput()
         {
             // Left/Right or Up/Down: cycle sets
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) ||
-                Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.LeftArrow) ||
+                Input.GetKeyDown(KeyCode.UpArrow))
             {
                 CycleSetFilter(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D) ||
-                Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.RightArrow) ||
+                Input.GetKeyDown(KeyCode.DownArrow))
             {
                 CycleSetFilter(1);
                 return;
@@ -2241,26 +2241,26 @@ namespace AccessibleArena.Core.Services
         private void HandleDetailsInput()
         {
             // Left/Right: navigate between cards
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 MoveDetailsCard(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 MoveDetailsCard(1);
                 return;
             }
 
             // Up/Down: navigate card info blocks
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveDetailsBlock(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveDetailsBlock(1);
                 return;
@@ -2613,12 +2613,12 @@ namespace AccessibleArena.Core.Services
             if (_modalElements.Count == 0) return;
 
             // Up/Down navigate modal elements
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveModalElement(-1);
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveModalElement(1);
                 return;

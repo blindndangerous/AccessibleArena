@@ -996,6 +996,7 @@ namespace AccessibleArena.Core.Models
         public static string WaitingForPlayable => L.Get("WaitingForPlayable");
         public static string NoSearchResults => L.Get("NoSearchResults");
         public static string EnterToSelect => L.Get("EnterToSelect");
+        public static string LetterSearchNoMatch(string prefix) => L.Format("LetterSearch_NoMatch_Format", prefix);
 
         // ===========================================
         // SCREEN TITLES

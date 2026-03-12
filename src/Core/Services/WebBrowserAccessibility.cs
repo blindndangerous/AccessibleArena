@@ -609,13 +609,13 @@ namespace AccessibleArena.Core.Services
 
         private void HandleNavigationInput()
         {
-            // Up/Down, W/S navigate elements
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            // Up/Down navigate elements
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveElement(-1);
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveElement(1);
                 return;

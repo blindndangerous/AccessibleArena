@@ -4,6 +4,14 @@ All notable changes to Accessible Arena.
 
 ## v0.8.4
 
+### New: Letter navigation in menus
+- Press A-Z to jump to the first menu item starting with that letter
+- Repeat the same letter to cycle through matches (e.g., S, S to go from "Store" to "Settings")
+- Type multiple letters quickly to build a prefix (e.g., "ST" finds "Store")
+- Works in grouped navigation (searches group names or items within group) and Advanced Filters (searches within current row)
+- Disabled in duels where letters are zone shortcuts
+- WASD keys no longer act as arrow-key alternatives in menus (freed up for letter navigation)
+
 ### Improved: Duel performance
 - Various performance improvements for battlefield navigation, combat scanning, and card state lookups during duels
 

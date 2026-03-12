@@ -918,8 +918,8 @@ namespace AccessibleArena.Core.Services
         {
             if (_tocItems.Count == 0) return;
 
-            // Up/W/Shift+Tab: Previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) ||
+            // Up/Shift+Tab: Previous item
+            if (Input.GetKeyDown(KeyCode.UpArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
             {
                 if (_tocIndex > 0)
@@ -934,8 +934,8 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Down/S/Tab: Next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) ||
+            // Down/Tab: Next item
+            if (Input.GetKeyDown(KeyCode.DownArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)))
             {
                 if (_tocIndex < _tocItems.Count - 1)
@@ -1023,7 +1023,7 @@ namespace AccessibleArena.Core.Services
         private void HandleContentInput()
         {
             // Up: Previous paragraph
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 if (_contentParagraphs.Count == 0)
                 {
@@ -1044,7 +1044,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Down: Next paragraph
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 if (_contentParagraphs.Count == 0)
                 {
@@ -1098,7 +1098,7 @@ namespace AccessibleArena.Core.Services
         private void HandleCreditsInput()
         {
             // Up: Previous credits block
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 if (_creditsParagraphs.Count == 0) return;
 
@@ -1115,7 +1115,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Down: Next credits block
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 if (_creditsParagraphs.Count == 0) return;
 

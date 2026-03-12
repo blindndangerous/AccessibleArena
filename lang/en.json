@@ -401,6 +401,7 @@
   "NoSearchResults": "No search results",
   "BrowserHint": "Tab to see card, Enter to keep on top",
   "EnterToSelect": "Enter to select",
+  "LetterSearch_NoMatch_Format": "No match for {0}",
   "TabToNavigate": "Tab to navigate",
   "TextField": "text field",
   "HasCharacters_Format": "has {0} characters",

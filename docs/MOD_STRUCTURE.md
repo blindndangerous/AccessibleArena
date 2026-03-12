@@ -39,6 +39,7 @@
         CardPoolAccessor.cs      - Reflection wrapper for CardPoolHolder (collection page API)
         RecentPlayAccessor.cs    - Reflection wrapper for LastPlayedBladeContentView (Recent tab tiles)
         InputFieldEditHelper.cs  - Shared input field edit mode logic (used by BaseNavigator for both menu and popup input fields)
+        LetterSearchHandler.cs   - Buffered letter-key navigation (A-Z jump with same-letter cycling, used by BaseNavigator)
         MenuDebugHelper.cs       - UI investigation utilities (DumpGameObjectDetails, LogTooltipTriggerDetails)
 
         # Central Services (held by main mod)
@@ -863,6 +864,24 @@ Detects menu panel state changes (open/close) via Harmony patches for reliable o
 Patched controllers: NavContentController, SettingsMenu, DeckSelectBlade
 
 See `docs/BEST_PRACTICES.md` "Panel State Detection (Harmony Patches)" section for full technical details.
+
+### Letter Navigation (LetterSearchHandler)
+Typing a letter key (A-Z) in menu screens jumps to the first element whose label starts with that letter. Built into `BaseNavigator`, so all menu navigators get it automatically.
+
+**Behavior:**
+- Single letter: jumps to first matching element (e.g., "S" jumps to "Store")
+- Same letter repeated: cycles through matches (e.g., "S", "S" goes from "Store" to "Settings")
+- Different letters within 1 second: builds a prefix (e.g., "S", "T" searches for "St...")
+- Buffer resets after 1 second of inactivity or when navigating with arrows/Tab/Home/End
+
+**Integration points:**
+- `BaseNavigator.HandleInput()` / `HandlePopupInput()` - detects A-Z keys after all other input
+- `BaseNavigator.HandleLetterNavigation()` - virtual method, searches `_elements` labels
+- `GeneralMenuNavigator` override - searches group DisplayNames at GroupList level, element labels at InsideGroup level
+- `AdvancedFiltersNavigator` override - searches current row's item labels
+- `DuelNavigator` - disabled via `SupportsLetterNavigation => false` (letters are zone shortcuts)
+
+Skipped when `UIFocusTracker.IsAnyInputFieldFocused()` returns true (user is typing in a text field).
 
 ## Changelog
 

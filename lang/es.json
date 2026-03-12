@@ -399,6 +399,7 @@
   "NoSearchResults": "Sin resultados de búsqueda",
   "BrowserHint": "Tab para ver carta, Enter para conservar arriba",
   "EnterToSelect": "Enter para seleccionar",
+  "LetterSearch_NoMatch_Format": "Sin coincidencia para {0}",
   "TabToNavigate": "Tab para navegar",
   "TextField": "campo de texto",
   "HasCharacters_Format": "tiene {0} caracteres",

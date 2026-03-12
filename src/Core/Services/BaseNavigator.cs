@@ -54,6 +54,9 @@ namespace AccessibleArena.Core.Services
         // Tab navigation should auto-enter input field edit mode, arrow keys should not
         private bool _lastNavigationWasTab;
 
+        // Letter navigation handler (buffered jump with same-letter cycling)
+        protected readonly LetterSearchHandler _letterSearch = new LetterSearchHandler();
+
         /// <summary>
         /// Represents a virtual action attached to an element (e.g., Delete, Edit for decks).
         /// These are cycled through with left/right arrows.
@@ -342,6 +345,9 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>Whether to accept Space key for activation (in addition to Enter)</summary>
         protected virtual bool AcceptSpaceKey => true;
+
+        /// <summary>Whether letter keys (A-Z) trigger jump-to-element navigation. Disabled in duel navigators where letters are zone shortcuts.</summary>
+        protected virtual bool SupportsLetterNavigation => true;
 
         #endregion
 
@@ -1219,12 +1225,12 @@ namespace AccessibleArena.Core.Services
                         }
 
                         // Handle arrow keys here since Unity may have already processed them
-                        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+                        if (Input.GetKeyDown(KeyCode.UpArrow))
                         {
                             MovePrevious();
                             return;
                         }
-                        if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+                        if (Input.GetKeyDown(KeyCode.DownArrow))
                         {
                             MoveNext();
                             return;
@@ -1291,14 +1297,14 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Menu navigation with Arrow Up/Down, W/S alternatives, and Tab/Shift+Tab
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            // Menu navigation with Arrow Up/Down and Tab/Shift+Tab
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MovePrevious();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveNext();
                 return;
@@ -1331,13 +1337,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Arrow Left/Right for carousel elements
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 if (HandleCarouselArrow(isNext: false))
                     return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 if (HandleCarouselArrow(isNext: true))
                     return;
@@ -1375,6 +1381,20 @@ namespace AccessibleArena.Core.Services
                 else
                 {
                     ActivateCurrentElement();
+                }
+                return;
+            }
+
+            // Letter navigation (A-Z): jump to element starting with typed letter(s)
+            if (SupportsLetterNavigation && !UIFocusTracker.IsAnyInputFieldFocused())
+            {
+                for (KeyCode key = KeyCode.A; key <= KeyCode.Z; key++)
+                {
+                    if (Input.GetKeyDown(key))
+                    {
+                        HandleLetterNavigation(key);
+                        return;
+                    }
                 }
             }
         }
@@ -1659,6 +1679,7 @@ namespace AccessibleArena.Core.Services
         /// <summary>Move to next (direction=1) or previous (direction=-1) element without wrapping</summary>
         protected virtual void Move(int direction)
         {
+            _letterSearch.Clear();
             if (_elements.Count == 0) return;
 
             // Single element: re-announce it instead of saying "end/beginning of list"
@@ -1692,6 +1713,43 @@ namespace AccessibleArena.Core.Services
 
             AnnounceCurrentElement();
             UpdateCardNavigation();
+        }
+
+        /// <summary>
+        /// Handle a letter key press for jump-to-element navigation.
+        /// Builds a label list from current elements and uses LetterSearchHandler.
+        /// Override in subclasses with custom navigation (e.g., grouped, grid).
+        /// </summary>
+        /// <returns>true if the key was handled</returns>
+        protected virtual bool HandleLetterNavigation(KeyCode key)
+        {
+            if (_elements.Count == 0) return false;
+
+            char letter = (char)('A' + (key - KeyCode.A));
+
+            var labels = new List<string>(_elements.Count);
+            for (int i = 0; i < _elements.Count; i++)
+                labels.Add(_elements[i].Label);
+
+            int target = _letterSearch.HandleKey(letter, labels, _currentIndex);
+            if (target >= 0 && target != _currentIndex)
+            {
+                _currentIndex = target;
+                _currentActionIndex = 0;
+                UpdateEventSystemSelection();
+                AnnounceCurrentElement();
+                UpdateCardNavigation();
+            }
+            else if (target == _currentIndex)
+            {
+                // Already on the match, re-announce
+                AnnounceCurrentElement();
+            }
+            else
+            {
+                _announcer.AnnounceInterrupt(Strings.LetterSearchNoMatch(_letterSearch.Buffer));
+            }
+            return true;
         }
 
         /// <summary>
@@ -1847,6 +1905,7 @@ namespace AccessibleArena.Core.Services
         /// <summary>Jump to first element</summary>
         protected virtual void MoveFirst()
         {
+            _letterSearch.Clear();
             if (_elements.Count == 0) return;
 
             // Single element or already at first: re-announce current
@@ -1865,6 +1924,7 @@ namespace AccessibleArena.Core.Services
         /// <summary>Jump to last element</summary>
         protected virtual void MoveLast()
         {
+            _letterSearch.Clear();
             if (_elements.Count == 0) return;
 
             int lastIndex = _elements.Count - 1;
@@ -2318,16 +2378,16 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Up/W/Shift+Tab: previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) ||
+            // Up/Shift+Tab: previous item
+            if (Input.GetKeyDown(KeyCode.UpArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
             {
                 NavigatePopupItem(-1);
                 return;
             }
 
-            // Down/S/Tab: next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) ||
+            // Down/Tab: next item
+            if (Input.GetKeyDown(KeyCode.DownArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)))
             {
                 NavigatePopupItem(1);
@@ -2345,12 +2405,12 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right: stepper (e.g., craft count)
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 HandleCarouselArrow(false);
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 HandleCarouselArrow(true);
                 return;
@@ -2364,6 +2424,19 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
+            // Letter navigation (A-Z) in popups
+            if (SupportsLetterNavigation && !UIFocusTracker.IsAnyInputFieldFocused())
+            {
+                for (KeyCode key = KeyCode.A; key <= KeyCode.Z; key++)
+                {
+                    if (Input.GetKeyDown(key))
+                    {
+                        HandleLetterNavigation(key);
+                        return;
+                    }
+                }
+            }
+
             // F4: toggle Friends panel (works even during popups)
             if (Input.GetKeyDown(KeyCode.F4))
                 HandleCustomInput();
@@ -2371,6 +2444,7 @@ namespace AccessibleArena.Core.Services
 
         private void NavigatePopupItem(int direction)
         {
+            _letterSearch.Clear();
             if (_elements.Count == 0) return;
 
             int newIndex = _currentIndex + direction;

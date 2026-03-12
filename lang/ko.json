@@ -399,6 +399,7 @@
   "NoSearchResults": "검색 결과 없음",
   "BrowserHint": "Tab으로 카드 보기, Enter로 위에 유지",
   "EnterToSelect": "Enter로 선택",
+  "LetterSearch_NoMatch_Format": "{0}에 대한 일치 항목 없음",
   "TabToNavigate": "Tab으로 탐색",
   "TextField": "텍스트 필드",
   "HasCharacters_Format": "{0}글자 있음",

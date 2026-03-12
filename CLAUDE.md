@@ -120,12 +120,13 @@ When enabled, dumps comprehensive info: UI structure, clickable components, work
 ### Safe Custom Shortcuts
 
 **Menu Navigation:**
-Arrow Up/Down (or W/S): Navigate menu items
+Arrow Up/Down: Navigate menu items
 Tab/Shift+Tab: Navigate menu items (same as Arrow Up/Down)
-Arrow Left/Right (or A/D): Carousel/stepper controls
+Arrow Left/Right: Carousel/stepper controls
 Home: Jump to first item
 End: Jump to last item
 Page Up/Page Down: Previous/next page in collection
+A-Z: Jump to item starting with letter (buffered: type "ST" for "Store", repeat same letter to cycle)
 Enter/Space: Activate
 Backspace: Back one level
 

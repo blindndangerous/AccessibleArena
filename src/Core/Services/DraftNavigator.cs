@@ -267,13 +267,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right arrows for navigation between cards
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 MovePrevious();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 MoveNext();
                 return;

@@ -1889,6 +1889,55 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         }
 
         /// <summary>
+        /// Jump to a specific group by index. Sets navigation to group level.
+        /// </summary>
+        public bool JumpToGroupByIndex(int index)
+        {
+            if (index < 0 || index >= _groups.Count) return false;
+            _currentGroupIndex = index;
+            _navigationLevel = NavigationLevel.GroupList;
+            _currentElementIndex = -1;
+            return true;
+        }
+
+        /// <summary>
+        /// Jump to a specific element by index within the current group (InsideGroup level).
+        /// </summary>
+        public bool JumpToElementByIndex(int index)
+        {
+            if (_navigationLevel != NavigationLevel.InsideGroup) return false;
+            var group = CurrentGroup;
+            if (!group.HasValue || index < 0 || index >= group.Value.Count) return false;
+            _currentElementIndex = index;
+            return true;
+        }
+
+        /// <summary>
+        /// Get display names of all groups as a list (for letter search).
+        /// </summary>
+        public List<string> GetGroupDisplayNames()
+        {
+            var names = new List<string>(_groups.Count);
+            for (int i = 0; i < _groups.Count; i++)
+                names.Add(_groups[i].DisplayName);
+            return names;
+        }
+
+        /// <summary>
+        /// Get labels of all elements in the current group (for letter search).
+        /// </summary>
+        public List<string> GetCurrentGroupElementLabels()
+        {
+            var group = CurrentGroup;
+            if (!group.HasValue) return new List<string>();
+            var elements = group.Value.Elements;
+            var labels = new List<string>(elements.Count);
+            for (int i = 0; i < elements.Count; i++)
+                labels.Add(elements[i].Label);
+            return labels;
+        }
+
+        /// <summary>
         /// Get group info by ElementGroup type.
         /// </summary>
         public ElementGroupInfo? GetGroupByType(ElementGroup groupType)

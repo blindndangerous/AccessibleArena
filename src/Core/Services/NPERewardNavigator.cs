@@ -529,17 +529,17 @@ namespace AccessibleArena.Core.Services
             if (HandleCustomInput()) return;
 
             // Left/Right arrows for navigation between cards
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                Log($"Input: Left/A - MovePrevious (current={_currentIndex}, total={_elements.Count})");
+                Log($"Input: Left - MovePrevious (current={_currentIndex}, total={_elements.Count})");
                 MovePrevious();
                 LogCurrentState();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                Log($"Input: Right/D - MoveNext (current={_currentIndex}, total={_elements.Count})");
+                Log($"Input: Right - MoveNext (current={_currentIndex}, total={_elements.Count})");
                 MoveNext();
                 LogCurrentState();
                 return;

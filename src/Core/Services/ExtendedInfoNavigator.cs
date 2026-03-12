@@ -98,15 +98,15 @@ namespace AccessibleArena.Core.Services
                 return true;
             }
 
-            // Up arrow or W: previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            // Up arrow: previous item
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MovePrevious();
                 return true;
             }
 
-            // Down arrow or S: next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            // Down arrow: next item
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveNext();
                 return true;

@@ -399,6 +399,7 @@
   "NoSearchResults": "没有搜索结果",
   "BrowserHint": "Tab查看卡牌，Enter保留在顶部",
   "EnterToSelect": "Enter选择",
+  "LetterSearch_NoMatch_Format": "没有匹配 {0}",
   "TabToNavigate": "Tab导航",
   "TextField": "文本字段",
   "HasCharacters_Format": "有{0}个字符",

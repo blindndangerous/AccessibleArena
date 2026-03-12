@@ -163,15 +163,15 @@ namespace AccessibleArena.Core.Services
                 return true;
             }
 
-            // Up arrow or W: previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            // Up arrow: previous item
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MovePrevious();
                 return true;
             }
 
-            // Down arrow or S: next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            // Down arrow: next item
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveNext();
                 return true;
@@ -247,17 +247,15 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Down/Right arrow or S/D: next language
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow)
-                || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D))
+            // Down/Right arrow: next language
+            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow))
             {
                 CycleDropdown(1);
                 return;
             }
 
-            // Up/Left arrow or W/A: previous language
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow)
-                || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A))
+            // Up/Left arrow: previous language
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 CycleDropdown(-1);
                 return;

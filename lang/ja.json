@@ -399,6 +399,7 @@
   "NoSearchResults": "検索結果なし",
   "BrowserHint": "Tabでカードを見る、Enterでトップにキープ",
   "EnterToSelect": "Enterで選択",
+  "LetterSearch_NoMatch_Format": "{0}に一致するものがありません",
   "TabToNavigate": "Tabで移動",
   "TextField": "テキストフィールド",
   "HasCharacters_Format": "{0}文字あります",

@@ -349,26 +349,26 @@ namespace AccessibleArena.Core.Services
             }
 
             // Row navigation (Up/Down)
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 MoveToPreviousRow();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 MoveToNextRow();
                 return;
             }
 
             // Item navigation within row (Left/Right)
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 MoveToPreviousItem();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 MoveToNextItem();
                 return;
@@ -404,6 +404,16 @@ namespace AccessibleArena.Core.Services
                 InputManager.ConsumeKey(KeyCode.Backspace);
                 ClosePopup();
                 return;
+            }
+
+            // Letter navigation (A-Z): jump to item in current row
+            for (KeyCode key = KeyCode.A; key <= KeyCode.Z; key++)
+            {
+                if (Input.GetKeyDown(key))
+                {
+                    HandleLetterNavigation(key);
+                    return;
+                }
             }
         }
 
@@ -490,6 +500,36 @@ namespace AccessibleArena.Core.Services
             var row = _rows[_currentRowIndex];
             _currentItemIndex = row.Items.Count - 1;
             AnnounceCurrentPosition(false);
+        }
+
+        /// <summary>
+        /// Override letter navigation to search within the current row's items.
+        /// </summary>
+        protected override bool HandleLetterNavigation(KeyCode key)
+        {
+            if (_rows.Count == 0 || !IsValidPosition()) return false;
+
+            char letter = (char)('A' + (key - KeyCode.A));
+            var row = _rows[_currentRowIndex];
+            var labels = new List<string>(row.Items.Count);
+            for (int i = 0; i < row.Items.Count; i++)
+                labels.Add(row.Items[i].Label);
+
+            int target = _letterSearch.HandleKey(letter, labels, _currentItemIndex);
+            if (target >= 0 && target != _currentItemIndex)
+            {
+                _currentItemIndex = target;
+                AnnounceCurrentPosition(false);
+            }
+            else if (target == _currentItemIndex)
+            {
+                AnnounceCurrentPosition(false);
+            }
+            else
+            {
+                _announcer.AnnounceInterrupt(Strings.LetterSearchNoMatch(_letterSearch.Buffer));
+            }
+            return true;
         }
 
         private bool IsValidPosition()

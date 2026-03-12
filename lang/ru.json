@@ -399,6 +399,7 @@
   "NoSearchResults": "Нет результатов поиска",
   "BrowserHint": "Tab для просмотра карты, Enter чтобы оставить сверху",
   "EnterToSelect": "Enter для выбора",
+  "LetterSearch_NoMatch_Format": "Нет совпадений для {0}",
   "TabToNavigate": "Tab для навигации",
   "TextField": "текстовое поле",
   "HasCharacters_Format": "содержит {0} символов",

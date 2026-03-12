@@ -46,6 +46,9 @@ namespace AccessibleArena.Core.Services
         // Let game handle Space natively (for Submit/Confirm, discard, etc.)
         protected override bool AcceptSpaceKey => false;
 
+        // Duel uses letters as zone shortcuts (C, G, X, S, W, etc.) - disable letter navigation
+        protected override bool SupportsLetterNavigation => false;
+
         public ZoneNavigator ZoneNavigator => _zoneNavigator;
         public HotHighlightNavigator HotHighlightNavigator => _hotHighlightNavigator;
         public BattlefieldNavigator BattlefieldNavigator => _battlefieldNavigator;

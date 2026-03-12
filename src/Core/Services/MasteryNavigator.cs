@@ -1428,7 +1428,7 @@ namespace AccessibleArena.Core.Services
         private void HandleLevelInput()
         {
             // Up/Down: Navigate levels (index 0 = status item, 1+ = real levels)
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) ||
+            if (Input.GetKeyDown(KeyCode.UpArrow) ||
                 Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
             {
                 if (_currentLevelIndex > 0)
@@ -1445,7 +1445,7 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) ||
+            if (Input.GetKeyDown(KeyCode.DownArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)))
             {
                 if (_currentLevelIndex < _levelData.Count - 1)
@@ -1463,13 +1463,13 @@ namespace AccessibleArena.Core.Services
             }
 
             // Left/Right: Cycle reward tiers (or buttons on status item)
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 CycleTier(-1);
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 CycleTier(1);
                 return;
@@ -1599,8 +1599,8 @@ namespace AccessibleArena.Core.Services
         {
             if (_prizeWallItems.Count == 0) return;
 
-            // Up/W/Shift+Tab: Previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) ||
+            // Up/Shift+Tab: Previous item
+            if (Input.GetKeyDown(KeyCode.UpArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
             {
                 if (_prizeWallIndex > 0)
@@ -1615,8 +1615,8 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Down/S/Tab: Next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) ||
+            // Down/Tab: Next item
+            if (Input.GetKeyDown(KeyCode.DownArrow) ||
                 (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)))
             {
                 if (_prizeWallIndex < _prizeWallItems.Count - 1)

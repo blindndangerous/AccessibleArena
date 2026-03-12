@@ -4683,6 +4683,63 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Override letter navigation to work with grouped navigation.
+        /// At GroupList level: search group display names.
+        /// At InsideGroup level: search element labels within current group.
+        /// When grouped navigation is inactive: fall through to base.
+        /// </summary>
+        protected override bool HandleLetterNavigation(KeyCode key)
+        {
+            if (!_groupedNavigationEnabled || !_groupedNavigator.IsActive)
+                return base.HandleLetterNavigation(key);
+
+            char letter = (char)('A' + (key - KeyCode.A));
+
+            if (_groupedNavigator.Level == NavigationLevel.GroupList)
+            {
+                var labels = _groupedNavigator.GetGroupDisplayNames();
+                int target = _letterSearch.HandleKey(letter, labels, _groupedNavigator.CurrentGroupIndex);
+                if (target >= 0 && target != _groupedNavigator.CurrentGroupIndex)
+                {
+                    _groupedNavigator.JumpToGroupByIndex(target);
+                    _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
+                    UpdateEventSystemSelectionForGroupedElement();
+                    UpdateCardNavigationForGroupedElement();
+                }
+                else if (target == _groupedNavigator.CurrentGroupIndex)
+                {
+                    _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
+                }
+                else
+                {
+                    _announcer.AnnounceInterrupt(Strings.LetterSearchNoMatch(_letterSearch.Buffer));
+                }
+                return true;
+            }
+            else // InsideGroup
+            {
+                var labels = _groupedNavigator.GetCurrentGroupElementLabels();
+                int target = _letterSearch.HandleKey(letter, labels, _groupedNavigator.CurrentElementIndex);
+                if (target >= 0 && target != _groupedNavigator.CurrentElementIndex)
+                {
+                    _groupedNavigator.JumpToElementByIndex(target);
+                    _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
+                    UpdateEventSystemSelectionForGroupedElement();
+                    UpdateCardNavigationForGroupedElement();
+                }
+                else if (target == _groupedNavigator.CurrentElementIndex)
+                {
+                    _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
+                }
+                else
+                {
+                    _announcer.AnnounceInterrupt(Strings.LetterSearchNoMatch(_letterSearch.Buffer));
+                }
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Handle Enter key for grouped navigation.
         /// When at group level with standalone element, activates it directly.
         /// When at group level with normal group, enters the group.

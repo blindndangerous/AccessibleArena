@@ -685,13 +685,13 @@ namespace AccessibleArena.Core.Services
             if (HandleCustomInput()) return;
 
             // Left/Right navigation
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 MovePrevious();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKeyDown(KeyCode.RightArrow))
             {
                 MoveNext();
                 return;
