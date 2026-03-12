@@ -2,6 +2,14 @@
 
 All notable changes to Accessible Arena.
 
+## v0.8.4
+
+### Improved: Duel performance
+- Various performance improvements for battlefield navigation, combat scanning, and card state lookups during duels
+
+### Fix: Card info navigation at zone boundaries
+- Arrow Down now correctly reads card detail blocks after hitting end or beginning of a row, instead of re-reading the card name
+
 ## v0.8.3
 
 ### Fix: Friends panel and invite popup closing
