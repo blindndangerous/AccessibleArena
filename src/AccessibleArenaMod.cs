@@ -260,6 +260,11 @@ namespace AccessibleArena
             if (!_initialized)
                 return;
 
+            // Skip all input processing when game doesn't have focus
+            // (e.g., Steam overlay, Alt+Tab, other overlays)
+            if (!Application.isFocused)
+                return;
+
             // Tell KeyboardManagerPatch to block Escape from reaching the game
             // when a mod menu is open (persistent flag avoids timing issues with per-frame consume)
             InputManager.ModMenuActive = (_helpNavigator?.IsActive == true)
