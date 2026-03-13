@@ -2,6 +2,24 @@
 
 All notable changes to Accessible Arena.
 
+## v0.8.5
+
+### Fix: Play blade navigation when opened from a home screen objective
+- When pressing Enter on a tracked Sparked-Rank achievement (Progress > Objectives), the Play blade now navigates correctly, matching the behavior of Play > Play
+- Backspace now correctly closes the blade and returns to the objectives screen
+
+### New: Spell cancel detection and cast type prefixes
+- Cancelling a spell (e.g. during mana payment) now announces "Spell cancelled" instead of false "Spell resolved"
+- Cast announcements now include type prefixes (Adventure, MDFC, Split, Disturb, Prototype, Room, Omen, Land)
+- Backspace now clicks Undo/Cancel buttons during mana payment
+- Mana sprite tags in prompts and buttons are parsed into readable names
+
+### Fix: Focus guard for Steam overlay
+- Mod input processing is now paused when the game loses focus (Steam overlay, Alt+Tab, etc.) to prevent state corruption
+
+### Fix: German locale wildcards translation
+- "Joker" corrected to "Wildcards" in German locale
+
 ## v0.8.4
 
 ### New: Letter navigation in menus
@@ -25,10 +43,6 @@ All notable changes to Accessible Arena.
 ### Fix: Play Blade backspace navigation
 - Leaving a deck folder with Backspace no longer re-announces the entire screen and jumps to the first element
 - Position is now correctly restored to the folder you exited from
-
-### Fix: Play blade navigation when opened from a home screen objective
-- When pressing Enter on a tracked Sparked-Rank achievement (Progress > Objectives), the Play blade now navigates correctly, matching the behavior of Play > Play
-- Backspace now correctly closes the blade and returns to the objectives screen
 
 ## v0.8.3
 
