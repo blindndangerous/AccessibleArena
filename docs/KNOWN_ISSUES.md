@@ -18,21 +18,9 @@ When activating a mana-costing ability on a battlefield card, the workflow brows
 
 ---
 
-### Challenge Cannot Be Accepted
-
-Incoming direct challenges cannot be accepted. The accept button or interaction is not working properly.
-
----
-
 ### Blocking Sometimes Announces "0 0"
 
 During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information.
-
----
-
-### Backspace Does Not Handle Undo Situations Correctly
-
-Pressing Backspace during certain game states (e.g., after selecting a card to play, during mana payment, or mid-targeting) does not always undo the action cleanly. The mod may not detect that the game has reverted to the previous state, leading to stale announcements or navigation getting out of sync.
 
 ---
 
@@ -84,26 +72,6 @@ When clicking a non-attacking token during declare attackers, the game always se
 ### Other Windows Versions and Screen Readers
 
 Only tested on Windows 11 with NVDA. Other Windows versions (Windows 10) and other screen readers (JAWS, Narrator, etc.) may work via Tolk but are untested.
-
----
-
-### ~~Jump In: Packet Order Chaotic~~ (Fixed)
-
-~~The packet tiles in Jump In appear in a chaotic/unpredictable order during navigation.~~
-
-Fixed: Packet elements now sort by their parent `JumpStartPacket` tile's position, producing a consistent top-to-bottom, left-to-right grid order. Needs in-game verification.
-
----
-
-### Challenge Screen
-
-The direct challenge screen is mostly functional. Working: screen detection, stepper controls with Left/Right, deck selection via folder navigation, main button with challenge status text, opponent join/leave polling, match countdown detection, icon-only enemy button labels (Kick/Block/Add Friend), locked spinner prefix when opponent is host, tournament parameter announcements.
-
-Remaining issues:
-- **Deck selection timing**: DeckSelectBlade opens when spinner values change; rescan timing may occasionally miss
-- **Leave/Invite buttons**: Become INACTIVE when DeckSelectBlade opens (game hides container)
-
-**Files:** `ChallengeNavigationHelper.cs`, `GeneralMenuNavigator.cs`
 
 ---
 
@@ -171,22 +139,11 @@ Zone change events can create redundant announcements when a creature dies and g
 
 ## Potential Issues (Monitor)
 
-### Wrong Card Played
+### Double Announcements on Some Browsers
 
-Sometimes the mod plays a different card than the one announced/focused. Root cause unclear.
+Some browser types occasionally produce duplicate announcements when opening or navigating. Root cause unclear.
 
----
-
-### Damage Assignment Browser Opens Twice
-
-The damage assignment browser sometimes opens twice in sequence for the same attacker (same blockers, same TotalDamage). This causes the game to request two separate damage assignments. Observed with a 5/4 creature blocked by 4 creatures — no first strike on any attacker or blocker. A creature with first strike (Halana und Alena) was on the battlefield but not in combat. Unclear whether this is caused by:
-- A first strike damage step being created by a non-combat creature with first strike
-- A game-internal behavior we don't understand yet
-- Something else on the battlefield granting first strike
-
-Currently mitigated with "1 of N" announcement so the user knows multiple rounds are expected.
-
-**Files:** `BrowserNavigator.cs` (GetAssignDamageEntryAnnouncement, EnsureTotalDamageCached)
+**Files:** `BrowserNavigator.cs`
 
 ---
 
