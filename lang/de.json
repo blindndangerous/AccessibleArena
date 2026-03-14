@@ -385,6 +385,7 @@
   "NoDetailsAvailable": "Keine Details verfügbar",
   "NoCardDetails": "Keine Kartendetails verfügbar",
   "Tabs_Format": "Tabs. {0} Tabs.",
+  "TabPositionOf_Format": "{2}, Tab {0} von {1}",
   "OptionsAvailable_Format": "{0} Optionen verfügbar. {1}",
   "Continuing": "Weiter",
   "FoundRewards_Format": "{0} Belohnungen gefunden",

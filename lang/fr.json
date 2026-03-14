@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "Aucun détail disponible",
   "NoCardDetails": "Aucun détail de carte disponible",
   "Tabs_Format": "Onglets. {0} onglets.",
+  "TabPositionOf_Format": "{2}, onglet {0} sur {1}",
   "OptionsAvailable_Format": "{0} options disponibles. {1}",
   "Continuing": "Continuation",
   "FoundRewards_Format": "{0} récompenses trouvées",

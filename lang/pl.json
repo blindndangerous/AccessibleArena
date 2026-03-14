@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "Brak dostępnych szczegółów",
   "NoCardDetails": "Brak szczegółów karty",
   "Tabs_Format": "Karty. {0} kart.",
+  "TabPositionOf_Format": "{2}, karta {0} z {1}",
   "OptionsAvailable_Format": "{0} dostępnych opcji. {1}",
   "Continuing": "Kontynuowanie",
   "FoundRewards_Format": "Znaleziono {0} nagród",

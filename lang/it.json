@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "Nessun dettaglio disponibile",
   "NoCardDetails": "Nessun dettaglio della carta disponibile",
   "Tabs_Format": "Schede. {0} schede.",
+  "TabPositionOf_Format": "{2}, scheda {0} di {1}",
   "OptionsAvailable_Format": "{0} opzioni disponibili. {1}",
   "Continuing": "Continuo",
   "FoundRewards_Format": "{0} ricompense trovate",
