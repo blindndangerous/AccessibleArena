@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "상세 정보가 없습니다",
   "NoCardDetails": "카드 상세 정보가 없습니다",
   "Tabs_Format": "탭. {0}개의 탭.",
+  "TabPositionOf_Format": "{2}, 탭 {0}/{1}",
   "OptionsAvailable_Format": "{0}개의 옵션 사용 가능. {1}",
   "Continuing": "계속 중",
   "FoundRewards_Format": "{0}개의 보상을 찾았습니다",

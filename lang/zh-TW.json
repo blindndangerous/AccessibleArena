@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "沒有詳細資訊",
   "NoCardDetails": "沒有卡牌詳情",
   "Tabs_Format": "標籤頁。{0}個標籤。",
+  "TabPositionOf_Format": "{2}，標籤 {0}/{1}",
   "OptionsAvailable_Format": "{0}個選項可用。{1}",
   "Continuing": "繼續中",
   "FoundRewards_Format": "找到{0}個獎勵",

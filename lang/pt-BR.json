@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "Nenhum detalhe disponível",
   "NoCardDetails": "Nenhum detalhe de carta disponível",
   "Tabs_Format": "Abas. {0} abas.",
+  "TabPositionOf_Format": "{2}, aba {0} de {1}",
   "OptionsAvailable_Format": "{0} opções disponíveis. {1}",
   "Continuing": "Continuando",
   "FoundRewards_Format": "Encontradas {0} recompensas",

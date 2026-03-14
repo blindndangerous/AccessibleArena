@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "No hay detalles disponibles",
   "NoCardDetails": "No hay detalles de carta disponibles",
   "Tabs_Format": "Pestañas. {0} pestañas.",
+  "TabPositionOf_Format": "{2}, pestaña {0} de {1}",
   "OptionsAvailable_Format": "{0} opciones disponibles. {1}",
   "Continuing": "Continuando",
   "FoundRewards_Format": "{0} recompensas encontradas",

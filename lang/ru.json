@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "Нет доступных деталей",
   "NoCardDetails": "Нет доступных деталей карты",
   "Tabs_Format": "Вкладки. {0} вкладок.",
+  "TabPositionOf_Format": "{2}, вкладка {0} из {1}",
   "OptionsAvailable_Format": "{0} вариантов доступно. {1}",
   "Continuing": "Продолжение",
   "FoundRewards_Format": "Найдено {0} наград",

@@ -375,6 +375,7 @@
   "NoDetailsAvailable": "没有详细信息",
   "NoCardDetails": "没有卡牌详情",
   "Tabs_Format": "标签页。{0}个标签。",
+  "TabPositionOf_Format": "{2}，标签 {0}/{1}",
   "OptionsAvailable_Format": "{0}个选项可用。{1}",
   "Continuing": "继续中",
   "FoundRewards_Format": "找到{0}个奖励",
