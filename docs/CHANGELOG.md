@@ -21,6 +21,20 @@ All notable changes to Accessible Arena.
 - Backspace now clicks Undo/Cancel buttons during mana payment
 - Mana sprite tags in prompts and buttons are parsed into readable names
 
+### Fix: Backspace undo during mana payment
+- Backspace now properly undoes mana tapping and cancels when you try to cast a spell without enough mana
+
+### Improved: Backspace as universal cancel in duels
+- Backspace now cancels more situations and acts as a safe cancel button
+- Only moments where you can truly act require skip confirmation with Space
+- Behavior may be adjusted depending on user feedback
+
+### New: Skip turn shortcuts (Shift+Backspace / Ctrl+Backspace)
+- Shift+Backspace: Pass until next opponent action you can react to (soft skip)
+- Ctrl+Backspace: Skip the entire turn regardless of what the opponent does (force skip)
+- Both are toggles — press again to cancel and regain priority
+- Escalating Backspace behavior: Backspace (cancel) → Shift+Backspace (pass) → Ctrl+Backspace (skip turn)
+
 ### Fix: Focus guard for Steam overlay
 - Mod input processing is now paused when the game loses focus (Steam overlay, Alt+Tab, etc.) to prevent state corruption
 

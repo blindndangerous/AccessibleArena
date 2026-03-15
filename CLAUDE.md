@@ -160,6 +160,8 @@ Player Info Zone: Left/Right (Switch player), Up/Down (Cycle properties), Enter 
 **Duel - Full Control & Phase Stops:**
 P: Toggle full control (temporary, resets on phase change)
 Shift+P: Toggle locked full control (permanent)
+Shift+Backspace: Toggle pass until opponent action (soft skip)
+Ctrl+Backspace: Toggle skip turn (force skip entire turn)
 1-0: Toggle phase stops (1=Upkeep, 2=Draw, 3=First Main, 4=Begin Combat, 5=Declare Attackers, 6=Declare Blockers, 7=Combat Damage, 8=End Combat, 9=Second Main, 0=End Step)
 Note: Ctrl is blocked from reaching the game in duels (prevents accidental full control toggle when silencing NVDA)
 

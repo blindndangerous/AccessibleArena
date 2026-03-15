@@ -1231,6 +1231,10 @@ namespace AccessibleArena.Core.Models
         public static string FullControl_Off => L.Get("FullControl_Off");
         public static string FullControl_Locked => L.Get("FullControl_Locked");
         public static string FullControl_Unlocked => L.Get("FullControl_Unlocked");
+        public static string PassUntilResponse_On => L.Get("PassUntilResponse_On");
+        public static string PassUntilResponse_Off => L.Get("PassUntilResponse_Off");
+        public static string SkipTurn_On => L.Get("SkipTurn_On");
+        public static string SkipTurn_Off => L.Get("SkipTurn_Off");
         public static string PhaseStop_Set(string phase) => L.Format("PhaseStop_Set_Format", phase);
         public static string PhaseStop_Cleared(string phase) => L.Format("PhaseStop_Cleared_Format", phase);
 

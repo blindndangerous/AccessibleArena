@@ -25,6 +25,14 @@ namespace AccessibleArena.Core.Services
         private PropertyInfo _fullControlEnabled;
         private PropertyInfo _fullControlLocked;
 
+        // Cached auto-pass methods
+        private MethodInfo _setAutoPassOption;
+        private PropertyInfo _autoPassEnabled;
+        private Type _autoPassOptionType;
+        private object _optionUnlessOpponentAction; // AutoPassOption.UnlessOpponentAction = 5
+        private object _optionTurn;                 // AutoPassOption.Turn = 1
+        private object _optionResolveMyStackEffects; // AutoPassOption.ResolveMyStackEffects = 6
+
         // Cached ButtonPhaseLadder
         private MonoBehaviour _phaseLadder;
         private int _phaseLadderSearchFrame = -1;
@@ -228,6 +236,105 @@ namespace AccessibleArena.Core.Services
             catch
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Ensure auto-pass reflection is cached (SetAutoPassOption method and AutoPassOption enum).
+        /// </summary>
+        private bool EnsureAutoPassCached()
+        {
+            if (_setAutoPassOption != null && _autoPassOptionType != null) return true;
+
+            var arm = GetAutoRespManager();
+            if (arm == null) return false;
+
+            var armType = arm.GetType();
+            _setAutoPassOption = armType.GetMethod("SetAutoPassOption", PublicInstance);
+            _autoPassEnabled = armType.GetProperty("AutoPassEnabled", PublicInstance);
+
+            if (_setAutoPassOption == null)
+            {
+                MelonLogger.Warning("[PriorityController] SetAutoPassOption method not found");
+                return false;
+            }
+
+            // Get AutoPassOption enum type from the method parameter
+            var parameters = _setAutoPassOption.GetParameters();
+            if (parameters.Length >= 1)
+            {
+                _autoPassOptionType = parameters[0].ParameterType;
+                _optionUnlessOpponentAction = Enum.ToObject(_autoPassOptionType, 5);
+                _optionTurn = Enum.ToObject(_autoPassOptionType, 1);
+                _optionResolveMyStackEffects = Enum.ToObject(_autoPassOptionType, 6);
+            }
+
+            MelonLogger.Msg($"[PriorityController] Cached auto-pass reflection " +
+                $"(SetAutoPassOption={_setAutoPassOption != null}, AutoPassEnabled={_autoPassEnabled != null}, " +
+                $"EnumType={_autoPassOptionType?.Name})");
+
+            return _setAutoPassOption != null && _autoPassOptionType != null;
+        }
+
+        /// <summary>
+        /// Check if any auto-pass mode is currently active.
+        /// </summary>
+        public bool IsAutoPassActive()
+        {
+            var arm = GetAutoRespManager();
+            if (arm == null || _autoPassEnabled == null) return false;
+
+            try { return (bool)_autoPassEnabled.GetValue(arm); }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Toggle "pass until opponent action" mode (originally Enter key).
+        /// Returns the new state (true = now passing, false = cancelled), or null if failed.
+        /// </summary>
+        public bool? TogglePassUntilResponse()
+        {
+            if (!EnsureAutoPassCached()) return null;
+            var arm = GetAutoRespManager();
+            if (arm == null) return null;
+
+            try
+            {
+                bool wasEnabled = IsAutoPassActive();
+                var option = wasEnabled ? _optionResolveMyStackEffects : _optionUnlessOpponentAction;
+                _setAutoPassOption.Invoke(arm, new object[] { option, _optionResolveMyStackEffects });
+                MelonLogger.Msg($"[PriorityController] TogglePassUntilResponse: {(wasEnabled ? "cancelled" : "activated")}");
+                return !wasEnabled;
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[PriorityController] TogglePassUntilResponse failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Toggle "skip entire turn" mode (originally Shift+Enter key).
+        /// Returns the new state (true = now skipping, false = cancelled), or null if failed.
+        /// </summary>
+        public bool? ToggleSkipTurn()
+        {
+            if (!EnsureAutoPassCached()) return null;
+            var arm = GetAutoRespManager();
+            if (arm == null) return null;
+
+            try
+            {
+                bool wasEnabled = IsAutoPassActive();
+                var option = wasEnabled ? _optionResolveMyStackEffects : _optionTurn;
+                _setAutoPassOption.Invoke(arm, new object[] { option, _optionResolveMyStackEffects });
+                MelonLogger.Msg($"[PriorityController] ToggleSkipTurn: {(wasEnabled ? "cancelled" : "activated")}");
+                return !wasEnabled;
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[PriorityController] ToggleSkipTurn failed: {ex.Message}");
+                return null;
             }
         }
 
@@ -460,6 +567,12 @@ namespace AccessibleArena.Core.Services
             _toggleLockedFullControl = null;
             _fullControlEnabled = null;
             _fullControlLocked = null;
+            _setAutoPassOption = null;
+            _autoPassEnabled = null;
+            _autoPassOptionType = null;
+            _optionUnlessOpponentAction = null;
+            _optionTurn = null;
+            _optionResolveMyStackEffects = null;
             _phaseLadder = null;
             _phaseLadderSearchFrame = -1;
             _phaseIconsField = null;

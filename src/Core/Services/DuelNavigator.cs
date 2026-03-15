@@ -382,6 +382,30 @@ namespace AccessibleArena.Core.Services
             if (_browserNavigator.HandleInput())
                 return true;
 
+            // Shift+Backspace: Pass until opponent action, Ctrl+Backspace: Skip turn
+            // Must be checked before CombatNavigator which also consumes Backspace
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+
+                if (ctrl)
+                {
+                    var result = _priorityController.ToggleSkipTurn();
+                    if (result.HasValue)
+                        _announcer.AnnounceInterrupt(result.Value ? Strings.SkipTurn_On : Strings.SkipTurn_Off);
+                    return true;
+                }
+
+                if (shift)
+                {
+                    var result = _priorityController.TogglePassUntilResponse();
+                    if (result.HasValue)
+                        _announcer.AnnounceInterrupt(result.Value ? Strings.PassUntilResponse_On : Strings.PassUntilResponse_Off);
+                    return true;
+                }
+            }
+
             // Next, let CombatNavigator handle Space during declare attackers/blockers
             if (_combatNavigator.HandleInput())
                 return true;
