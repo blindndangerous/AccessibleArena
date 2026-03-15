@@ -890,8 +890,11 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 }
             }
 
+            // Track whether any pending auto-entry was processed.
+            // When true, the group restore is skipped (auto-entries take precedence).
+            bool autoEntryPerformed = false;
+
             // Check for pending folder entry (set by EnterGroup before rescan)
-            bool enteredPendingFolder = false;
             if (!string.IsNullOrEmpty(_pendingFolderEntry))
             {
                 // Find the folder and auto-enter it
@@ -902,7 +905,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         _currentGroupIndex = i;
                         _navigationLevel = NavigationLevel.InsideGroup;
                         _currentElementIndex = 0;
-                        enteredPendingFolder = true;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered pending folder: {_pendingFolderEntry} with {_groups[i].Count} items");
                         break;
                     }
@@ -911,7 +914,6 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             }
 
             // Check for pending PlayBlade tabs entry (set when PlayBlade opens)
-            bool playBladeAutoEntryPerformed = false;
             if (_pendingPlayBladeTabsEntry)
             {
                 _pendingPlayBladeTabsEntry = false;
@@ -927,7 +929,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         // Use restore index if valid, otherwise start at 0
                         int maxIdx = _groups[i].Count - 1;
                         _currentElementIndex = (restoreIndex >= 0 && restoreIndex <= maxIdx) ? restoreIndex : 0;
-                        playBladeAutoEntryPerformed = true;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered PlayBladeTabs with {_groups[i].Count} items at index {_currentElementIndex}");
                         break;
                     }
@@ -950,7 +952,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         // Use requested index if valid, otherwise start at 0
                         int maxIdx = _groups[i].Count - 1;
                         _currentElementIndex = (requestedIndex >= 0 && requestedIndex <= maxIdx) ? requestedIndex : 0;
-                        playBladeAutoEntryPerformed = true;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered PlayBladeContent with {_groups[i].Count} items at index {_currentElementIndex}");
                         break;
                     }
@@ -958,7 +960,6 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             }
 
             // Check for pending ChallengeMain entry (set when challenge opens or returning from deck selection)
-            bool challengeAutoEntryPerformed = false;
             if (_pendingChallengeMainEntry)
             {
                 _pendingChallengeMainEntry = false;
@@ -973,7 +974,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         _navigationLevel = NavigationLevel.InsideGroup;
                         int maxIdx = _groups[i].Count - 1;
                         _currentElementIndex = (requestedIndex >= 0 && requestedIndex <= maxIdx) ? requestedIndex : 0;
-                        challengeAutoEntryPerformed = true;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered ChallengeMain with {_groups[i].Count} items at index {_currentElementIndex}");
                         break;
                     }
@@ -1019,6 +1020,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         _currentGroupIndex = i;
                         _navigationLevel = NavigationLevel.InsideGroup;
                         _currentElementIndex = 0;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered folder '{_groups[i].DisplayName}' with {_groups[i].Count} items");
                         break;
                     }
@@ -1056,6 +1058,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                             }
                             MelonLogger.Msg($"[GroupedNavigator] Auto-entered PlayBladeFolders with {_groups[i].Count} folders at index {_currentElementIndex}");
                             foundFolders = true;
+                            autoEntryPerformed = true;
                         }
                         else
                         {
@@ -1083,6 +1086,7 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         _currentGroupIndex = i;
                         _navigationLevel = NavigationLevel.InsideGroup;
                         _currentElementIndex = 0;
+                        autoEntryPerformed = true;
                         MelonLogger.Msg($"[GroupedNavigator] Auto-entered specific folder '{folderName}' with {_groups[i].Count} items");
                         break;
                     }
@@ -1095,11 +1099,10 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             if (_pendingGroupRestore.HasValue)
             {
                 bool isPopupRestore = _pendingGroupRestore.Value == ElementGroup.Popup;
-                if (!isPopupRestore && (_isPlayBladeContext || enteredPendingFolder || playBladeAutoEntryPerformed || challengeAutoEntryPerformed))
+                if (!isPopupRestore && (_isPlayBladeContext || autoEntryPerformed))
                 {
                     // Clear stale restore state - auto-entries take precedence
-                    string reason = challengeAutoEntryPerformed ? "Challenge auto-entry" : (playBladeAutoEntryPerformed ? "PlayBlade auto-entry" : (enteredPendingFolder ? "folder entry" : "PlayBlade context"));
-                    MelonLogger.Msg($"[GroupedNavigator] Skipping group restore due to {reason} (was: {_pendingGroupRestore.Value})");
+                    MelonLogger.Msg($"[GroupedNavigator] Skipping group restore (was: {_pendingGroupRestore.Value}, autoEntry={autoEntryPerformed}, playBlade={_isPlayBladeContext})");
                     _pendingGroupRestore = null;
                     _pendingLevelRestore = NavigationLevel.GroupList;
                     _pendingElementIndexRestore = -1;

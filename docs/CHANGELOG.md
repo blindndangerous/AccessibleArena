@@ -4,6 +4,11 @@ All notable changes to Accessible Arena.
 
 ## v0.8.5
 
+### Fix: Deck selection in challenge friend screen
+- Pressing Enter on the deck name now correctly opens the deck selector instead of announcing "Deck Selected"
+- Entering folders in the deck selector works reliably (no longer snaps back to the folder list)
+- Simplified internal auto-entry logic: a single flag now prevents position restore from overriding any pending navigation
+
 ### New: Accessible achievements screen (thanks to blindndangerous)
 - Achievements now use multi-level drill-down navigation: set tabs, achievement groups, individual achievements
 - Group descriptions and completion status are read aloud

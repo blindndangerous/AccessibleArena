@@ -5109,7 +5109,10 @@ namespace AccessibleArena.Core.Services
             // Note: deck card count is already captured by OnDeckBuilderCardCountCapture()
             // which runs at the top of ActivateCurrentElement() before any click path.
             var result = UIActivator.Activate(element);
-            _announcer.Announce(result.Message, Models.AnnouncementPriority.Normal);
+            // Don't announce "Deck Selected" when challenge helper is opening the deck selector
+            // (challengeResult == RescanNeeded means we're opening the picker, not selecting a deck)
+            if (challengeResult != PlayBladeResult.RescanNeeded)
+                _announcer.Announce(result.Message, Models.AnnouncementPriority.Normal);
 
             // Color Challenge: activating a color button changes the track, so rescan
             // to refresh info blocks and deck name
