@@ -176,23 +176,74 @@ namespace AccessibleArena.Core.Services
             var selected = eventSystem.currentSelectedGameObject;
 
             // Tab race condition: Unity moved focus to the next field before our code ran.
-            // The game already called onEndEdit on the old field. Don't call onEndEdit on
-            // the new field (which would send empty text and corrupt validation).
-            // Just deactivate auto-focus on the new field and clear selection.
+            // We must:
+            // 1. Fire onEndEdit on the OLD field (game needs this for validation, e.g.
+            //    registration form's _displayName_endEdit triggers server username validation)
+            // 2. NOT fire onEndEdit on the new field (would send empty text, corrupting state)
+            // 3. Suppress the new field's auto-activation without triggering its onEndEdit
             if (expectedField != null && selected != null && selected != expectedField)
             {
+                // Step 1: Fire onEndEdit on the OLD field with its correct text.
+                // Unity's OnDeselect may have already done this, but we ensure it explicitly.
+                // TMP_InputField.DeactivateInputField is a no-op if already deactivated
+                // (m_HasDoneFocusTransition=false), so this is safe against double-firing.
+                var oldTmpInput = expectedField.GetComponent<TMPro.TMP_InputField>();
+                if (oldTmpInput != null)
+                {
+                    string oldText = oldTmpInput.text ?? "";
+                    if (oldTmpInput.onEndEdit != null)
+                    {
+                        DebugConfig.LogIf(DebugConfig.LogFocusTracking, "FocusTracker",
+                            $"Tab: firing onEndEdit on old field {expectedField.name} with text: '{(oldTmpInput.inputType == TMPro.TMP_InputField.InputType.Password ? "***" : oldText)}'");
+                        oldTmpInput.onEndEdit.Invoke(oldText);
+                    }
+                    oldTmpInput.DeactivateInputField();
+                }
+                else
+                {
+                    var oldLegacyInput = expectedField.GetComponent<UnityEngine.UI.InputField>();
+                    if (oldLegacyInput != null)
+                    {
+                        string oldText = oldLegacyInput.text ?? "";
+                        if (oldLegacyInput.onEndEdit != null)
+                        {
+                            DebugConfig.LogIf(DebugConfig.LogFocusTracking, "FocusTracker",
+                                $"Tab: firing onEndEdit on old field {expectedField.name} with text: '{(oldLegacyInput.inputType == UnityEngine.UI.InputField.InputType.Password ? "***" : oldText)}'");
+                            oldLegacyInput.onEndEdit.Invoke(oldText);
+                        }
+                        oldLegacyInput.DeactivateInputField();
+                    }
+                }
+
+                // Step 2: Clear EventSystem selection without triggering onEndEdit on the new field.
+                // We temporarily remove onEndEdit listeners, clear selection (which fires OnDeselect
+                // on the new field), then restore the listeners.
                 var newTmpInput = selected.GetComponent<TMPro.TMP_InputField>();
-                if (newTmpInput != null && newTmpInput.isFocused)
-                    newTmpInput.DeactivateInputField();
+                if (newTmpInput != null)
+                {
+                    var savedEndEdit = newTmpInput.onEndEdit;
+                    newTmpInput.onEndEdit = new TMPro.TMP_InputField.SubmitEvent();
+                    eventSystem.SetSelectedGameObject(null);
+                    newTmpInput.onEndEdit = savedEndEdit;
+                }
                 else
                 {
                     var newLegacyInput = selected.GetComponent<UnityEngine.UI.InputField>();
-                    if (newLegacyInput != null && newLegacyInput.isFocused)
-                        newLegacyInput.DeactivateInputField();
+                    if (newLegacyInput != null)
+                    {
+                        var savedEndEdit = newLegacyInput.onEndEdit;
+                        newLegacyInput.onEndEdit = new UnityEngine.UI.InputField.EndEditEvent();
+                        eventSystem.SetSelectedGameObject(null);
+                        newLegacyInput.onEndEdit = savedEndEdit;
+                    }
+                    else
+                    {
+                        eventSystem.SetSelectedGameObject(null);
+                    }
                 }
-                eventSystem.SetSelectedGameObject(null);
+
                 DebugConfig.LogIf(DebugConfig.LogFocusTracking, "FocusTracker",
-                    $"Tab moved focus from {expectedField.name} to {selected.name} - skipped onEndEdit on new field");
+                    $"Tab moved focus from {expectedField.name} to {selected.name} - fired onEndEdit on old, suppressed on new");
                 return;
             }
 

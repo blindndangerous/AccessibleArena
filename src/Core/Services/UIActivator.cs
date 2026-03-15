@@ -186,6 +186,27 @@ namespace AccessibleArena.Core.Services
                     return new ActivationResult(true, Models.Strings.ActivatedBare, ActivationType.Button);
                 }
 
+                // Check if the CustomButton is interactable before sending pointer events.
+                // When not interactable (e.g. registration form validation fails),
+                // CustomButton.OnPointerUp returns early and _onClick won't fire,
+                // but SimulatePointerClick would still return success, misleading the user.
+                var customButtonComp = FindComponentByName(element, CustomButtonTypeName);
+                if (customButtonComp != null)
+                {
+                    var interactableProp = customButtonComp.GetType().GetProperty("Interactable", PublicInstance);
+                    if (interactableProp != null)
+                    {
+                        bool isInteractable = (bool)interactableProp.GetValue(customButtonComp);
+                        if (!isInteractable)
+                        {
+                            Log($"CustomButton '{element.name}' is NOT interactable - click blocked");
+                            // Diagnostic: check registration form validation state
+                            DiagnoseRegistrationState(element);
+                            return new ActivationResult(false, "Deaktiviert");
+                        }
+                    }
+                }
+
                 var pointerResult2 = SimulatePointerClick(element);
 
                 // Special handling for empty slot buttons (commander/companion in Brawl deck builder)
@@ -1509,6 +1530,86 @@ namespace AccessibleArena.Core.Services
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Diagnostic: when registration button is not interactable, log which validation
+        /// condition in RegistrationPanel._checkFields() is failing.
+        /// </summary>
+        private static void DiagnoseRegistrationState(GameObject element)
+        {
+            try
+            {
+                // Only run for the registration submit button
+                if (element.name != "MainButton_Register") return;
+
+                // Find the RegistrationPanel in the hierarchy
+                var regPanelType = FindType("Wotc.Mtga.Login.RegistrationPanel");
+                if (regPanelType == null) return;
+
+                var panel = Object.FindObjectOfType(regPanelType);
+                if (panel == null) return;
+
+                // Check _validDisplayName (private bool)
+                var validDnField = regPanelType.GetField("_validDisplayName", PrivateInstance);
+                if (validDnField != null)
+                {
+                    bool validDn = (bool)validDnField.GetValue(panel);
+                    Log($"  _validDisplayName = {validDn}");
+                }
+
+                // Check _submitting
+                var submittingField = regPanelType.GetField("_submitting", PrivateInstance);
+                if (submittingField != null)
+                {
+                    bool submitting = (bool)submittingField.GetValue(panel);
+                    Log($"  _submitting = {submitting}");
+                }
+
+                // Check input field texts via the UIWidget fields
+                string[] fieldNames = { "displayName_inputField", "email_inputField", "email2_inputField", "password_inputField", "password2_inputField" };
+                foreach (var fn in fieldNames)
+                {
+                    var widgetField = regPanelType.GetField(fn, PrivateInstance);
+                    if (widgetField != null)
+                    {
+                        var widget = widgetField.GetValue(panel);
+                        if (widget != null)
+                        {
+                            var inputFieldProp = widget.GetType().GetProperty("InputField", PublicInstance);
+                            if (inputFieldProp != null)
+                            {
+                                var inputField = inputFieldProp.GetValue(widget) as TMPro.TMP_InputField;
+                                if (inputField != null)
+                                {
+                                    bool isPassword = fn.Contains("password");
+                                    string text = isPassword ? $"(len={inputField.text?.Length ?? 0})" : $"'{inputField.text}'";
+                                    Log($"  {fn}: {text}, enabled={inputField.enabled}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check required toggles
+                string[] toggleNames = { "termsAndConditions_Toggle", "codeOfConduct_Toggle", "privacyPolicy_Toggle" };
+                foreach (var tn in toggleNames)
+                {
+                    var toggleField = regPanelType.GetField(tn, PrivateInstance);
+                    if (toggleField != null)
+                    {
+                        var toggle = toggleField.GetValue(panel) as Toggle;
+                        if (toggle != null)
+                        {
+                            Log($"  {tn}: isOn={toggle.isOn}");
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log($"  DiagnoseRegistrationState error: {ex.Message}");
+            }
         }
 
         /// <summary>

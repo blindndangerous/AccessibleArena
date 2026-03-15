@@ -178,6 +178,20 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | IColorChallengeStrategy | (interface, from _strategy field on controller) | Core |
 | Client_ColorChallengeMatchNode | (from strategy.CurrentTrack.Nodes) | Core |
 
+## Login / Registration
+
+| Short Name | Full Namespace | DLL |
+|---|---|---|
+| LoginScene | Wotc.Mtga.Login.LoginScene | Core |
+| RegistrationPanel | Wotc.Mtga.Login.RegistrationPanel | Core |
+| LoginPanel | Wotc.Mtga.Login.LoginPanel | Core |
+| RegisterOrLoginPanel | Wotc.Mtga.Login.RegisterOrLoginPanel | Core |
+| Panel (login base) | Wotc.Mtga.Login.Panel | Core |
+| UIWidget_InputField_Registration | UIWidget_InputField_Registration | Core |
+| LoginFlowAnalytics | (in Core.dll, has SendEvent_Registration) | Core |
+| AccountError | (in Core.dll, has ErrorTypes enum: Email, Password, DisplayName, Token, Age) | Core |
+| CountryCodes | (in Core.dll, has DataShareCountries dictionary) | Core |
+
 ## Codex / Learn to Play
 
 | Short Name | Full Namespace | DLL |
@@ -254,3 +268,8 @@ Some types have members that are fields (not properties) - reflection with `GetP
 - **CampaignGraphContentController**: `_strategy` (private field) → IColorChallengeStrategy. Strategy has `CurrentTrack` property → track with `Name`, `Completed`, `UnlockedMatchNodeCount`, `Nodes` (list of Client_ColorChallengeMatchNode)
 - **Client_ColorChallengeMatchNode**: `Id` (string field), `IsPvpMatch` (bool field), `DeckUpgradeData` (field, null if none), `Reward` (field → RewardDisplayData with `MainText`/`RewardText` fields)
 - **CampaignGraphObjectiveBubble**: `ID` (public property), `_circleText` (private TMP field, roman numeral), `_animator` (private, use GetBool for "Locked"/"Completed"/"Selected"), `_notificationPopup` (private, has `_titleLabel`/`_descriptionLabel` Localize fields)
+- **RegistrationPanel**: 5 serialized `UIWidget_InputField_Registration` fields (`displayName_inputField`, `email_inputField`, `email2_inputField`, `password_inputField`, `password2_inputField`), 5 serialized `Toggle` fields (`receiveOffers_Toggle`, `dataShare_Toggle`, `termsAndConditions_Toggle`, `codeOfConduct_Toggle`, `privacyPolicy_Toggle`), `submitButton` (GameObject), `generalError` (TMP), `_validDisplayName` (private bool, default false)
+- **RegistrationPanel._checkFields()**: runs in `Update()` every frame, controls button enabled state. Required: `_validDisplayName==true`, displayname 3-23 chars, email non-empty, email1==email2, password>=8, password1==password2, password rules, `termsAndConditions_Toggle.isOn && codeOfConduct_Toggle.isOn && privacyPolicy_Toggle.isOn`. Offers and Data toggles are NOT required.
+- **RegistrationPanel._validDisplayName**: only set to `true` by `Coroutine_ValidateUsername` (server call), triggered by `_displayName_endEdit`. Reset to `false` by `_displayName_select`. If displayname validation fails (taken, invalid), button stays permanently disabled.
+- **RegistrationPanel.Show()**: Data toggle visibility depends on `CountryCodes.DataShareCountries.ContainsKey(selectedCountry)` — shown for EU/GDPR countries, hidden (auto-checked) otherwise
+- **RegistrationPanel.OnButton_SubmitRegistration()**: does NOT check validation — directly calls `DoRegistration()`. Button disabling is done by `_checkFields()` + `EnableButton(false)`
