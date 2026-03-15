@@ -14,9 +14,10 @@ namespace AccessibleArena.Core.Services
 {
     /// <summary>
     /// Navigator for the MTGA Achievements screen.
-    /// Reads achievement data (title, description, progress, status) from
-    /// AchievementCard and AchievementGroupDisplay components via reflection,
-    /// providing meaningful announcements instead of raw UI element text.
+    /// Multi-level navigation:
+    ///   Level 0 (Overview) - Summary achievements (tracked, up next) + set tabs
+    ///   Level 1 (Groups)   - Achievement groups within a selected set tab
+    ///   Level 2 (Achievements) - Individual achievements within a selected group
     /// </summary>
     public class AchievementsNavigator : BaseNavigator
     {
@@ -36,34 +37,86 @@ namespace AccessibleArena.Core.Services
 
         #endregion
 
+        #region Navigation Levels & Entries
+
+        private enum NavigationLevel
+        {
+            Overview,
+            Groups,
+            Achievements
+        }
+
+        private enum OverviewEntryType
+        {
+            SectionLabel,
+            Achievement,
+            SetTab
+        }
+
+        private struct OverviewEntry
+        {
+            public string Label;
+            public GameObject GameObject;
+            public OverviewEntryType Type;
+            // Achievement-specific (only for Type == Achievement)
+            public bool IsClaimable;
+            public bool IsFavorite;
+            public int ActionCount;
+            public int ClaimActionIndex;
+            public int TrackActionIndex;
+        }
+
+        private struct GroupEntry
+        {
+            public string Label;
+            public GameObject GameObject;
+            public string Title;
+        }
+
+        private struct AchievementItem
+        {
+            public string Label;
+            public GameObject GameObject;
+            public bool IsClaimable;
+            public bool IsFavorite;
+            public int ActionCount;
+            public int ClaimActionIndex;
+            public int TrackActionIndex;
+        }
+
+        #endregion
+
         #region State
 
         private MonoBehaviour _controller;
         private string _currentScene;
 
-        // Achievement data extracted via reflection
-        private readonly List<AchievementEntry> _achievementEntries = new List<AchievementEntry>();
+        // Navigation level
+        private NavigationLevel _navLevel = NavigationLevel.Overview;
+        private NavigationLevel? _pendingLevel; // Level to transition to after rescan
 
-        private struct AchievementEntry
-        {
-            public string Label;           // Full announcement text
-            public GameObject GameObject;  // The AchievementCard or group header GameObject
-            public EntryType Type;
-            public bool IsClaimable;
-            public bool IsFavorite;
-            public int ActionCount;        // Total number of sub-actions available
-            // Action indices (1-based; 0 = not applicable)
-            public int ClaimActionIndex;
-            public int TrackActionIndex;
-        }
+        // Per-level entries
+        private readonly List<OverviewEntry> _overviewEntries = new List<OverviewEntry>();
+        private readonly List<GroupEntry> _groupEntries = new List<GroupEntry>();
+        private readonly List<AchievementItem> _achievementItems = new List<AchievementItem>();
 
-        private enum EntryType
-        {
-            SetHeader,
-            GroupHeader,
-            Achievement,
-            SectionLabel    // Read-only summary section divider — re-announces on Enter, no other action
-        }
+        // Per-level indices
+        private int _overviewIndex;
+        private int _groupIndex;
+        private int _achievementIndex;
+
+        // Saved indices for back navigation
+        private int _savedOverviewIndex;
+        private int _savedGroupIndex;
+
+        // Context for level transitions
+        private string _selectedTabName;
+        private string _selectedGroupName;
+        private GameObject _selectedGroupObject;
+
+        // Sub-action state (for achievement entries at Overview and Achievements levels)
+        private int _actionSubIndex;
+        private float _rescanTimer;
 
         #endregion
 
@@ -142,7 +195,6 @@ namespace AccessibleArena.Core.Services
 
         protected override bool DetectScreen()
         {
-            // The Achievements screen loads as scene "Achievements" with AchievementsContentController
             if (_currentScene != SceneNames.Achievements)
                 return false;
 
@@ -192,11 +244,9 @@ namespace AccessibleArena.Core.Services
 
             var flags = AllInstanceFlags;
 
-            // AchievementsContentController inherits from NavContentController which has IsOpen
             _isOpenProp = FindType("AchievementsContentController")
                 ?.GetProperty("IsOpen", flags | BindingFlags.FlattenHierarchy);
 
-            // AchievementCard._achievementData
             _achievementCardType = FindType("AchievementCard");
             if (_achievementCardType != null)
             {
@@ -204,7 +254,6 @@ namespace AccessibleArena.Core.Services
                 _favoriteToggleField = _achievementCardType.GetField("_favoriteToggle", flags);
             }
 
-            // IClientAchievement properties (public interface)
             var achievementInterface = FindType("IClientAchievement");
             if (achievementInterface != null)
             {
@@ -220,14 +269,12 @@ namespace AccessibleArena.Core.Services
                 _setFavoriteMethod = achievementInterface.GetMethod("SetFavorite", pubFlags);
             }
 
-            // AchievementGroupDisplay._achievementGroup
             _groupDisplayType = FindType("AchievementGroupDisplay");
             if (_groupDisplayType != null)
             {
                 _achievementGroupField = _groupDisplayType.GetField("_achievementGroup", flags);
             }
 
-            // IClientAchievementGroup properties
             var groupInterface = FindType("IClientAchievementGroup");
             if (groupInterface != null)
             {
@@ -238,31 +285,27 @@ namespace AccessibleArena.Core.Services
                 _groupClaimableCountProp = groupInterface.GetProperty("ClaimableAchievementCount", pubFlags);
             }
 
-            // AchievementSetItem._clientAchievementSet
             _setItemType = FindType("AchievementSetItem");
             if (_setItemType != null)
             {
                 _clientSetField = _setItemType.GetField("_clientAchievementSet", flags);
             }
 
-            // IClientAchievementSet.Title
             var setInterface = FindType("IClientAchievementSet");
             if (setInterface != null)
             {
                 _setTitleProp = setInterface.GetProperty("Title", BindingFlags.Public | BindingFlags.Instance);
             }
 
-            // AchievementSetItem tab selection
             _currentlySelectedField = _setItemType?.GetField("_currentlySelected", BindingFlags.Static | BindingFlags.NonPublic);
             _selectSetMethod = _setItemType?.GetMethod("SelectSet", BindingFlags.Public | BindingFlags.Instance);
 
-            // IAchievementManager — Summary tab data
             _achievementManagerType = FindType("IAchievementManager");
             if (_achievementManagerType != null)
             {
                 var pubFlags = BindingFlags.Public | BindingFlags.Instance;
                 _favoriteAchievementsProp = _achievementManagerType.GetProperty("FavoriteAchievements", pubFlags);
-                _upNextAchievementsProp   = _achievementManagerType.GetProperty("UpNextAchievements", pubFlags);
+                _upNextAchievementsProp = _achievementManagerType.GetProperty("UpNextAchievements", pubFlags);
             }
 
             _reflectionInitialized = true;
@@ -279,76 +322,33 @@ namespace AccessibleArena.Core.Services
 
         protected override void DiscoverElements()
         {
-            _achievementEntries.Clear();
+            _overviewEntries.Clear();
+            _navLevel = NavigationLevel.Overview;
+            _pendingLevel = null;
 
-            // Discover the active set (selected tab on the left blade)
-            bool isSummary = DiscoverActiveSet();
+            DiscoverOverview();
 
-            if (isSummary)
-                DiscoverSummaryAchievements();
-            else
-                DiscoverGroupsAndAchievements();
+            // Add a placeholder for base class (needs at least 1 element to activate)
+            if (_overviewEntries.Count > 0)
+                AddElement(_controller.gameObject, "Achievements");
 
-            // Convert to navigable elements
-            foreach (var entry in _achievementEntries)
-            {
-                AddElement(entry.GameObject, entry.Label);
-            }
-
-            MelonLogger.Msg($"[{NavigatorId}] Discovered {_achievementEntries.Count} entries");
+            MelonLogger.Msg($"[{NavigatorId}] Discovered {_overviewEntries.Count} overview entries");
         }
 
-        // Returns true if the currently selected tab is Summary (clientSet == null)
-        private bool DiscoverActiveSet()
+        private void DiscoverOverview()
         {
-            if (_setItemType == null || _clientSetField == null) return false;
+            // Part 1: Summary achievements (tracked + up next) from IAchievementManager
+            DiscoverSummaryAchievements();
 
-            var currentlySelected = _currentlySelectedField?.GetValue(null) as UnityEngine.Object;
-            bool selectedIsSummary = false;
-
-            var setItems = new List<MonoBehaviour>();
-            foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
-            {
-                if (mb == null || !mb.gameObject.activeInHierarchy) continue;
-                if (mb.GetType() == _setItemType)
-                    setItems.Add(mb);
-            }
-
-            MelonLogger.Msg($"[{NavigatorId}] Found {setItems.Count} set tabs");
-
-            foreach (var setItem in setItems)
-            {
-                var clientSet = _clientSetField.GetValue(setItem);
-                bool isSummaryTab = clientSet == null;
-                string title = isSummaryTab
-                    ? Strings.AchievementSummaryTab
-                    : StripRichText(SafeGetString(_setTitleProp, clientSet) ?? "Unknown Set");
-
-                bool isSelected = currentlySelected != null && setItem.Equals(currentlySelected);
-                if (isSelected && isSummaryTab) selectedIsSummary = true;
-
-                string label = isSelected ? $"Tab: {title} (selected)" : $"Tab: {title}";
-
-                _achievementEntries.Add(new AchievementEntry
-                {
-                    Label = label,
-                    GameObject = setItem.gameObject,
-                    Type = EntryType.SetHeader,
-                    IsClaimable = false
-                });
-            }
-
-            return selectedIsSummary;
+            // Part 2: Set tabs (excluding Summary tab)
+            DiscoverSetTabs();
         }
 
         private void DiscoverSummaryAchievements()
         {
-            // Read FavoriteAchievements and UpNextAchievements from IAchievementManager
-            // via Pantry (service locator) rather than parsing the hub prefab UI.
             var managerType = FindType("IAchievementManager");
             if (managerType == null || _achievementManagerType == null) return;
 
-            // Pantry.Get<IAchievementManager>()
             object manager = null;
             try
             {
@@ -366,10 +366,7 @@ namespace AccessibleArena.Core.Services
 
             if (manager == null) return;
 
-            // Tracked (favorites) section
             AddSummarySection(Strings.AchievementSectionTracked, _favoriteAchievementsProp, manager);
-
-            // Up Next section
             AddSummarySection(Strings.AchievementSectionUpNext, _upNextAchievementsProp, manager);
         }
 
@@ -388,13 +385,11 @@ namespace AccessibleArena.Core.Services
             {
                 if (!any)
                 {
-                    // Section header as a read-only label (no GameObject needed; use controller as placeholder)
-                    _achievementEntries.Add(new AchievementEntry
+                    _overviewEntries.Add(new OverviewEntry
                     {
                         Label = $"--- {sectionName} ---",
                         GameObject = _controller.gameObject,
-                        Type = EntryType.SectionLabel,
-                        IsClaimable = false
+                        Type = OverviewEntryType.SectionLabel
                     });
                     any = true;
                 }
@@ -419,14 +414,13 @@ namespace AccessibleArena.Core.Services
                 int claimIdx   = isClaimable ? ++actionIdx : 0;
                 int trackIdx   = ++actionIdx;
 
-                // Summary achievements have no card GameObject — find by matching title in scene
                 var cardGo = FindAchievementCardByTitle(title);
 
-                _achievementEntries.Add(new AchievementEntry
+                _overviewEntries.Add(new OverviewEntry
                 {
                     Label         = label,
                     GameObject    = cardGo ?? _controller.gameObject,
-                    Type          = EntryType.Achievement,
+                    Type          = OverviewEntryType.Achievement,
                     IsClaimable   = isClaimable,
                     IsFavorite    = isFavorite,
                     ActionCount   = cardGo != null ? actionIdx : 0,
@@ -437,31 +431,39 @@ namespace AccessibleArena.Core.Services
 
             if (!any)
             {
-                _achievementEntries.Add(new AchievementEntry
+                _overviewEntries.Add(new OverviewEntry
                 {
                     Label = $"--- {sectionName}: none ---",
                     GameObject = _controller.gameObject,
-                    Type = EntryType.GroupHeader
+                    Type = OverviewEntryType.SectionLabel
                 });
             }
         }
 
-        private GameObject FindAchievementCardByTitle(string strippedTitle)
+        private void DiscoverSetTabs()
         {
-            if (_achievementCardType == null || _achievementDataField == null) return null;
+            if (_setItemType == null || _clientSetField == null) return;
+
             foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
             {
                 if (mb == null || !mb.gameObject.activeInHierarchy) continue;
-                if (mb.GetType() != _achievementCardType) continue;
-                var data = _achievementDataField.GetValue(mb);
-                if (data == null) continue;
-                if (StripRichText(SafeGetString(_titleProp, data) ?? "") == strippedTitle)
-                    return mb.gameObject;
+                if (mb.GetType() != _setItemType) continue;
+
+                var clientSet = _clientSetField.GetValue(mb);
+                if (clientSet == null) continue; // Skip Summary tab
+
+                string title = StripRichText(SafeGetString(_setTitleProp, clientSet) ?? "Unknown Set");
+
+                _overviewEntries.Add(new OverviewEntry
+                {
+                    Label = title,
+                    GameObject = mb.gameObject,
+                    Type = OverviewEntryType.SetTab
+                });
             }
-            return null;
         }
 
-        private void DiscoverGroupsAndAchievements()
+        private void DiscoverGroups()
         {
             if (_groupDisplayType == null)
             {
@@ -469,7 +471,6 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Find all AchievementGroupDisplay components
             var groupDisplays = new List<MonoBehaviour>();
             foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
             {
@@ -485,32 +486,24 @@ namespace AccessibleArena.Core.Services
                 var groupData = _achievementGroupField?.GetValue(groupDisplay);
                 if (groupData == null) continue;
 
-                // Extract group info
                 string groupTitle = StripRichText(SafeGetString(_groupTitleProp, groupData) ?? "Unknown Group");
                 int completed = SafeGetInt(_groupCompletedCountProp, groupData);
                 int total = SafeGetInt(_groupTotalCountProp, groupData);
                 int claimable = SafeGetInt(_groupClaimableCountProp, groupData);
 
-                string groupLabel = Strings.AchievementGroup(groupTitle, completed, total, claimable);
-
-                _achievementEntries.Add(new AchievementEntry
+                _groupEntries.Add(new GroupEntry
                 {
-                    Label = groupLabel,
+                    Label = Strings.AchievementGroup(groupTitle, completed, total, claimable),
                     GameObject = groupDisplay.gameObject,
-                    Type = EntryType.GroupHeader,
-                    IsClaimable = false
+                    Title = groupTitle
                 });
-
-                // Find AchievementCard children within this group
-                DiscoverCardsInGroup(groupDisplay.gameObject);
             }
         }
 
-        private void DiscoverCardsInGroup(GameObject groupObject)
+        private void DiscoverAchievementsInGroup(GameObject groupObject)
         {
-            if (_achievementCardType == null || _achievementDataField == null) return;
+            if (_achievementCardType == null || _achievementDataField == null || groupObject == null) return;
 
-            // Find all AchievementCard components that are children of this group
             var cards = new List<MonoBehaviour>();
             foreach (var mb in groupObject.GetComponentsInChildren<MonoBehaviour>(false))
             {
@@ -533,15 +526,10 @@ namespace AccessibleArena.Core.Services
                 bool isClaimable = SafeGetBool(_isClaimableProp, achievementData);
                 bool isFavorite = SafeGetBool(_isFavoriteProp, achievementData);
 
-                string status;
-                if (isClaimed)
-                    status = Strings.AchievementClaimed;
-                else if (isClaimable)
-                    status = Strings.AchievementReadyToClaim;
-                else if (isCompleted)
-                    status = Strings.AchievementCompleted;
-                else
-                    status = $"{current}/{max}";
+                string status = isClaimed ? Strings.AchievementClaimed
+                              : isClaimable ? Strings.AchievementReadyToClaim
+                              : isCompleted ? Strings.AchievementCompleted
+                              : $"{current}/{max}";
 
                 string label = Strings.AchievementEntry(title, description, status, isFavorite);
 
@@ -549,11 +537,10 @@ namespace AccessibleArena.Core.Services
                 int claimIdx = isClaimable ? ++actionIdx : 0;
                 int trackIdx = ++actionIdx;
 
-                _achievementEntries.Add(new AchievementEntry
+                _achievementItems.Add(new AchievementItem
                 {
                     Label = label,
                     GameObject = card.gameObject,
-                    Type = EntryType.Achievement,
                     IsClaimable = isClaimable,
                     IsFavorite = isFavorite,
                     ActionCount = actionIdx,
@@ -563,115 +550,483 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        private GameObject FindAchievementCardByTitle(string strippedTitle)
+        {
+            if (_achievementCardType == null || _achievementDataField == null) return null;
+            foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>())
+            {
+                if (mb == null || !mb.gameObject.activeInHierarchy) continue;
+                if (mb.GetType() != _achievementCardType) continue;
+                var data = _achievementDataField.GetValue(mb);
+                if (data == null) continue;
+                if (StripRichText(SafeGetString(_titleProp, data) ?? "") == strippedTitle)
+                    return mb.gameObject;
+            }
+            return null;
+        }
+
         #endregion
 
         #region Custom Navigation
 
         protected override bool HandleCustomInput()
         {
-            // Reset sub-action index when the focused element changes
-            if (_currentIndex != _lastNavigatedIndex)
+            // Block input during pending level transitions
+            if (_pendingLevel != null)
+                return true;
+
+            switch (_navLevel)
             {
-                _achievementActionIndex = 0;
-                _lastNavigatedIndex = _currentIndex;
+                case NavigationLevel.Overview:
+                    return HandleOverviewInput();
+                case NavigationLevel.Groups:
+                    return HandleGroupsInput();
+                case NavigationLevel.Achievements:
+                    return HandleAchievementsLevelInput();
+            }
+            return false;
+        }
+
+        #endregion
+
+        #region Overview Input (Level 0)
+
+        private bool HandleOverviewInput()
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveOverview(-1); return true; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveOverview(1); return true; }
+
+            if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                MoveOverview(shift ? -1 : 1);
+                return true;
             }
 
-            // Backspace: navigate back to home
+            if (Input.GetKeyDown(KeyCode.Home))
+            {
+                if (_overviewEntries.Count > 0)
+                {
+                    _overviewIndex = 0;
+                    _actionSubIndex = 0;
+                    AnnounceCurrentOverview();
+                }
+                return true;
+            }
+
+            if (Input.GetKeyDown(KeyCode.End))
+            {
+                if (_overviewEntries.Count > 0)
+                {
+                    _overviewIndex = _overviewEntries.Count - 1;
+                    _actionSubIndex = 0;
+                    AnnounceCurrentOverview();
+                }
+                return true;
+            }
+
+            bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+            bool space = InputManager.GetKeyDownAndConsume(KeyCode.Space);
+            if (enter || space)
+            {
+                ActivateOverviewEntry();
+                return true;
+            }
+
+            // Left/Right: sub-action cycling for achievement entries
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                if (_overviewIndex >= 0 && _overviewIndex < _overviewEntries.Count)
+                {
+                    var entry = _overviewEntries[_overviewIndex];
+                    if (entry.Type == OverviewEntryType.Achievement && entry.ActionCount > 0)
+                    {
+                        CycleSubAction(Input.GetKeyDown(KeyCode.RightArrow),
+                            entry.ActionCount, entry.ClaimActionIndex, entry.TrackActionIndex,
+                            entry.IsFavorite, entry.Label);
+                    }
+                }
+                return true;
+            }
+
             if (Input.GetKeyDown(KeyCode.Backspace))
             {
                 NavigateToHome();
                 return true;
             }
 
-            if (_currentIndex < 0 || _currentIndex >= _achievementEntries.Count)
-                return false;
+            return false;
+        }
 
-            var entry = _achievementEntries[_currentIndex];
+        private void MoveOverview(int direction)
+        {
+            if (_overviewEntries.Count == 0) return;
+            int newIndex = _overviewIndex + direction;
+            if (newIndex < 0) { _announcer.AnnounceVerbose(Strings.BeginningOfList); return; }
+            if (newIndex >= _overviewEntries.Count) { _announcer.AnnounceVerbose(Strings.EndOfList); return; }
+            _overviewIndex = newIndex;
+            _actionSubIndex = 0;
+            AnnounceCurrentOverview();
+        }
 
-            // --- Achievement cards: Left/Right cycles sub-actions, Enter fires them ---
-            if (entry.Type == EntryType.Achievement)
+        private void ActivateOverviewEntry()
+        {
+            if (_overviewIndex < 0 || _overviewIndex >= _overviewEntries.Count) return;
+            var entry = _overviewEntries[_overviewIndex];
+
+            switch (entry.Type)
             {
-                bool isLeft  = Input.GetKeyDown(KeyCode.LeftArrow);
-                bool isRight = Input.GetKeyDown(KeyCode.RightArrow);
-                bool isEnter = Input.GetKeyDown(KeyCode.Return)      || Input.GetKeyDown(KeyCode.KeypadEnter);
+                case OverviewEntryType.SetTab:
+                    EnterSetTab();
+                    break;
+                case OverviewEntryType.Achievement:
+                    ActivateAchievementAction(
+                        entry.ClaimActionIndex, entry.TrackActionIndex,
+                        entry.Label, entry.GameObject);
+                    break;
+                case OverviewEntryType.SectionLabel:
+                    _announcer.AnnounceInterrupt(entry.Label);
+                    break;
+            }
+        }
 
-                if (isLeft || isRight)
-                {
-                    int newIdx = _achievementActionIndex + (isRight ? 1 : -1);
-                    if (newIdx < 0)
-                    {
-                        _announcer.AnnounceVerbose(Strings.BeginningOfList);
-                        return true;
-                    }
-                    if (newIdx > entry.ActionCount)
-                    {
-                        _announcer.AnnounceVerbose(Strings.EndOfList);
-                        return true;
-                    }
-                    _achievementActionIndex = newIdx;
-                    _announcer.AnnounceInterrupt(GetActionAnnouncement(entry));
-                    return true;
-                }
+        #endregion
 
-                if (isEnter)
-                {
-                    if (_achievementActionIndex == 0)
-                    {
-                        // No default action on the card itself — re-announce for orientation
-                        _announcer.AnnounceInterrupt(entry.Label);
-                    }
-                    else if (_achievementActionIndex == entry.ClaimActionIndex)
-                    {
-                        ActivateCollectButton(entry.GameObject);
-                    }
-                    else if (_achievementActionIndex == entry.TrackActionIndex)
-                    {
-                        ToggleTracking(entry.GameObject);
-                    }
-                    return true;
-                }
+        #region Groups Input (Level 1)
 
-                return false;
+        private bool HandleGroupsInput()
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveGroup(-1); return true; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveGroup(1); return true; }
+
+            if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                MoveGroup(shift ? -1 : 1);
+                return true;
             }
 
-            // --- Set tab headers: Enter switches tab ---
-            if (entry.Type == EntryType.SetHeader)
+            if (Input.GetKeyDown(KeyCode.Home))
             {
-                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-                {
-                    ActivateSetTab(entry.GameObject);
-                    return true;
-                }
+                if (_groupEntries.Count > 0) { _groupIndex = 0; AnnounceCurrentGroup(); }
+                return true;
             }
 
-            // --- Group headers: Enter toggles foldout ---
-            if (entry.Type == EntryType.GroupHeader)
+            if (Input.GetKeyDown(KeyCode.End))
             {
-                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-                {
-                    ToggleGroupFoldout(entry.GameObject);
-                    return true;
-                }
+                if (_groupEntries.Count > 0) { _groupIndex = _groupEntries.Count - 1; AnnounceCurrentGroup(); }
+                return true;
+            }
+
+            bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+            bool space = InputManager.GetKeyDownAndConsume(KeyCode.Space);
+            if (enter || space)
+            {
+                EnterGroup();
+                return true;
+            }
+
+            // Consume Left/Right (no action at group level)
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow))
+                return true;
+
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                ReturnToOverview();
+                return true;
             }
 
             return false;
         }
 
-        private string GetActionAnnouncement(AchievementEntry entry)
+        private void MoveGroup(int direction)
         {
-            if (_achievementActionIndex == 0)
-                return entry.Label;
-
-            string label;
-            if (_achievementActionIndex == entry.ClaimActionIndex)
-                label = Strings.AchievementActionClaim;
-            else if (_achievementActionIndex == entry.TrackActionIndex)
-                label = entry.IsFavorite ? Strings.AchievementActionUntrack : Strings.AchievementActionTrack;
-            else
-                label = Strings.AchievementActionGeneric;
-
-            return Strings.AchievementActionPosition(label, _achievementActionIndex, entry.ActionCount);
+            if (_groupEntries.Count == 0) return;
+            int newIndex = _groupIndex + direction;
+            if (newIndex < 0) { _announcer.AnnounceVerbose(Strings.BeginningOfList); return; }
+            if (newIndex >= _groupEntries.Count) { _announcer.AnnounceVerbose(Strings.EndOfList); return; }
+            _groupIndex = newIndex;
+            AnnounceCurrentGroup();
         }
+
+        #endregion
+
+        #region Achievements Input (Level 2)
+
+        private bool HandleAchievementsLevelInput()
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveAchievement(-1); return true; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveAchievement(1); return true; }
+
+            if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                MoveAchievement(shift ? -1 : 1);
+                return true;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Home))
+            {
+                if (_achievementItems.Count > 0) { _achievementIndex = 0; _actionSubIndex = 0; AnnounceCurrentAchievement(); }
+                return true;
+            }
+
+            if (Input.GetKeyDown(KeyCode.End))
+            {
+                if (_achievementItems.Count > 0) { _achievementIndex = _achievementItems.Count - 1; _actionSubIndex = 0; AnnounceCurrentAchievement(); }
+                return true;
+            }
+
+            bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+            bool space = InputManager.GetKeyDownAndConsume(KeyCode.Space);
+            if (enter || space)
+            {
+                if (_achievementIndex >= 0 && _achievementIndex < _achievementItems.Count)
+                {
+                    var item = _achievementItems[_achievementIndex];
+                    ActivateAchievementAction(item.ClaimActionIndex, item.TrackActionIndex,
+                        item.Label, item.GameObject);
+                }
+                return true;
+            }
+
+            // Left/Right: sub-action cycling
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                if (_achievementIndex >= 0 && _achievementIndex < _achievementItems.Count)
+                {
+                    var item = _achievementItems[_achievementIndex];
+                    if (item.ActionCount > 0)
+                    {
+                        CycleSubAction(Input.GetKeyDown(KeyCode.RightArrow),
+                            item.ActionCount, item.ClaimActionIndex, item.TrackActionIndex,
+                            item.IsFavorite, item.Label);
+                    }
+                }
+                return true;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                ReturnToGroups();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void MoveAchievement(int direction)
+        {
+            if (_achievementItems.Count == 0) return;
+            int newIndex = _achievementIndex + direction;
+            if (newIndex < 0) { _announcer.AnnounceVerbose(Strings.BeginningOfList); return; }
+            if (newIndex >= _achievementItems.Count) { _announcer.AnnounceVerbose(Strings.EndOfList); return; }
+            _achievementIndex = newIndex;
+            _actionSubIndex = 0;
+            AnnounceCurrentAchievement();
+        }
+
+        #endregion
+
+        #region Shared Achievement Actions
+
+        private void CycleSubAction(bool forward, int actionCount, int claimIdx, int trackIdx,
+            bool isFavorite, string label)
+        {
+            int newIdx = _actionSubIndex + (forward ? 1 : -1);
+            if (newIdx < 0) { _announcer.AnnounceVerbose(Strings.BeginningOfList); return; }
+            if (newIdx > actionCount) { _announcer.AnnounceVerbose(Strings.EndOfList); return; }
+            _actionSubIndex = newIdx;
+            _announcer.AnnounceInterrupt(FormatActionAnnouncement(label, isFavorite, actionCount, claimIdx, trackIdx));
+        }
+
+        private void ActivateAchievementAction(int claimIdx, int trackIdx, string label, GameObject go)
+        {
+            if (_actionSubIndex == 0)
+            {
+                _announcer.AnnounceInterrupt(label);
+            }
+            else if (_actionSubIndex == claimIdx)
+            {
+                ActivateCollectButton(go);
+            }
+            else if (_actionSubIndex == trackIdx)
+            {
+                ToggleTracking(go);
+            }
+        }
+
+        private string FormatActionAnnouncement(string label, bool isFavorite, int actionCount, int claimIdx, int trackIdx)
+        {
+            if (_actionSubIndex == 0)
+                return label;
+
+            string actionLabel;
+            if (_actionSubIndex == claimIdx)
+                actionLabel = Strings.AchievementActionClaim;
+            else if (_actionSubIndex == trackIdx)
+                actionLabel = isFavorite ? Strings.AchievementActionUntrack : Strings.AchievementActionTrack;
+            else
+                actionLabel = Strings.AchievementActionGeneric;
+
+            return Strings.AchievementActionPosition(actionLabel, _actionSubIndex, actionCount);
+        }
+
+        #endregion
+
+        #region Level Transitions
+
+        private void EnterSetTab()
+        {
+            if (_overviewIndex < 0 || _overviewIndex >= _overviewEntries.Count) return;
+            var entry = _overviewEntries[_overviewIndex];
+            if (entry.Type != OverviewEntryType.SetTab) return;
+
+            var setItem = entry.GameObject.GetComponent(_setItemType) as MonoBehaviour;
+            if (setItem == null) return;
+
+            _selectedTabName = entry.Label;
+            _savedOverviewIndex = _overviewIndex;
+
+            // Check if this tab is already selected in the game
+            var currentlySelected = _currentlySelectedField?.GetValue(null) as UnityEngine.Object;
+            bool alreadyActive = currentlySelected != null && setItem.Equals(currentlySelected);
+
+            if (alreadyActive)
+            {
+                TransitionToGroups();
+            }
+            else
+            {
+                // Switch tab and wait for content to load
+                try
+                {
+                    _selectSetMethod.Invoke(setItem, new object[] { true });
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Warning($"[{NavigatorId}] SelectSet error: {ex.InnerException?.Message ?? ex.Message}");
+                    return;
+                }
+                _announcer.AnnounceInterrupt(Strings.Loading(_selectedTabName));
+                _pendingLevel = NavigationLevel.Groups;
+                ScheduleRescan(1.0f);
+            }
+        }
+
+        private void EnterGroup()
+        {
+            if (_groupIndex < 0 || _groupIndex >= _groupEntries.Count) return;
+            var entry = _groupEntries[_groupIndex];
+
+            _selectedGroupName = entry.Title;
+            _selectedGroupObject = entry.GameObject;
+            _savedGroupIndex = _groupIndex;
+
+            // Open foldout and wait for cards to appear
+            _pendingLevel = NavigationLevel.Achievements;
+            ToggleFoldout(entry.GameObject);
+            ScheduleRescan(0.8f);
+        }
+
+        private void TransitionToGroups()
+        {
+            _groupEntries.Clear();
+            DiscoverGroups();
+
+            if (_groupEntries.Count == 0)
+            {
+                _announcer.AnnounceInterrupt(Strings.NoItemsAvailable(_selectedTabName));
+                return;
+            }
+
+            _navLevel = NavigationLevel.Groups;
+            _groupIndex = 0;
+            _actionSubIndex = 0;
+
+            string msg = Strings.AchievementsGroups(_selectedTabName, _groupEntries.Count);
+            msg += " " + FormatGroupAnnouncement(0);
+            _announcer.AnnounceInterrupt(msg);
+        }
+
+        private void TransitionToAchievements()
+        {
+            _achievementItems.Clear();
+            DiscoverAchievementsInGroup(_selectedGroupObject);
+
+            if (_achievementItems.Count == 0)
+            {
+                _announcer.AnnounceInterrupt(Strings.NoItemsAvailable(_selectedGroupName));
+                _pendingLevel = null;
+                return;
+            }
+
+            _navLevel = NavigationLevel.Achievements;
+            _achievementIndex = 0;
+            _actionSubIndex = 0;
+
+            string msg = Strings.AchievementsInGroup(_selectedGroupName, _achievementItems.Count);
+            msg += " " + FormatAchievementAnnouncement(0);
+            _announcer.AnnounceInterrupt(msg);
+        }
+
+        private void ReturnToOverview()
+        {
+            _navLevel = NavigationLevel.Overview;
+            _groupEntries.Clear();
+
+            // Re-discover overview for fresh data
+            _overviewEntries.Clear();
+            DiscoverOverview();
+
+            // Restore position to the tab we came from
+            _overviewIndex = FindOverviewIndexByLabel(_selectedTabName, OverviewEntryType.SetTab);
+            if (_overviewIndex < 0)
+                _overviewIndex = Math.Min(_savedOverviewIndex, Math.Max(0, _overviewEntries.Count - 1));
+            _actionSubIndex = 0;
+
+            int tabCount = _overviewEntries.Count(e => e.Type == OverviewEntryType.SetTab);
+            string msg = Strings.TabsCount(tabCount);
+            if (_overviewIndex >= 0 && _overviewIndex < _overviewEntries.Count)
+                msg += " " + FormatOverviewAnnouncement(_overviewIndex);
+            _announcer.AnnounceInterrupt(msg);
+        }
+
+        private void ReturnToGroups()
+        {
+            // Close the foldout we opened
+            if (_selectedGroupObject != null)
+                ToggleFoldout(_selectedGroupObject);
+
+            _navLevel = NavigationLevel.Groups;
+            _achievementItems.Clear();
+
+            // Re-discover groups for fresh data
+            _groupEntries.Clear();
+            DiscoverGroups();
+
+            _groupIndex = Math.Min(_savedGroupIndex, Math.Max(0, _groupEntries.Count - 1));
+            _actionSubIndex = 0;
+
+            string msg = Strings.AchievementsGroups(_selectedTabName, _groupEntries.Count);
+            if (_groupIndex >= 0 && _groupIndex < _groupEntries.Count)
+                msg += " " + FormatGroupAnnouncement(_groupIndex);
+            _announcer.AnnounceInterrupt(msg);
+        }
+
+        private int FindOverviewIndexByLabel(string label, OverviewEntryType type)
+        {
+            for (int i = 0; i < _overviewEntries.Count; i++)
+            {
+                if (_overviewEntries[i].Type == type && _overviewEntries[i].Label == label)
+                    return i;
+            }
+            return -1;
+        }
+
+        #endregion
+
+        #region Game Actions
 
         private void ActivateCollectButton(GameObject cardObject)
         {
@@ -691,26 +1046,7 @@ namespace AccessibleArena.Core.Services
             {
                 UIActivator.Activate(buttonObj);
                 _announcer.Announce(Strings.ActivatedBare);
-                // Trigger rescan after a short delay to update status
                 ScheduleRescan(0.5f);
-            }
-        }
-
-        private void ActivateSetTab(GameObject tabObject)
-        {
-            if (_selectSetMethod == null) return;
-            var setItem = tabObject.GetComponent(_setItemType) as MonoBehaviour;
-            if (setItem == null) return;
-
-            MelonLogger.Msg($"[{NavigatorId}] Selecting set tab: {tabObject.name}");
-            try
-            {
-                _selectSetMethod.Invoke(setItem, new object[] { true });
-                ScheduleRescan(1.0f);
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning($"[{NavigatorId}] SelectSet error: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -740,32 +1076,92 @@ namespace AccessibleArena.Core.Services
             }
         }
 
-        private void ToggleGroupFoldout(GameObject groupObject)
+        private void ToggleFoldout(GameObject groupObject)
         {
-            // Scan all child components for one that has ToggleFoldout() — avoids needing to know the Foldout type/assembly
             foreach (var comp in groupObject.GetComponentsInChildren<Component>(true))
             {
                 if (comp == null) continue;
                 var toggleMethod = comp.GetType().GetMethod("ToggleFoldout", BindingFlags.Public | BindingFlags.Instance);
                 if (toggleMethod != null)
                 {
-                    MelonLogger.Msg($"[{NavigatorId}] ToggleFoldout via {comp.GetType().FullName} on {groupObject.name}");
+                    MelonLogger.Msg($"[{NavigatorId}] ToggleFoldout via {comp.GetType().FullName}");
                     try { toggleMethod.Invoke(comp, null); }
                     catch (Exception ex) { MelonLogger.Warning($"[{NavigatorId}] ToggleFoldout error: {ex.InnerException?.Message ?? ex.Message}"); }
-                    ScheduleRescan(0.8f);
                     return;
                 }
             }
             MelonLogger.Warning($"[{NavigatorId}] No ToggleFoldout found on {groupObject.name}");
         }
 
-        private float _rescanTimer;
-        private int _achievementActionIndex;  // 0 = element itself, 1+ = sub-actions
-        private int _lastNavigatedIndex = -1;
-
         private void ScheduleRescan(float delay)
         {
             _rescanTimer = delay;
+        }
+
+        #endregion
+
+        #region Announcements
+
+        protected override string GetActivationAnnouncement()
+        {
+            int tabCount = _overviewEntries.Count(e => e.Type == OverviewEntryType.SetTab);
+            return Strings.AchievementsActivation(tabCount);
+        }
+
+        protected override string GetElementAnnouncement(int index)
+        {
+            // Not used directly — we handle announcements per-level
+            return "";
+        }
+
+        private void AnnounceCurrentOverview()
+        {
+            if (_overviewIndex < 0 || _overviewIndex >= _overviewEntries.Count) return;
+            _announcer.AnnounceInterrupt(FormatOverviewAnnouncement(_overviewIndex));
+        }
+
+        private void AnnounceCurrentGroup()
+        {
+            if (_groupIndex < 0 || _groupIndex >= _groupEntries.Count) return;
+            _announcer.AnnounceInterrupt(FormatGroupAnnouncement(_groupIndex));
+        }
+
+        private void AnnounceCurrentAchievement()
+        {
+            if (_achievementIndex < 0 || _achievementIndex >= _achievementItems.Count) return;
+            _announcer.AnnounceInterrupt(FormatAchievementAnnouncement(_achievementIndex));
+        }
+
+        private string FormatOverviewAnnouncement(int index)
+        {
+            if (index < 0 || index >= _overviewEntries.Count) return "";
+            var entry = _overviewEntries[index];
+
+            if (entry.Type == OverviewEntryType.SetTab)
+            {
+                int tabCount = _overviewEntries.Count(e => e.Type == OverviewEntryType.SetTab);
+                int tabPos = 0;
+                for (int i = 0; i <= index; i++)
+                {
+                    if (_overviewEntries[i].Type == OverviewEntryType.SetTab)
+                        tabPos++;
+                }
+                return Strings.TabPositionOf(tabPos, tabCount, entry.Label);
+            }
+
+            return entry.Label;
+        }
+
+        private string FormatGroupAnnouncement(int index)
+        {
+            if (index < 0 || index >= _groupEntries.Count) return "";
+            return $"{_groupEntries[index].Label}, {index + 1} of {_groupEntries.Count}";
+        }
+
+        private string FormatAchievementAnnouncement(int index)
+        {
+            if (index < 0 || index >= _achievementItems.Count) return "";
+            return $"{_achievementItems[index].Label}, {index + 1} of {_achievementItems.Count}";
         }
 
         #endregion
@@ -786,17 +1182,7 @@ namespace AccessibleArena.Core.Services
                 _rescanTimer -= Time.deltaTime;
                 if (_rescanTimer <= 0)
                 {
-                    int savedIndex = _currentIndex;
-                    _elements.Clear();
-                    _achievementEntries.Clear();
-                    DiscoverElements();
-
-                    if (_elements.Count > 0)
-                    {
-                        _currentIndex = Math.Min(savedIndex, _elements.Count - 1);
-                        if (_currentIndex >= 0)
-                            _announcer.AnnounceInterrupt(GetElementAnnouncement(_currentIndex));
-                    }
+                    HandleRescanComplete();
                 }
             }
 
@@ -828,33 +1214,71 @@ namespace AccessibleArena.Core.Services
             base.Update();
         }
 
+        private void HandleRescanComplete()
+        {
+            if (_pendingLevel == NavigationLevel.Groups)
+            {
+                _pendingLevel = null;
+                TransitionToGroups();
+            }
+            else if (_pendingLevel == NavigationLevel.Achievements)
+            {
+                _pendingLevel = null;
+                TransitionToAchievements();
+            }
+            else
+            {
+                // Regular rescan: refresh current level, preserve position
+                RefreshCurrentLevel();
+            }
+        }
+
+        private void RefreshCurrentLevel()
+        {
+            switch (_navLevel)
+            {
+                case NavigationLevel.Overview:
+                    int savedOv = _overviewIndex;
+                    _overviewEntries.Clear();
+                    DiscoverOverview();
+                    _overviewIndex = Math.Min(savedOv, Math.Max(0, _overviewEntries.Count - 1));
+                    if (_overviewIndex >= 0 && _overviewIndex < _overviewEntries.Count)
+                        AnnounceCurrentOverview();
+                    break;
+
+                case NavigationLevel.Groups:
+                    int savedGr = _groupIndex;
+                    _groupEntries.Clear();
+                    DiscoverGroups();
+                    _groupIndex = Math.Min(savedGr, Math.Max(0, _groupEntries.Count - 1));
+                    if (_groupIndex >= 0 && _groupIndex < _groupEntries.Count)
+                        AnnounceCurrentGroup();
+                    break;
+
+                case NavigationLevel.Achievements:
+                    int savedAch = _achievementIndex;
+                    _achievementItems.Clear();
+                    DiscoverAchievementsInGroup(_selectedGroupObject);
+                    _achievementIndex = Math.Min(savedAch, Math.Max(0, _achievementItems.Count - 1));
+                    if (_achievementIndex >= 0 && _achievementIndex < _achievementItems.Count)
+                        AnnounceCurrentAchievement();
+                    break;
+            }
+        }
+
         protected override void OnDeactivating()
         {
             _controller = null;
-            _achievementEntries.Clear();
+            _overviewEntries.Clear();
+            _groupEntries.Clear();
+            _achievementItems.Clear();
             _rescanTimer = 0;
-            _achievementActionIndex = 0;
-            _lastNavigatedIndex = -1;
-        }
-
-        #endregion
-
-        #region Announcements
-
-        protected override string GetActivationAnnouncement()
-        {
-            int achievementCount = _achievementEntries.Count(e => e.Type == EntryType.Achievement);
-            int claimableCount = _achievementEntries.Count(e => e.IsClaimable);
-
-            return Strings.AchievementsActivation(achievementCount, claimableCount);
-        }
-
-        protected override string GetElementAnnouncement(int index)
-        {
-            if (index < 0 || index >= _achievementEntries.Count) return "";
-
-            var entry = _achievementEntries[index];
-            return $"{entry.Label}, {index + 1} of {_achievementEntries.Count}";
+            _actionSubIndex = 0;
+            _navLevel = NavigationLevel.Overview;
+            _pendingLevel = null;
+            _selectedTabName = null;
+            _selectedGroupName = null;
+            _selectedGroupObject = null;
         }
 
         #endregion

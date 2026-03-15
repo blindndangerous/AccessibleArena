@@ -935,8 +935,12 @@ namespace AccessibleArena.Core.Models
         // ===========================================
         // ACHIEVEMENTS SCREEN
         // ===========================================
-        public static string AchievementsActivation(int count, int claimable) =>
-            L.Format("AchievementsActivation_Format", count, claimable);
+        public static string AchievementsActivation(int tabCount) =>
+            L.Format("AchievementsActivation_Format", tabCount);
+        public static string AchievementsGroups(string tabName, int groupCount) =>
+            L.Format("AchievementsGroups_Format", tabName, groupCount);
+        public static string AchievementsInGroup(string groupName, int achievementCount) =>
+            L.Format("AchievementsInGroup_Format", groupName, achievementCount);
         public static string AchievementGroup(string title, int completed, int total, int claimable) =>
             L.Format("AchievementGroup_Format", title, completed, total, claimable);
         public static string AchievementEntry(string title, string description, string status, bool favorite) =>
