@@ -1204,13 +1204,20 @@ namespace AccessibleArena.Core.Models
         public static string EventScreenTitle(string eventName) => L.Format("EventScreenTitle_Format", eventName);
         public static string PacketOf(int current, int total) => L.Format("PacketOf_Format", current, total);
         public static string EventInfoLabel => L.Get("EventInfoLabel");
-        public static string ColorChallengeProgress(string trackName, int unlocked, int total, bool completed)
+        public static string ColorChallengeProgress(string trackName, int unlocked, int total, bool completed, int aiCount = 0, int pvpCount = 0)
         {
             bool hasTrack = !string.IsNullOrEmpty(trackName);
             if (completed)
                 return hasTrack ? L.Format("ColorChallengeTrackComplete_Format", trackName) : L.Get("ColorChallengeComplete");
             if (total > 0)
-                return hasTrack ? L.Format("ColorChallengeProgress_Format", trackName, unlocked, total) : L.Format("ColorChallengeProgressNoTrack_Format", unlocked, total);
+            {
+                string progress = hasTrack
+                    ? L.Format("ColorChallengeProgress_Format", trackName, unlocked, total)
+                    : L.Format("ColorChallengeProgressNoTrack_Format", unlocked, total);
+                if (aiCount > 0 || pvpCount > 0)
+                    progress += ", " + L.Format("ColorChallengeMatchBreakdown_Format", aiCount, pvpCount);
+                return progress;
+            }
             return hasTrack ? trackName : null;
         }
         public static string ColorChallengeNode(string roman) => L.Format("ColorChallengeNode_Format", roman);

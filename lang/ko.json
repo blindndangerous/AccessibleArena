@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "PvP 대전",
   "ColorChallengeMatchAI": "AI 대전",
   "ColorChallengeDeckUpgrade": "덱 강화",
+  "ColorChallengeMatchBreakdown_Format": "AI {0}전, PvP {1}전",
   "ColorChallengeReward_Format": "보상: {0}",
   "ScreenChat": "채팅",
   "ChatWith_Format": "{0}와 채팅",

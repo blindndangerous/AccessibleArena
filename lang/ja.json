@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "PvP対戦",
   "ColorChallengeMatchAI": "AI対戦",
   "ColorChallengeDeckUpgrade": "デッキ強化",
+  "ColorChallengeMatchBreakdown_Format": "AI {0}戦, PvP {1}戦",
   "ColorChallengeReward_Format": "報酬：{0}",
   "ScreenChat": "チャット",
   "ChatWith_Format": "{0}とチャット",

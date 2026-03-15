@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Partita PvP",
   "ColorChallengeMatchAI": "Partita contro IA",
   "ColorChallengeDeckUpgrade": "Potenziamento mazzo",
+  "ColorChallengeMatchBreakdown_Format": "{0} IA, {1} PvP",
   "ColorChallengeReward_Format": "Ricompensa: {0}",
   "ScreenChat": "Chat",
   "ChatWith_Format": "Chat con {0}",

@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Mecz PvP",
   "ColorChallengeMatchAI": "Mecz z AI",
   "ColorChallengeDeckUpgrade": "Ulepszenie talii",
+  "ColorChallengeMatchBreakdown_Format": "{0} AI, {1} PvP",
   "ColorChallengeReward_Format": "Nagroda: {0}",
   "RowWithCount_Few": "{0}, {1} karty",
   "ZoneWithCount_Few": "{0}, {1} karty",

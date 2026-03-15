@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Матч PvP",
   "ColorChallengeMatchAI": "Матч с ИИ",
   "ColorChallengeDeckUpgrade": "Улучшение колоды",
+  "ColorChallengeMatchBreakdown_Format": "{0} ИИ, {1} PvP",
   "ColorChallengeReward_Format": "Награда: {0}",
   "RowWithCount_Few": "{0}, {1} карты",
   "ZoneWithCount_Few": "{0}, {1} карты",

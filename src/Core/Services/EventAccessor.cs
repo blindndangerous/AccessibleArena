@@ -1011,14 +1011,31 @@ namespace AccessibleArena.Core.Services
                     int unlocked = (int)(trackType.GetProperty("UnlockedMatchNodeCount", PublicInstance)?.GetValue(track) ?? 0);
 
                     int total = 0;
+                    int aiCount = 0, pvpCount = 0;
                     var nodesProp = trackType.GetProperty("Nodes", PublicInstance);
                     if (nodesProp != null)
                     {
                         var nodes = nodesProp.GetValue(track) as IList;
-                        if (nodes != null) total = nodes.Count;
+                        if (nodes != null)
+                        {
+                            total = nodes.Count;
+                            FieldInfo pvpField = null;
+                            foreach (var node in nodes)
+                            {
+                                if (node == null) continue;
+                                if (pvpField == null)
+                                    pvpField = node.GetType().GetField("IsPvpMatch", PublicInstance);
+                                if (pvpField != null)
+                                {
+                                    bool isPvp = (bool)pvpField.GetValue(node);
+                                    if (isPvp) pvpCount++;
+                                    else aiCount++;
+                                }
+                            }
+                        }
                     }
 
-                    string summary = Strings.ColorChallengeProgress(null, unlocked, total, completed);
+                    string summary = Strings.ColorChallengeProgress(null, unlocked, total, completed, aiCount, pvpCount);
                     if (string.IsNullOrEmpty(summary)) continue;
 
                     // Map track key (e.g. "white") to localized color name (e.g. "Weiß")

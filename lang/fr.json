@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Match JcJ",
   "ColorChallengeMatchAI": "Match contre l'IA",
   "ColorChallengeDeckUpgrade": "Amélioration du deck",
+  "ColorChallengeMatchBreakdown_Format": "{0} IA, {1} JcJ",
   "ColorChallengeReward_Format": "Récompense : {0}",
   "ScreenChat": "Chat",
   "ChatWith_Format": "Chat avec {0}",

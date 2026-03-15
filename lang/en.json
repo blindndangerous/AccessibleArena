@@ -875,6 +875,7 @@
   "ColorChallengeMatchPvP": "PvP Match",
   "ColorChallengeMatchAI": "AI Match",
   "ColorChallengeDeckUpgrade": "Deck Upgrade",
+  "ColorChallengeMatchBreakdown_Format": "{0} AI, {1} PvP",
   "ColorChallengeReward_Format": "Reward: {0}",
   "ScreenChat": "Chat",
   "ChatWith_Format": "Chat with {0}",

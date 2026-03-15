@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Partida JcJ",
   "ColorChallengeMatchAI": "Partida contra IA",
   "ColorChallengeDeckUpgrade": "Mejora de mazo",
+  "ColorChallengeMatchBreakdown_Format": "{0} IA, {1} JcJ",
   "ColorChallengeReward_Format": "Recompensa: {0}",
   "ScreenChat": "Chat",
   "ChatWith_Format": "Chat con {0}",

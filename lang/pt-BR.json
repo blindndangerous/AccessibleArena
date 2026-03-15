@@ -863,6 +863,7 @@
   "ColorChallengeMatchPvP": "Partida PvP",
   "ColorChallengeMatchAI": "Partida contra IA",
   "ColorChallengeDeckUpgrade": "Melhoria do deck",
+  "ColorChallengeMatchBreakdown_Format": "{0} IA, {1} PvP",
   "ColorChallengeReward_Format": "Recompensa: {0}",
   "ScreenChat": "Chat",
   "ChatWith_Format": "Chat com {0}",

@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.8.5
 
+### Improved: Color Challenge labels show match type breakdown
+- Color button labels now include AI/PvP match counts (e.g. "White, 0 of 5 nodes unlocked, 3 AI, 2 PvP")
+
 ### Fix: Hopefully fixed auto-advancing dropdowns in registration
 - Extended post-dropdown Submit block from 3 frames (~50ms) to 500ms to cover the game's delayed form-advance
 
