@@ -435,7 +435,7 @@ namespace AccessibleArena.Core.Services
             {
                 _overviewEntries.Add(new OverviewEntry
                 {
-                    Label = $"--- {sectionName}: none ---",
+                    Label = $"--- {sectionName}: {Strings.AchievementSectionEmpty} ---",
                     GameObject = _controller.gameObject,
                     Type = OverviewEntryType.SectionLabel
                 });
@@ -1173,13 +1173,13 @@ namespace AccessibleArena.Core.Services
         private string FormatGroupAnnouncement(int index)
         {
             if (index < 0 || index >= _groupEntries.Count) return "";
-            return $"{_groupEntries[index].Label}, {index + 1} of {_groupEntries.Count}";
+            return Strings.ItemPositionOf(index + 1, _groupEntries.Count, _groupEntries[index].Label);
         }
 
         private string FormatAchievementAnnouncement(int index)
         {
             if (index < 0 || index >= _achievementItems.Count) return "";
-            return $"{_achievementItems[index].Label}, {index + 1} of {_achievementItems.Count}";
+            return Strings.ItemPositionOf(index + 1, _achievementItems.Count, _achievementItems[index].Label);
         }
 
         #endregion

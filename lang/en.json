@@ -361,6 +361,7 @@
   "AchievementSummaryTab": "Summary",
   "AchievementSectionTracked": "Tracked",
   "AchievementSectionUpNext": "Up Next",
+  "AchievementSectionEmpty": "none",
   "PopupCancel": "Cancel",
   "NavigateHint": "Arrow keys to navigate, Enter to select",
   "DuelKeybindingsHint": "Tab cycles playable cards. C for hand. B for your creatures, A for your lands, R for your non-creatures. Shift plus B, A, R for enemy. G for graveyard, X for exile, S for stack. V for player info. P for full control, Shift plus P to lock. Number keys 1 to 0 for phase stops",

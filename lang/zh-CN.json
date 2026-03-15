@@ -329,6 +329,27 @@
   "PrizeWallActivation_Format": "奖品墙。{0}个物品。{1}个球体可用。方向键导航。",
   "PrizeWallItem_Format": "第{0}个，共{1}个：{2}",
   "PrizeWallSphereStatus_Format": "{0}个球体可用",
+  "AchievementsActivation_Format": "成就。{0}个标签页。上下键导航。",
+  "AchievementsGroups_Format": "{0}。{1}个分组。",
+  "AchievementsInGroup_Format": "{0}。{1}个成就。",
+  "AchievementGroup_Format": "{0}，{2}个中完成{1}个，{3}个可领取",
+  "AchievementGroupDesc_Format": "{0}。{1}。{3}个中完成{2}个，{4}个可领取",
+  "AchievementEntry_Format": "{0}。{1}。{2}",
+  "AchievementEntryFavorite_Format": "{0}。{1}。{2}。已追踪",
+  "AchievementCompleted": "已完成",
+  "AchievementClaimed": "已领取",
+  "AchievementReadyToClaim": "可领取",
+  "AchievementTracked": "已追踪",
+  "AchievementUntracked": "已取消追踪",
+  "AchievementActionClaim": "领取",
+  "AchievementActionTrack": "追踪",
+  "AchievementActionUntrack": "取消追踪",
+  "AchievementActionGeneric": "操作",
+  "AchievementActionPosition_Format": "{0}，选项{1}/{2}",
+  "AchievementSummaryTab": "概览",
+  "AchievementSectionTracked": "追踪中",
+  "AchievementSectionUpNext": "接下来",
+  "AchievementSectionEmpty": "无",
   "PopupCancel": "取消",
   "NavigateHint": "方向键导航，Enter选择",
   "DuelKeybindingsHint": "Tab循环可用卡牌。C查看手牌。B你的生物，A你的地牌，R你的非生物。Shift+B、A、R查看对手。G坟场，X放逐区，S堆叠。V玩家信息。P完全控制，Shift+P锁定。数字键1到0切换阶段停止",
@@ -853,3 +874,5 @@
   "ChatNoConversation": "无对话",
   "GroupChatWindow": "聊天"
 }
+
+

@@ -4,6 +4,13 @@ All notable changes to Accessible Arena.
 
 ## v0.8.5
 
+### New: Accessible achievements screen (thanks to blindndangerous)
+- Achievements now use multi-level drill-down navigation: set tabs, achievement groups, individual achievements
+- Group descriptions and completion status are read aloud
+- Track, untrack, and claim achievements with Enter/Space sub-actions
+- All achievement strings translated in all supported languages
+- Note: any bugs are mine (frostbane) — I adapted the original design to match the mod's navigation patterns
+
 ### Fix: Play blade navigation when opened from a home screen objective
 - When pressing Enter on a tracked Sparked-Rank achievement (Progress > Objectives), the Play blade now navigates correctly, matching the behavior of Play > Play
 - Backspace now correctly closes the blade and returns to the objectives screen

@@ -963,6 +963,7 @@ namespace AccessibleArena.Core.Models
         public static string AchievementSummaryTab => L.Get("AchievementSummaryTab");
         public static string AchievementSectionTracked => L.Get("AchievementSectionTracked");
         public static string AchievementSectionUpNext => L.Get("AchievementSectionUpNext");
+        public static string AchievementSectionEmpty => L.Get("AchievementSectionEmpty");
 
         // ===========================================
         // INLINE STRING MIGRATIONS
