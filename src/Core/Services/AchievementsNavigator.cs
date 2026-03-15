@@ -147,6 +147,7 @@ namespace AccessibleArena.Core.Services
 
         // IClientAchievementGroup properties
         private PropertyInfo _groupTitleProp;
+        private PropertyInfo _groupDescriptionProp;
         private PropertyInfo _groupCompletedCountProp;
         private PropertyInfo _groupTotalCountProp;
         private PropertyInfo _groupClaimableCountProp;
@@ -280,6 +281,7 @@ namespace AccessibleArena.Core.Services
             {
                 var pubFlags = BindingFlags.Public | BindingFlags.Instance;
                 _groupTitleProp = groupInterface.GetProperty("Title", pubFlags);
+                _groupDescriptionProp = groupInterface.GetProperty("Description", pubFlags);
                 _groupCompletedCountProp = groupInterface.GetProperty("CompletedAchievementCount", pubFlags);
                 _groupTotalCountProp = groupInterface.GetProperty("TotalAchievementCount", pubFlags);
                 _groupClaimableCountProp = groupInterface.GetProperty("ClaimableAchievementCount", pubFlags);
@@ -487,13 +489,14 @@ namespace AccessibleArena.Core.Services
                 if (groupData == null) continue;
 
                 string groupTitle = StripRichText(SafeGetString(_groupTitleProp, groupData) ?? "Unknown Group");
+                string groupDesc = StripRichText(SafeGetString(_groupDescriptionProp, groupData) ?? "");
                 int completed = SafeGetInt(_groupCompletedCountProp, groupData);
                 int total = SafeGetInt(_groupTotalCountProp, groupData);
                 int claimable = SafeGetInt(_groupClaimableCountProp, groupData);
 
                 _groupEntries.Add(new GroupEntry
                 {
-                    Label = Strings.AchievementGroup(groupTitle, completed, total, claimable),
+                    Label = Strings.AchievementGroup(groupTitle, groupDesc, completed, total, claimable),
                     GameObject = groupDisplay.gameObject,
                     Title = groupTitle
                 });

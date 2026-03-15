@@ -941,8 +941,10 @@ namespace AccessibleArena.Core.Models
             L.Format("AchievementsGroups_Format", tabName, groupCount);
         public static string AchievementsInGroup(string groupName, int achievementCount) =>
             L.Format("AchievementsInGroup_Format", groupName, achievementCount);
-        public static string AchievementGroup(string title, int completed, int total, int claimable) =>
-            L.Format("AchievementGroup_Format", title, completed, total, claimable);
+        public static string AchievementGroup(string title, string description, int completed, int total, int claimable) =>
+            string.IsNullOrEmpty(description)
+                ? L.Format("AchievementGroup_Format", title, completed, total, claimable)
+                : L.Format("AchievementGroupDesc_Format", title, description, completed, total, claimable);
         public static string AchievementEntry(string title, string description, string status, bool favorite) =>
             favorite
                 ? L.Format("AchievementEntryFavorite_Format", title, description, status)
