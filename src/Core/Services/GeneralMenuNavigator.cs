@@ -1216,6 +1216,14 @@ namespace AccessibleArena.Core.Services
             // Use GetEnterAndConsume to prevent game from also processing Enter on EventSystem selected object
             if (_groupedNavigationEnabled && _groupedNavigator.IsActive && InputManager.GetEnterAndConsume())
             {
+                // On Login scene, block the Enter KeyUp from reaching the game.
+                // The game's ActionSystem fires Panel.OnAccept() on KeyUp, which clicks
+                // _mainButton regardless of focus — causing double registration submission.
+                if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SceneNames.Login)
+                {
+                    InputManager.BlockNextEnterKeyUp = true;
+                }
+
                 if (HandleGroupedEnter())
                     return true;
             }

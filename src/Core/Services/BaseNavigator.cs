@@ -1362,18 +1362,26 @@ namespace AccessibleArena.Core.Services
 
             if (enterPressed || spacePressed)
             {
-                // Consume Enter for toggles, dropdowns, and ALL elements on Login scene
-                // so the game's KeyboardManager.PublishKeyDown doesn't trigger Panel.OnAccept()
-                // (which would submit the registration form a second time).
+                // Consume Enter for toggles/dropdowns so KeyboardManager.PublishKeyDown
+                // doesn't pass it to the game's subscribers.
                 if (IsValidIndex && enterPressed)
                 {
                     var element = _elements[_currentIndex].GameObject;
-                    bool isLoginScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Login";
-                    if (element != null && (isLoginScene || element.GetComponent<Toggle>() != null || UIFocusTracker.IsDropdown(element)))
+                    if (element != null && (element.GetComponent<Toggle>() != null || UIFocusTracker.IsDropdown(element)))
                     {
                         InputManager.ConsumeKey(KeyCode.Return);
                         InputManager.ConsumeKey(KeyCode.KeypadEnter);
                     }
+                }
+
+                // On Login scene, block the Enter KeyUp from reaching the game.
+                // Same pattern as the craft fix: the game's ActionSystem fires
+                // Panel.OnAccept() on KeyUp (via OldInputHandler/PublishKeyUp),
+                // which clicks _mainButton regardless of focus.
+                // BlockNextEnterKeyUp is a one-shot flag checked in PublishKeyUp_Prefix.
+                if (enterPressed && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Login")
+                {
+                    InputManager.BlockNextEnterKeyUp = true;
                 }
 
                 if (shiftHeld && enterPressed)

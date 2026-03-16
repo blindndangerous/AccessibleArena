@@ -12,8 +12,9 @@ namespace AccessibleArena.Patches
     /// MTGA has multiple ways of detecting Enter:
     /// 1. Unity's EventSystem Submit - blocked by SendSubmitEventToSelectedObject patch
     /// 2. Direct Input.GetKeyDown calls - blocked by GetKeyDown patch
+    /// 3. ActionSystem calling IAcceptActionHandler.OnAccept() - blocked by PanelOnAccept patch
     ///
-    /// Both patches check BlockSubmitForToggle flag set by navigators when on a toggle.
+    /// All patches check BlockSubmitForToggle flag set by navigators when on a toggle/login element.
     ///
     /// Arrow key navigation is blocked by SendMoveEventToSelectedObject patch when
     /// the user is editing an input field (prevents focus from leaving the field).
@@ -105,6 +106,28 @@ namespace AccessibleArena.Patches
                     __result = false;
                 }
             }
+        }
+
+        /// <summary>
+        /// Patch Panel.OnAccept() to block the ActionSystem from submitting the form
+        /// when our navigator is handling Enter.
+        ///
+        /// Panel (Wotc.Mtga.Login.Panel) implements IAcceptActionHandler. The ActionSystem
+        /// calls OnAccept() when Enter is pressed — this is a SEPARATE path from
+        /// Input.GetKeyDown, EventSystem Submit, and KeyboardManager.PublishKeyDown.
+        /// Without this patch, pressing Enter triggers BOTH our mod's activation AND
+        /// the game's Panel.OnAccept(), causing double registration submission.
+        /// </summary>
+        [HarmonyPatch("Wotc.Mtga.Login.Panel", "OnAccept")]
+        [HarmonyPrefix]
+        public static bool PanelOnAccept_Prefix()
+        {
+            if (InputManager.BlockSubmitForToggle)
+            {
+                MelonLogger.Msg("[EventSystemPatch] BLOCKED Panel.OnAccept() - our navigator handles Enter");
+                return false;
+            }
+            return true;
         }
     }
 }
