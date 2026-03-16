@@ -2,6 +2,8 @@
 
 All notable changes to Accessible Arena.
 
+## v0.8.6
+
 ## v0.8.5
 
 ### Fix: Stale browser announcement after confirming modal spell mode

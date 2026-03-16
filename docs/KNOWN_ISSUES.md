@@ -12,21 +12,9 @@ Starting a bot match from the "Recent Played" section does not work properly.
 
 ---
 
-### Workflow Browser Cannot Cancel Mana-Costing Activated Abilities
-
-When activating a mana-costing ability on a battlefield card, the workflow browser opens but Backspace does not cancel it.
-
----
-
 ### Blocking Sometimes Announces "0 0"
 
 During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information.
-
----
-
-### No Feedback When Card Cannot Be Played
-
-When attempting to play a card that cannot be played (e.g., insufficient mana, invalid target, wrong phase), the game silently rejects the action. The mod does not extract or announce the reason for the failure, leaving the user with no feedback about what went wrong.
 
 ---
 
@@ -157,16 +145,6 @@ Zone change events can create redundant announcements when a creature dies and g
 
 ---
 
-## Potential Issues (Monitor)
-
-### Double Announcements on Some Browsers
-
-Some browser types occasionally produce duplicate announcements when opening or navigating. Root cause unclear.
-
-**Files:** `BrowserNavigator.cs`
-
----
-
 ## Design Decisions
 
 ### Panel Detection Architecture
@@ -213,24 +191,20 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 ### Upcoming
 
-1. Unplayable card detection - detect and announce when a card cannot be played (e.g. insufficient mana) instead of silently failing or entering a broken state
-2. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
-3. Auto-skip tracking and hotkeys - correct tracking and switching of auto-skip state, including a new hotkey for toggling auto-skip and full auto-skip modes
-4. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
-5. Tutorial system for mod users (see detailed section below)
-6. Better handling of number announcements while tabbing - possibly change how Tab changes focus to reduce noisy or redundant number readouts
-7. Player username announcements
-8. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
-9. Better group announcements - improve how element groups are announced when entering/switching groups
-10. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-11. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-12. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
-13. Pass entire turn shortcut - quick shortcut to pass priority for the whole turn (may already exist as Shift+Enter in the game, just needs to be enabled/announced)
-14. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-15. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
-16. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
-17. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
-18. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
+1. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
+2. Rapid navigation by holding navigation keys - allow continuous scrolling through elements when arrow keys or other navigation keys are held down
+3. Player username announcements
+4. Settings menu improvements - better sorting of options and clearer display of checkmarks/toggle states
+5. Display counters on players - announce counters like poison, energy, experience, etc. on players
+6. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
+7. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
+8. Phase skip warning - warn when passing priority would skip a phase where the player could still play cards (e.g., skipping main phase with mana open)
+9. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+10. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+11. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
+12. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
+13. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
+14. Missing settings screens - make Account settings and Report Error screens accessible
 
 ### Tutorial System
 
@@ -270,12 +244,13 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 5. Improve player zone entries - better labels and more useful information for properties shown in the player info zone (V key)
 6. Mulligan overview announcement - announce hand summary when mulligan opens (e.g., card count, notable cards)
 7. Loading screen announcement cleanup - reduce repetitive announcements during loading screens
+8. Useful text for all browsers - add contextual help text describing what each browser type expects (e.g. "choose a mode", "put cards on top or bottom") and make these announcements optional via a setting
+9. Better group announcements - improve how element groups are announced when entering/switching groups
 
 ### Low Priority / v1.1
 
 1. Auto version checking and auto update - check for new mod versions on launch and optionally auto-update. May be too problematic to implement reliably.
 2. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
 3. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
-4. Achievement screen - accessible navigation and reading of achievement progress and rewards
-5. Improving deck actions workflow - streamline the deck management actions (rename, delete, duplicate, etc.) for better screen reader accessibility
+4. Improving deck actions workflow - streamline the deck management actions (rename, delete, duplicate, etc.) for better screen reader accessibility
 
