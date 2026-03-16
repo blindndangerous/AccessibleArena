@@ -4,6 +4,11 @@ All notable changes to Accessible Arena.
 
 ## v0.8.5
 
+### Improved: Battlefield card selection in multi-select situations
+- Enter now toggles selection on battlefield cards navigated via Tab (e.g. untap lands from Frantic Search)
+- Selection count announcement distinguishes multi-select from single-target: multi-select shows "1 of 3 selected", single-target just says "selected"
+- Fixed wrong "0 of 1 selected" announcement for single-target abilities like Eluge's flood counter
+
 ### Improved: Color Challenge labels show match type breakdown
 - Color button labels now include AI/PvP match counts (e.g. "White, 0 of 5 nodes unlocked, 3 AI, 2 PvP")
 

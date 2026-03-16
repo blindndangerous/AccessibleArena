@@ -220,18 +220,20 @@ namespace AccessibleArena.Core.Services
                 // In selection mode, handle Enter even if BattlefieldNavigator has zone ownership.
                 // Tab navigates to battlefield cards which delegates to BattlefieldNavigator (Left/Right work),
                 // but Enter should toggle selection rather than doing a regular click.
-                if (IsSelectionModeActive() && _zoneNavigator.CurrentZoneOwner == ZoneOwner.BattlefieldNavigator
+                var submitInfo = IsSelectionModeActive() ? GetSubmitButtonInfo() : null;
+                if (submitInfo != null && _zoneNavigator.CurrentZoneOwner == ZoneOwner.BattlefieldNavigator
                     && _battlefieldNavigator != null)
                 {
                     var card = _battlefieldNavigator.GetCurrentCard();
                     if (card != null)
                     {
+                        int preClickCount = submitInfo.Value.count;
                         string cardName = CardDetector.GetCardName(card) ?? card.name;
                         bool wasSelected = IsCardSelected(card);
-                        MelonLogger.Msg($"[HotHighlightNavigator] Toggling battlefield selection: {cardName} (was selected: {wasSelected})");
+                        MelonLogger.Msg($"[HotHighlightNavigator] Toggling battlefield selection: {cardName} (was selected: {wasSelected}, preCount: {preClickCount})");
                         var result = UIActivator.SimulatePointerClick(card);
                         if (result.Success)
-                            MelonCoroutines.Start(AnnounceSelectionToggleDelayed(cardName, wasSelected));
+                            MelonCoroutines.Start(AnnounceSelectionToggleDelayed(cardName, wasSelected, preClickCount));
                         else
                             _announcer.Announce(Strings.CouldNotSelect(cardName), AnnouncementPriority.High);
                         return true;
@@ -700,6 +702,7 @@ namespace AccessibleArena.Core.Services
             }
 
             bool selectionMode = IsSelectionModeActive();
+            int preClickCount = selectionMode ? (GetSubmitButtonInfo()?.count ?? -1) : -1;
             MelonLogger.Msg($"[HotHighlightNavigator] Activating: {item.Name} in {item.Zone} (selection mode: {selectionMode})");
 
             if (item.Zone == "Hand")
@@ -715,7 +718,7 @@ namespace AccessibleArena.Core.Services
                     if (result.Success)
                     {
                         // Announce toggle result after game updates
-                        MelonCoroutines.Start(AnnounceSelectionToggleDelayed(item.Name, wasSelected));
+                        MelonCoroutines.Start(AnnounceSelectionToggleDelayed(item.Name, wasSelected, preClickCount));
                     }
                     else
                     {
@@ -750,7 +753,7 @@ namespace AccessibleArena.Core.Services
 
                     var result = UIActivator.SimulatePointerClick(item.GameObject);
                     if (result.Success)
-                        MelonCoroutines.Start(AnnounceSelectionToggleDelayed(item.Name, wasSelected));
+                        MelonCoroutines.Start(AnnounceSelectionToggleDelayed(item.Name, wasSelected, preClickCount));
                     else
                         _announcer.Announce(Strings.CouldNotSelect(item.Name), AnnouncementPriority.High);
                 }
@@ -1058,6 +1061,7 @@ namespace AccessibleArena.Core.Services
                 if (match.Success)
                 {
                     int count = int.Parse(match.Groups[1].Value);
+                    MelonLogger.Msg($"[HotHighlightNavigator] DIAG GetSubmitButtonInfo matched: '{buttonText}' count={count}");
                     return (count, selectable.gameObject);
                 }
             }
@@ -1067,28 +1071,40 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// After toggling a card selection, announces the toggle result and current count.
+        /// Compares post-click count with pre-click count to detect single-target targeting
+        /// (where the game resolves immediately and the count doesn't change).
         /// </summary>
         /// <param name="cardName">Name of the card that was toggled</param>
         /// <param name="wasSelected">Whether the card was selected before the click</param>
-        private IEnumerator AnnounceSelectionToggleDelayed(string cardName, bool wasSelected)
+        /// <param name="preClickCount">The submit button count before the click (-1 if unknown)</param>
+        private IEnumerator AnnounceSelectionToggleDelayed(string cardName, bool wasSelected, int preClickCount = -1)
         {
             yield return new WaitForSeconds(0.2f);
 
             var info = GetSubmitButtonInfo();
             if (info != null)
             {
-                // Get required count from game's prompt text (e.g. "Discard 2 cards")
-                int required = GetRequiredCountFromPrompt();
-                string progress = Strings.SelectionProgress(info.Value.count, required);
-                // Select: "CardName, 1 of 2 selected" (action implied by progress)
-                // Deselect: "CardName deselected, 1 of 2 selected" (need explicit action)
-                if (wasSelected)
-                    _announcer.Announce($"{cardName} {Strings.Deselected}, {progress}", AnnouncementPriority.Normal);
+                // If the count didn't change from pre-click, the game processed immediately
+                // (single-target like Eluge's flood counter). Just announce "selected".
+                if (preClickCount >= 0 && info.Value.count == preClickCount)
+                {
+                    string action = wasSelected ? Strings.Deselected : Strings.Selected;
+                    _announcer.Announce($"{cardName} {action}", AnnouncementPriority.Normal);
+                }
                 else
-                    _announcer.Announce($"{cardName}, {progress}", AnnouncementPriority.Normal);
+                {
+                    // Count changed = real multi-select (discard, untap lands, etc.)
+                    int required = GetRequiredCountFromPrompt();
+                    string progress = Strings.SelectionProgress(info.Value.count, required);
+                    if (wasSelected)
+                        _announcer.Announce($"{cardName} {Strings.Deselected}, {progress}", AnnouncementPriority.Normal);
+                    else
+                        _announcer.Announce($"{cardName}, {progress}", AnnouncementPriority.Normal);
+                }
             }
             else
             {
+                // Button gone = game resolved and moved on. Just announce "selected".
                 string action = wasSelected ? Strings.Deselected : Strings.Selected;
                 _announcer.Announce($"{cardName} {action}", AnnouncementPriority.Normal);
             }
@@ -1236,13 +1252,14 @@ namespace AccessibleArena.Core.Services
         {
             if (!IsSelectionModeActive()) return false;
 
+            int preClickCount = GetSubmitButtonInfo()?.count ?? -1;
             string cardName = CardDetector.GetCardName(card) ?? card.name;
             bool wasSelected = IsCardSelected(card);
             MelonLogger.Msg($"[HotHighlightNavigator] Zone nav toggling selection: {cardName} (was selected: {wasSelected})");
 
             var result = UIActivator.SimulatePointerClick(card);
             if (result.Success)
-                MelonCoroutines.Start(AnnounceSelectionToggleDelayed(cardName, wasSelected));
+                MelonCoroutines.Start(AnnounceSelectionToggleDelayed(cardName, wasSelected, preClickCount));
             else
                 _announcer.Announce(Strings.CouldNotSelect(cardName), AnnouncementPriority.High);
 
