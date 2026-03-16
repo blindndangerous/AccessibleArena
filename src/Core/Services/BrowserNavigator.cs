@@ -2084,6 +2084,10 @@ namespace AccessibleArena.Core.Services
             // not confirm/cancel, and the global PromptButtons would click unrelated duel phase buttons
             if (!(_browserInfo?.IsOptionalAction == true) && !_isChoiceList && TryClickPromptButton(BrowserDetector.PromptButtonPrimaryPrefix, out clickedLabel))
             {
+                // PromptButton_Primary is a duel-level button (pass/submit), not browser-internal.
+                // Clicking it advances the game, which will destroy the scaffold.
+                // Clear rescan to avoid stale re-announcement while scaffold lingers.
+                _pendingRescan = false;
                 _announcer.Announce(clickedLabel, AnnouncementPriority.Normal);
                 BrowserDetector.InvalidateCache(); // Force re-detection on next Update
                 return;

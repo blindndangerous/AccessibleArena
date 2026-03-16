@@ -4,6 +4,10 @@ All notable changes to Accessible Arena.
 
 ## v0.8.5
 
+### Fix: Stale browser announcement after confirming modal spell mode
+- After selecting a mode in a multi-option browser (e.g. Phantom Interference), the selection prompt was re-announced before the next game step (auto-pay)
+- The browser scaffold lingered for a few frames after confirm, causing a spurious rescan
+
 ### Improved: Battlefield card selection in multi-select situations
 - Enter now toggles selection on battlefield cards navigated via Tab (e.g. untap lands from Frantic Search)
 - Selection count announcement distinguishes multi-select from single-target: multi-select shows "1 of 3 selected", single-target just says "selected"
