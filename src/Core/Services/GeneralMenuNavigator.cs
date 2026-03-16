@@ -1216,14 +1216,6 @@ namespace AccessibleArena.Core.Services
             // Use GetEnterAndConsume to prevent game from also processing Enter on EventSystem selected object
             if (_groupedNavigationEnabled && _groupedNavigator.IsActive && InputManager.GetEnterAndConsume())
             {
-                // On Login scene, block the Enter KeyUp from reaching the game.
-                // The game's ActionSystem fires Panel.OnAccept() on KeyUp, which clicks
-                // _mainButton regardless of focus — causing double registration submission.
-                if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SceneNames.Login)
-                {
-                    InputManager.BlockNextEnterKeyUp = true;
-                }
-
                 if (HandleGroupedEnter())
                     return true;
             }
@@ -4655,12 +4647,12 @@ namespace AccessibleArena.Core.Services
                 // EventSystemPatch checks this flag to block Unity's Submit events.
                 // For dropdowns: prevents SendSubmitEventToSelectedObject from firing
                 // before our Update opens the dropdown and sets ShouldBlockEnterFromGame.
-                // On Login scene: block Enter for ALL elements. Without this,
-                // the game's Panel.OnAccept() fires via OldInputHandler before our mod
-                // processes Enter, clicking the main button and setting _submitting=true.
-                // Our mod then sees the button as disabled and reports "Deaktiviert".
+                // On Login scene: block Enter for ALL elements except the RegistrationPanel
+                // submit button, which needs the game's native path for ConnectToFrontDoor.
                 bool isLoginScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SceneNames.Login;
-                InputManager.BlockSubmitForToggle = isToggle || isDropdown || isLoginScene;
+                bool isRegSubmit = isLoginScene && gameObject.name == "MainButton_Register" && IsInsideRegistrationPanel(gameObject);
+                InputManager.AllowNativeEnterOnLogin = isRegSubmit;
+                InputManager.BlockSubmitForToggle = isToggle || isDropdown || (isLoginScene && !isRegSubmit);
 
                 // Skip SetSelectedGameObject if EventSystem already has our element selected.
                 // Calling it again would trigger OnSelect handlers unnecessarily, which can cause

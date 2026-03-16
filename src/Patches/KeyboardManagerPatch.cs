@@ -120,11 +120,9 @@ namespace AccessibleArena.Patches
                 }
             }
 
-            // In Login scene, block Enter entirely - our mod handles all Enter presses
-            // This prevents Panel.OnAccept() from submitting the registration form
-            // via KeyboardManager subscribers (separate path from Input.GetKeyDown which
-            // is blocked by EventSystemPatch.GetKeyDown_Postfix).
-            if (_cachedSceneName == SceneNames.Login)
+            // In Login scene, block Enter — our mod handles activation for all buttons
+            // EXCEPT the RegistrationPanel submit, which needs the game's native path.
+            if (_cachedSceneName == SceneNames.Login && !InputManager.AllowNativeEnterOnLogin)
             {
                 if (key == KeyCode.Return || key == KeyCode.KeypadEnter)
                 {

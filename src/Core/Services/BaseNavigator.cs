@@ -1374,14 +1374,21 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
-                // On Login scene, block the Enter KeyUp from reaching the game.
-                // Same pattern as the craft fix: the game's ActionSystem fires
-                // Panel.OnAccept() on KeyUp (via OldInputHandler/PublishKeyUp),
-                // which clicks _mainButton regardless of focus.
-                // BlockNextEnterKeyUp is a one-shot flag checked in PublishKeyUp_Prefix.
-                if (enterPressed && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Login")
+                // On Login scene, let the game handle Enter for the RegistrationPanel
+                // submit button natively. The game's own input system
+                // (ActionSystem → Panel.OnAccept) handles that specific button.
+                // All other Login buttons are still activated by our mod normally.
+                if (enterPressed && IsValidIndex)
                 {
-                    InputManager.BlockNextEnterKeyUp = true;
+                    var currentElement = _elements[_currentIndex].GameObject;
+                    bool isLoginScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Login";
+                    if (isLoginScene && currentElement != null
+                        && currentElement.name == "MainButton_Register"
+                        && IsInsideRegistrationPanel(currentElement))
+                    {
+                        // Don't activate — game handles it. Just return so we don't interfere.
+                        return;
+                    }
                 }
 
                 if (shiftHeld && enterPressed)
@@ -1786,10 +1793,12 @@ namespace AccessibleArena.Core.Services
                 // EventSystemPatch checks this flag to block Unity's Submit events.
                 // For dropdowns: prevents SendSubmitEventToSelectedObject from firing
                 // before our Update opens the dropdown and sets ShouldBlockEnterFromGame.
-                // On Login scene: block Enter for ALL elements to prevent
-                // Panel.OnAccept() from racing our mod (see GeneralMenuNavigator for details).
+                // On Login scene: block Enter for ALL elements except the RegistrationPanel
+                // submit button, which needs the game's native path for ConnectToFrontDoor.
                 bool isLoginScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Login";
-                InputManager.BlockSubmitForToggle = isToggle || isDropdown || isLoginScene;
+                bool isRegSubmit = isLoginScene && element.name == "MainButton_Register" && IsInsideRegistrationPanel(element);
+                InputManager.AllowNativeEnterOnLogin = isRegSubmit;
+                InputManager.BlockSubmitForToggle = isToggle || isDropdown || (isLoginScene && !isRegSubmit);
 
                 // INPUT FIELD HANDLING (arrow navigation):
                 // Clear EventSystem selection when arrow-navigating to input fields.
@@ -2078,6 +2087,25 @@ namespace AccessibleArena.Core.Services
             {
                 _announcer.Announce(result.Message, AnnouncementPriority.Normal);
             }
+        }
+
+        /// <summary>
+        /// Check if an element is inside a RegistrationPanel (not RegisterOrLoginPanel).
+        /// Used to let the game handle Enter natively for the registration submit button only.
+        /// </summary>
+        protected static bool IsInsideRegistrationPanel(UnityEngine.GameObject element)
+        {
+            var t = element.transform.parent;
+            while (t != null)
+            {
+                foreach (var comp in t.GetComponents<UnityEngine.MonoBehaviour>())
+                {
+                    if (comp != null && comp.GetType().Name == "RegistrationPanel")
+                        return true;
+                }
+                t = t.parent;
+            }
+            return false;
         }
 
         #endregion

@@ -1,6 +1,30 @@
 # Registration Form Investigation
 
-Status: **Mod now invokes Panel.OnAccept() directly for registration submit.** All Enter paths blocked, only mod activates the button. Registration succeeds (email sent) but post-registration auto-login fails with 403 — cause unknown, not related to Enter blocking or code path.
+Status: **403 confirmed with ALL activation methods — including game's own native code path.** The post-registration `ConnectToFrontDoor` auto-login fails regardless of how the submit button is clicked. Not yet tested without MelonLoader.
+
+## Summary of All Tests
+
+Three different activation methods have been tested. All produce the same result: registration succeeds (email sent), but `ConnectToFrontDoor` returns 403.
+
+| Activation Method | Code Path | Result |
+|---|---|---|
+| Mod: `Panel.OnAccept()` via reflection | Mod → Panel.OnAccept() → CustomButton.Click() → OnButton_SubmitRegistration | 403 |
+| Mod: `SimulatePointerClick` | Mod → OnPointerUp → UnityEvent.Invoke → OnButton_SubmitRegistration | 403 |
+| Game native (zero mod involvement) | OldInputHandler.Update() → ActionSystem → Panel.OnAccept() → CustomButton.Click() → OnButton_SubmitRegistration | 403 |
+
+**Conclusion:** The mod's activation method is NOT the cause. The 403 occurs even when the game's own `OldInputHandler.Update()` handles Enter with zero mod involvement in the activation.
+
+## Current Architecture (after native-path changes)
+
+For the RegistrationPanel submit button specifically:
+- `AllowNativeEnterOnLogin = true` — all Enter blocks are lifted
+- `BlockSubmitForToggle = false` — game's `GetKeyDown(Return)` returns true
+- Mod's Enter handling does NOT activate (early return in BaseNavigator)
+- Game's `OldInputHandler.Update()` → `ActionSystem` → `Panel.OnAccept()` handles it natively
+
+For all OTHER Login scene elements:
+- Enter is still blocked from the game (6-layer blocking as before)
+- Mod handles activation via `UIActivator.Activate()` / `SimulatePointerClick()`
 
 ## Architecture: How Enter Reaches Registration
 
@@ -18,11 +42,6 @@ MTGA has **two independent input systems** that both detect Enter:
 ### Which system is active?
 `ActionSystemFactory.UseNewInput` (feature toggle `"use_new_unity_input"`) determines which handler is created. `CustomInputModule.Start()` uses the same toggle to choose `CustomStandaloneInputModule` or `CustomUIInputModule`. Only ONE of each is active.
 
-### Our mod's activation path
-- `BaseNavigator.HandleInput` / `GeneralMenuNavigator.HandleCustomInput` detects Enter via `EnterPressedWhileBlocked` flag (set by GetKeyDown_Postfix)
-- For the registration submit button: `UIActivator.TryInvokeLoginPanelAccept()` finds `RegistrationPanel` component, calls `Panel.OnAccept()` via reflection — identical to the game's own path
-- For other Login scene buttons: `UIActivator.SimulatePointerClick()` (normal path)
-
 ## Decompiled Types (all in `llm-docs/decompiled/`)
 
 - `OldInputHandler.cs` — `Core.Code.Input.OldInputHandler` (Core.dll): polls `Input.GetKeyDown` for all actions
@@ -33,125 +52,126 @@ MTGA has **two independent input systems** that both detect Enter:
 - `CustomUIInputModule.cs` — `Wotc.Mtga.CustomInput.CustomUIInputModule` (Core.dll): extends InputSystemUIInputModule, no Submit override
 - `Panel.cs` — `Wotc.Mtga.Login.Panel` (Core.dll): implements IAcceptActionHandler, OnAccept() clicks _mainButton
 - `RegistrationPanel.cs` — `Wotc.Mtga.Login.RegistrationPanel` (Core.dll): OnButton_SubmitRegistration() → DoRegistration()
+- `LoginScene.cs` — `Wotc.Mtga.Login.LoginScene` (Core.dll): ConnectToFrontDoor() connects via JWT + client version
 - `CustomButton.cs` — `CustomButton` (Core.dll): implements IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler (NOT ISubmitHandler). `Click()` calls OnPointerDown + _onClick.Invoke() directly. `OnPointerUp()` checks `_mouseOver` before invoking _onClick.
 
-## All Blocks on Login Scene
+## Enter Blocking on Login Scene
 
-### 1. `Input.GetKeyDown(KeyCode.Return)` — BLOCKED (KeyDown only)
-`EventSystemPatch.GetKeyDown_Postfix` (Harmony postfix on `UnityEngine.Input.GetKeyDown`):
-- When `BlockSubmitForToggle == true` and `__result == true` for Return/KeypadEnter
-- Sets `__result = false` (caller sees false), sets `EnterPressedWhileBlocked = true`
-- Blocks `OldInputHandler.Update()` from seeing Enter → Accept event never fires
-- Also blocks our own mod's `Input.GetKeyDown` calls (mod uses `EnterPressedWhileBlocked` instead)
-- `Input.GetKeyUp(Return)` is NOT patched — Unity raw KeyUp still fires normally
-- `Input.GetKey(Return)` is NOT patched — Unity raw key-held still fires normally
+### For RegistrationPanel submit button (`AllowNativeEnterOnLogin = true`)
+- `BlockSubmitForToggle = false` → `GetKeyDown(Return)` returns true to all callers
+- `NewInputHandler.OnAccept()` → allowed through
+- `KeyboardManager.PublishKeyDown/Up(Return)` → allowed through
+- Mod's BaseNavigator detects Enter but returns without activating
+- **Game handles activation entirely through its own native code path**
 
-### 2. `EventSystem.SendSubmitEventToSelectedObject` — BLOCKED
-`EventSystemPatch.SendSubmitEventToSelectedObject_Prefix` (Harmony prefix on `StandaloneInputModule`):
-- Blocked when `BlockSubmitForToggle == true` (always true on Login scene for all elements)
-- Also blocked by `DropdownStateManager.ShouldBlockEnterFromGame` (while dropdown is open)
-- Also blocked by `DropdownStateManager.ShouldBlockSubmit()` (500ms timer after dropdown close/selection)
-- The 500ms timer ONLY blocks this one method — does NOT block KeyUp, KeyDown, or PublishKeyDown/PublishKeyUp
-
-### 3. `KeyboardManager.PublishKeyDown(Return)` — BLOCKED
-`KeyboardManagerPatch.PublishKeyDown_Prefix` via `ShouldBlockKey`:
-- Scene-based check: `_cachedSceneName == SceneNames.Login` → blocks Return/KeypadEnter unconditionally
-- No dependency on button state — blocked regardless of interactable
-
-### 4. `KeyboardManager.PublishKeyUp(Return)` — BLOCKED
-`KeyboardManagerPatch.PublishKeyUp_Prefix` via `ShouldBlockKey`:
-- Same scene-based check as KeyDown — blocks Return/KeypadEnter unconditionally on Login scene
-- Game never sees Enter KeyUp through KeyboardManager, even if button is interactable
-- `BlockNextEnterKeyUp` one-shot flag is redundant on Login scene (permanent block catches it)
-
-### 5. `NewInputHandler.OnAccept()` — BLOCKED
-`EventSystemPatch.NewInputHandlerOnAccept_Prefix` (runtime Harmony prefix):
-- Blocks when scene is Login — prevents ActionSystem from calling Panel.OnAccept()
-- Applied via `FindType("Core.Code.Input.NewInputHandler")` + `harmony.Patch()` at runtime
-
-### 6. `BlockSubmitForToggle` for all Login scene elements
-In `BaseNavigator.UpdateEventSystemSelection` and `GeneralMenuNavigator.UpdateEventSystemSelectionForGroupedElement`:
-- Set to true for toggles, dropdowns, AND all Login scene elements
-- Controls GetKeyDown_Postfix (#1) and SendSubmitEventToSelectedObject_Prefix (#2)
-
-### Summary: what the game sees on Login scene
-- `Input.GetKeyDown(Return)` → always false (patched)
-- `Input.GetKey(Return)` → normal (NOT patched)
-- `Input.GetKeyUp(Return)` → normal (NOT patched)
-- `KeyboardManager.PublishKeyDown(Return)` → never fires (blocked)
-- `KeyboardManager.PublishKeyUp(Return)` → never fires (blocked)
-- `NewInputHandler.OnAccept()` → never fires (blocked)
-- `SendSubmitEventToSelectedObject()` → never fires (blocked)
-- **Only activation:** mod calls `Panel.OnAccept()` via reflection on `RegistrationPanel`
+### For all other Login elements (`AllowNativeEnterOnLogin = false`)
+- `Input.GetKeyDown(Return)` → blocked (patched, sets `EnterPressedWhileBlocked`)
+- `SendSubmitEventToSelectedObject()` → blocked (`BlockSubmitForToggle = true`)
+- `KeyboardManager.PublishKeyDown(Return)` → blocked (scene-based check)
+- `KeyboardManager.PublishKeyUp(Return)` → blocked (scene-based check)
+- `NewInputHandler.OnAccept()` → blocked (scene-based check)
+- **Only activation:** mod handles via `UIActivator.Activate()`
 
 ## Diagnostic Results
 
-### Test: empty form submit attempt
-```
-Activating: MainButton_Register (ID:-2846, Label:Bestätigen)
-CustomButton 'MainButton_Register' is NOT interactable - click blocked
-Announce: Deaktiviert
-```
-Button correctly blocked — `_checkFields()` disables it when form is incomplete. `OnButton_SubmitRegistration` was NOT called.
-
-### Test: filled form submit (Panel.OnAccept path)
+### Test 1: Mod calls Panel.OnAccept() via reflection
 ```
 Activating: MainButton_Register (ID:-2846, Label:Bestätigen)
 Invoking RegistrationPanel.OnAccept() via Panel base
 >>> OnButton_SubmitRegistration CALLED <<<
 Stack: Panel.OnAccept() → CustomButton.Click() → UnityEvent.Invoke → OnButton_SubmitRegistration
-Announce: Aktiviert
 (~10 seconds later) Accessible Arena shutting down
 ```
-- **Exactly ONE call** to `OnButton_SubmitRegistration`
-- Stack trace confirms game's own code path: `Panel.OnAccept()` → `CustomButton.Click()`
-- Registration succeeds (email sent), but 403 error appears instead of advancing to new player experience
+- Exactly ONE call. Registration succeeds (email sent), 403 on auto-login.
 
-### Test: filled form submit (SimulatePointerClick path, earlier build)
+### Test 2: Mod calls SimulatePointerClick
 ```
 Activating: MainButton_Register (ID:-2846, Label:Bestätigen)
 Simulating pointer events on: MainButton_Register
 >>> OnButton_SubmitRegistration CALLED <<<
 Stack: UIActivator.SimulatePointerClick → CustomButton.OnPointerUp → UnityEvent.Invoke → OnButton_SubmitRegistration
-Announce: Aktiviert
 (~4.5 seconds later) Accessible Arena shutting down
 ```
-- Also exactly ONE call — same 403 result
-- Different code path (OnPointerUp vs Click) but same outcome
+- Exactly ONE call. Same 403 result.
+
+### Test 3: Game's own native code path (zero mod activation)
+```
+BlockSubmitForToggle changed: True -> False  (user navigated to submit button)
+>>> OnButton_SubmitRegistration CALLED <<<
+Stack: OldInputHandler.Update() → ActionSystem.<.ctor>b__7_1() → Panel.OnAccept() → CustomButton.Click() → UnityEvent.Invoke → OnButton_SubmitRegistration
+(~23 seconds later) Accessible Arena shutting down
+```
+- Exactly ONE call. **Game's own `OldInputHandler.Update()` fired Enter.** Zero mod code in the stack trace. Same 403 result.
 
 ## What's Been Ruled Out
 
 1. **Double-submit** — Diagnostic proves exactly ONE `OnButton_SubmitRegistration` call in all tests
-2. **Code path difference** — Tested both `Panel.OnAccept()` (game's path) and `SimulatePointerClick` (mod's path) — same 403 result
-3. **Dropdown 500ms timer** — All dropdown `onValueChanged` properly suppressed/restored/fired. Timer expired 68+ seconds before submit. Only blocks `SendSubmitEventToSelectedObject`, not KeyUp/KeyDown
-4. **Dropdown onValueChanged suppression** — Log shows every "Suppressed" has matching "Restored" and "Fired"
-5. **`ShouldBlockEnterFromGame`** — Cleared when dropdown closed, false at submit time
-6. **Leaked KeyUp event** — Both KeyDown and KeyUp permanently blocked on Login scene via `ShouldBlockKey` (scene-based, not button-state-based). Game never sees Enter through KeyboardManager.
+2. **Mod's activation code path** — Three different activation methods tested (reflection, pointer simulation, game native) — all produce same 403
+3. **Mod involvement in activation** — Test 3 has zero mod code in the stack trace. The game's own `OldInputHandler.Update()` detected Enter and called `Panel.OnAccept()` through `ActionSystem`. Same 403.
+4. **Dropdown 500ms timer** — All dropdown `onValueChanged` properly suppressed/restored/fired. Timer expired 68+ seconds before submit
+5. **Dropdown onValueChanged suppression** — Log shows every "Suppressed" has matching "Restored" and "Fired"
+6. **`ShouldBlockEnterFromGame`** — Cleared when dropdown closed, false at submit time
+7. **Leaked KeyUp event** — Both KeyDown and KeyUp blocked on Login scene (scene-based, not button-state-based)
 
-## Remaining Unknown: Post-Registration 403
+## Post-Registration 403: What We Know
 
-After `OnButton_SubmitRegistration()` → `DoRegistration()`:
+### ConnectToFrontDoor (decompiled)
 ```csharp
-// From decompiled RegistrationPanel.cs
-private Promise<CreateUserResponse> DoRegistration()
+public void ConnectToFrontDoor(AccountInformation accountInfo)
 {
-    _submitting = true;
-    return _loginScene._accountClient.RegisterAsFullAccount(...)
-        .ThenOnMainThreadIfSuccess(delegate { OnRegisterSuccess(email); })
-        .ThenOnMainThreadIfError(delegate(Error e) { OnRegisterError(...); })
-        .Then(delegate { _submitting = false; });
-}
-
-private void OnRegisterSuccess(string email)
-{
-    // ... tracking, experiments, remember me ...
-    _loginScene.ConnectToFrontDoor(accountInformation);
+    FDCConnectionParams parameters = new FDCConnectionParams
+    {
+        Host = _currentEnvironment.fdHost,
+        Port = _currentEnvironment.fdPort,
+        SessionTicket = accountInfo.Credentials.Jwt,
+        ClientVersion = Global.VersionInfo.ContentVersion.ToString(),
+        IsDebugAccount = (accountInfo.HasRole_Debugging() || Debug.isDebugBuild),
+        AcceptsPolicy = () => RegistrationPanel.PolicyAcceptedThisSession
+                           || UpdatePoliciesPanel.PolicyAcceptedThisSession
+    };
+    _frontDoorConnection.Connect(parameters);
+    LoadNextPanelBasedOnLoginState();
 }
 ```
 
-Registration succeeds (email sent) but `ConnectToFrontDoor` (auto-login) fails with 403. This is a server callback, not input-driven. None of our Enter/input blocking should affect it.
+The FrontDoor connection uses:
+- **JWT token** from registration response (`accountInfo.Credentials.Jwt`)
+- **Client version** string (`Global.VersionInfo.ContentVersion`)
+- **Policy acceptance** lambda checking `RegistrationPanel.PolicyAcceptedThisSession`
 
-**Not yet tested:** whether the 403 also occurs without the mod installed.
+### LoginScene.Update() — auto-transition on success
+```csharp
+private void Update()
+{
+    if (!_exiting && _accountClient != null && _frontDoorConnection != null)
+    {
+        bool loggedIn = _accountClient.CurrentLoginState == LoginState.FullyRegisteredLogin;
+        bool connected = _frontDoorConnection.Connected;
+        bool notQueued = !_frontDoorConnection.IsQueued;
+        if (loggedIn && connected && notQueued)
+        {
+            _exiting = true;
+            this.LoggedIn?.Invoke();
+        }
+    }
+}
+```
+If ConnectToFrontDoor fails (403), `Connected` never becomes true, and the game never transitions out of the Login scene. Eventually the game quits (`OnApplicationQuit` fires).
+
+## Remaining Suspects
+
+### 1. MelonLoader/Harmony presence (most likely)
+MelonLoader injects into the Unity process and Harmony modifies game methods at the IL level (~30+ patches). If the FrontDoor server performs any client integrity validation (method hashes, DLL checksums, process integrity), the patched methods would fail those checks.
+
+### 2. Diagnostic Harmony patch on OnButton_SubmitRegistration
+The `SubmitRegistrationDiagnostic_Prefix` modifies `OnButton_SubmitRegistration` via Harmony IL patching. Even though it only logs, the method's IL is altered. This could trip integrity checks.
+
+### 3. Game/server bug unrelated to the mod
+The 403 might occur without the mod installed. **Not yet tested.**
+
+## Critical Next Step
+
+**Test registration without MelonLoader entirely.** Rename `version.dll` (or `winhttp.dll`) in the MTGA folder to temporarily disable MelonLoader. If the 403 also occurs without the mod, it's a game/server issue.
 
 ## Previous Attempts That Failed
 

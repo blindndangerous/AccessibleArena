@@ -58,6 +58,14 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// When true, patches allow the game's native Enter handling on the Login scene.
+        /// Set by navigators when the focused element is the RegistrationPanel submit button.
+        /// This lets the game's own ActionSystem → Panel.OnAccept() handle the button click
+        /// instead of our mod, to ensure the post-registration ConnectToFrontDoor flow works.
+        /// </summary>
+        public static bool AllowNativeEnterOnLogin { get; set; }
+
+        /// <summary>
         /// Set by EventSystemPatch when Enter is pressed but blocked because we're on a toggle.
         /// Our HandleInput checks this flag to know Enter was pressed and should activate the toggle.
         /// Frame-aware to prevent double-activation from multiple GetKeyDown calls per frame.

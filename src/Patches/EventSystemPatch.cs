@@ -77,15 +77,15 @@ namespace AccessibleArena.Patches
         }
 
         /// <summary>
-        /// Block NewInputHandler.OnAccept() on the Login scene.
-        /// Our mod handles all Enter presses — without this, the new Input System
-        /// fires Accept independently, causing Panel.OnAccept() to click _mainButton.
+        /// Block NewInputHandler.OnAccept() on the Login scene, unless the user is
+        /// on the RegistrationPanel submit button (which needs the game's native path
+        /// for the post-registration ConnectToFrontDoor flow).
         /// </summary>
         public static bool NewInputHandlerOnAccept_Prefix()
         {
-            if (SceneManager.GetActiveScene().name == SceneNames.Login)
+            if (SceneManager.GetActiveScene().name == SceneNames.Login
+                && !InputManager.AllowNativeEnterOnLogin)
             {
-                MelonLogger.Msg("[EventSystemPatch] BLOCKED NewInputHandler.OnAccept() on Login scene");
                 return false;
             }
             return true;
