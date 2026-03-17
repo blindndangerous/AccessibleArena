@@ -648,7 +648,7 @@
   "Card_TargetedBy_One_Format": "bersaglio di {0}",
   "Card_TargetedBy_Two_Format": "bersaglio di {0} e {1}",
   "Card_TargetedBy_Many_Format": "bersaglio di {0}",
-  "Duel_Started_Format": "Duello iniziato. {0} carte in mano",
+  "Duel_Started": "Duello iniziato",
   "Duel_YourTurn_Format": "Turno {0}",
   "Duel_OpponentTurn": "Turno dell'avversario",
   "Duel_TurnChanged": "Cambio turno",

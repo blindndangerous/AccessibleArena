@@ -648,7 +648,7 @@
   "Card_TargetedBy_One_Format": "被{0}指定為目標",
   "Card_TargetedBy_Two_Format": "被{0}和{1}指定為目標",
   "Card_TargetedBy_Many_Format": "被{0}指定為目標",
-  "Duel_Started_Format": "對決開始。手牌{0}張",
+  "Duel_Started": "對決開始",
   "Duel_YourTurn_Format": "回合{0}",
   "Duel_OpponentTurn": "對手的回合",
   "Duel_TurnChanged": "回合變更",

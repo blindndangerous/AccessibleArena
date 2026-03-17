@@ -358,9 +358,7 @@ namespace AccessibleArena.Core.Services
 
         protected override string GetActivationAnnouncement()
         {
-            int handCards = _zoneNavigator.HandCardCount;
-
-            string core = Models.Strings.Duel_Started(handCards);
+            string core = Models.Strings.Duel_Started;
             return Strings.WithHint(core, "DuelKeybindingsHint");
         }
 

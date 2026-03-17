@@ -658,7 +658,7 @@
   "Card_TargetedBy_One_Format": "Ziel von {0}",
   "Card_TargetedBy_Two_Format": "Ziel von {0} und {1}",
   "Card_TargetedBy_Many_Format": "Ziel von {0}",
-  "Duel_Started_Format": "Duell gestartet. {0} Karten auf der Hand",
+  "Duel_Started": "Duell gestartet",
   "Duel_YourTurn_Format": "Zug {0}",
   "Duel_OpponentTurn": "Zug des Gegners",
   "Duel_TurnChanged": "Zugwechsel",

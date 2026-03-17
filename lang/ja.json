@@ -648,7 +648,7 @@
   "Card_TargetedBy_One_Format": "{0}の対象",
   "Card_TargetedBy_Two_Format": "{0}と{1}の対象",
   "Card_TargetedBy_Many_Format": "{0}の対象",
-  "Duel_Started_Format": "デュエル開始。手札{0}枚",
+  "Duel_Started": "デュエル開始",
   "Duel_YourTurn_Format": "ターン{0}",
   "Duel_OpponentTurn": "対戦相手のターン",
   "Duel_TurnChanged": "ターン変更",

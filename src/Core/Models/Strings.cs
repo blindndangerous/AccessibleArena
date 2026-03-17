@@ -289,7 +289,7 @@ namespace AccessibleArena.Core.Models
         // ===========================================
         // DUEL ANNOUNCEMENTS
         // ===========================================
-        public static string Duel_Started(int handCards) => L.Format("Duel_Started_Format", handCards);
+        public static string Duel_Started => L.Get("Duel_Started");
         public static string Duel_YourTurn(int turnNum) => L.Format("Duel_YourTurn_Format", turnNum);
         public static string Duel_OpponentTurn => L.Get("Duel_OpponentTurn");
         public static string Duel_TurnChanged => L.Get("Duel_TurnChanged");

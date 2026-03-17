@@ -660,7 +660,7 @@
   "Card_TargetedBy_One_Format": "targeted by {0}",
   "Card_TargetedBy_Two_Format": "targeted by {0} and {1}",
   "Card_TargetedBy_Many_Format": "targeted by {0}",
-  "Duel_Started_Format": "Duel started. {0} cards in hand",
+  "Duel_Started": "Duel started",
   "Duel_YourTurn_Format": "Turn {0}",
   "Duel_OpponentTurn": "Opponent's turn",
   "Duel_TurnChanged": "Turn changed",
