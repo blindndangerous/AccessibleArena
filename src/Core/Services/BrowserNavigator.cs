@@ -8,6 +8,7 @@ using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using static AccessibleArena.Core.Utils.ReflectionUtils;
+using T = AccessibleArena.Core.Constants.GameTypeNames;
 
 namespace AccessibleArena.Core.Services
 {
@@ -27,6 +28,7 @@ namespace AccessibleArena.Core.Services
         // Browser state
         private bool _isActive;
         private bool _hasAnnouncedEntry;
+        private float _announceSettleTimer; // Delay announcement for scaffold-less browsers to avoid transient states
         private BrowserInfo _browserInfo;
 
         // Generic browser navigation (non-zone browsers)
@@ -206,6 +208,9 @@ namespace AccessibleArena.Core.Services
             _isActive = true;
             _browserInfo = browserInfo;
             _hasAnnouncedEntry = false;
+            // Scaffold-detected browsers have stable UI — announce immediately.
+            // Generic CardBrowserCardHolder may be a transient pre-mulligan state — settle first.
+            _announceSettleTimer = browserInfo.BrowserType == T.CardBrowserCardHolder ? 0.3f : 0f;
             _currentCardIndex = -1;
             _currentButtonIndex = -1;
             _browserCards.Clear();
@@ -354,9 +359,14 @@ namespace AccessibleArena.Core.Services
         {
             if (!_isActive) return false;
 
-            // Announce browser state on first interaction
+            // Announce browser state once settled
             if (!_hasAnnouncedEntry)
             {
+                if (_announceSettleTimer > 0f)
+                {
+                    _announceSettleTimer -= Time.deltaTime;
+                    return true; // Consume input while settling
+                }
                 AnnounceBrowserState();
                 _hasAnnouncedEntry = true;
             }
