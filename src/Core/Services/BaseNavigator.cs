@@ -7,6 +7,7 @@ using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using AccessibleArena.Core.Services.PanelDetection;
+using AccessibleArena.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,6 +58,9 @@ namespace AccessibleArena.Core.Services
 
         // Letter navigation handler (buffered jump with same-letter cycling)
         protected readonly LetterSearchHandler _letterSearch = new LetterSearchHandler();
+
+        // Hold-to-repeat handler for arrow key navigation
+        protected readonly KeyHoldRepeater _holdRepeater = new KeyHoldRepeater();
 
         /// <summary>
         /// Represents a virtual action attached to an element (e.g., Delete, Edit for decks).
@@ -607,6 +611,8 @@ namespace AccessibleArena.Core.Services
                 ClearPopupModeState();
 
             DisablePopupDetection();
+
+            _holdRepeater.Reset();
 
             OnDeactivating();
 
@@ -1298,18 +1304,18 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Menu navigation with Arrow Up/Down and Tab/Shift+Tab
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
+            // Menu navigation with Arrow Up/Down (hold-to-repeat) and Tab/Shift+Tab
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int before = _currentIndex;
                 MovePrevious();
-                return;
-            }
+                return _currentIndex != before;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int before = _currentIndex;
                 MoveNext();
-                return;
-            }
+                return _currentIndex != before;
+            })) return;
 
             // Tab/Shift+Tab navigation - same as arrow down/up but auto-enters input fields
             // Use GetKeyDownAndConsume to prevent game from also processing Tab
@@ -1337,18 +1343,9 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Arrow Left/Right for carousel elements
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                if (HandleCarouselArrow(isNext: false))
-                    return;
-            }
-
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                if (HandleCarouselArrow(isNext: true))
-                    return;
-            }
+            // Arrow Left/Right for carousel elements (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => HandleCarouselArrow(isNext: false))) return;
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => HandleCarouselArrow(isNext: true))) return;
 
             // Activation (Enter or Space)
             // Check EnterPressedWhileBlocked for when our Input.GetKeyDown patch blocked Enter on a toggle
@@ -1481,7 +1478,7 @@ namespace AccessibleArena.Core.Services
             if (control == null || !control.activeInHierarchy)
             {
                 _announcer.Announce(isNext ? Strings.NoNextItem : Strings.NoPreviousItem, AnnouncementPriority.Normal);
-                return true;
+                return false; // Boundary — stop hold-repeat (initial press still consumed by Check)
             }
 
             // Activate the nav control (carousel nav button or stepper increment/decrement)
@@ -2420,17 +2417,27 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Up/Shift+Tab: previous item
-            if (Input.GetKeyDown(KeyCode.UpArrow) ||
-                (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
+            // Up arrow (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int before = _currentIndex;
+                NavigatePopupItem(-1);
+                return _currentIndex != before;
+            })) return;
+
+            // Down arrow (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int before = _currentIndex;
+                NavigatePopupItem(1);
+                return _currentIndex != before;
+            })) return;
+
+            // Shift+Tab: previous item / Tab: next item (no hold-repeat)
+            if (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
             {
                 NavigatePopupItem(-1);
                 return;
             }
-
-            // Down/Tab: next item
-            if (Input.GetKeyDown(KeyCode.DownArrow) ||
-                (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)))
+            if (Input.GetKeyDown(KeyCode.Tab) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
             {
                 NavigatePopupItem(1);
                 return;
@@ -2446,17 +2453,9 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Left/Right: stepper (e.g., craft count)
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                HandleCarouselArrow(false);
-                return;
-            }
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                HandleCarouselArrow(true);
-                return;
-            }
+            // Left/Right: stepper (e.g., craft count) — hold-to-repeat
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => HandleCarouselArrow(false))) return;
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => HandleCarouselArrow(true))) return;
 
             // Backspace: dismiss popup
             if (Input.GetKeyDown(KeyCode.Backspace))

@@ -713,18 +713,14 @@ namespace AccessibleArena.Core.Services
         {
             if (HandleCustomInput()) return;
 
-            // Left/Right navigation
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                MovePrevious();
-                return;
-            }
+            // Left/Right navigation (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
+                int b = _currentIndex; MovePrevious(); return _currentIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                MoveNext();
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
+                int b = _currentIndex; MoveNext(); return _currentIndex != b;
+            })) return;
 
             // Home/End
             if (Input.GetKeyDown(KeyCode.Home))

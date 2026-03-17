@@ -348,31 +348,23 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Row navigation (Up/Down)
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                MoveToPreviousRow();
-                return;
-            }
+            // Row navigation (Up/Down) — hold-to-repeat
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int b = _currentRowIndex; MoveToPreviousRow(); return _currentRowIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                MoveToNextRow();
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int b = _currentRowIndex; MoveToNextRow(); return _currentRowIndex != b;
+            })) return;
 
-            // Item navigation within row (Left/Right)
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                MoveToPreviousItem();
-                return;
-            }
+            // Item navigation within row (Left/Right) — hold-to-repeat
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
+                int b = _currentItemIndex; MoveToPreviousItem(); return _currentItemIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                MoveToNextItem();
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
+                int b = _currentItemIndex; MoveToNextItem(); return _currentItemIndex != b;
+            })) return;
 
             // Home/End within current row
             if (Input.GetKeyDown(KeyCode.Home))
