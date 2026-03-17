@@ -28,6 +28,7 @@ namespace AccessibleArena.Core.Services
 
         private bool _isWatching;
         private bool _hasCenteredMouse;
+        private float _playerNameAnnounceDelay = -1f; // One-shot: announces matchup after HUD settles
         private ZoneNavigator _zoneNavigator;
         private HotHighlightNavigator _hotHighlightNavigator;  // Unified navigator for Tab, cards, targets, selection mode
         private CombatNavigator _combatNavigator;
@@ -129,6 +130,30 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[{NavigatorId}] Centered mouse cursor at ({centerX}, {centerY})");
                 _hasCenteredMouse = true;
             }
+
+            // Schedule a matchup announcement once the HUD has fully settled
+            _playerNameAnnounceDelay = 1.5f;
+        }
+
+        public override void Update()
+        {
+            // One-shot matchup announcement after HUD settles
+            if (_playerNameAnnounceDelay > 0f)
+            {
+                _playerNameAnnounceDelay -= Time.deltaTime;
+                if (_playerNameAnnounceDelay <= 0f)
+                {
+                    _playerNameAnnounceDelay = -1f;
+                    string matchup = _portraitNavigator.GetMatchupText();
+                    if (!string.IsNullOrEmpty(matchup))
+                    {
+                        MelonLogger.Msg($"[{NavigatorId}] Matchup: {matchup}");
+                        _announcer.Announce(matchup, Models.AnnouncementPriority.Normal);
+                    }
+                }
+            }
+
+            base.Update();
         }
 
         public override void OnSceneChanged(string sceneName)
@@ -137,6 +162,7 @@ namespace AccessibleArena.Core.Services
             {
                 _isWatching = false;
                 _hasCenteredMouse = false; // Reset for next duel
+                _playerNameAnnounceDelay = -1f;
                 _zoneNavigator.Deactivate();
                 _hotHighlightNavigator.Deactivate();
                 _battlefieldNavigator.Deactivate();
