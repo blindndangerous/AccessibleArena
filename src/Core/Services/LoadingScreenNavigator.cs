@@ -794,11 +794,23 @@ namespace AccessibleArena.Core.Services
                     if (_elements.Count > 0)
                         UpdateEventSystemSelection();
 
-                    // Track status text to avoid double-announcement
-                    if (_currentMode == ScreenMode.GameLoading && _elements.Count > 0)
-                        _lastLoadingStatusText = _elements[0].Label;
-
-                    _announcer.AnnounceInterrupt(GetActivationAnnouncement());
+                    if (_currentMode == ScreenMode.GameLoading)
+                    {
+                        // Only announce if the status text actually changed — element count
+                        // can flicker 0→1→0→1 while the same "Waiting for server" message
+                        // is displayed, causing duplicate speech.
+                        string currentLabel = _elements.Count > 0 ? _elements[0].Label : "";
+                        if (!string.IsNullOrEmpty(currentLabel) && currentLabel != _lastLoadingStatusText)
+                        {
+                            _lastLoadingStatusText = currentLabel;
+                            _announcer.AnnounceInterrupt($"{Strings.ScreenLoading}. {currentLabel}");
+                            Log($"Loading status (count changed): {currentLabel}");
+                        }
+                    }
+                    else
+                    {
+                        _announcer.AnnounceInterrupt(GetActivationAnnouncement());
+                    }
                 }
                 else if (_currentMode == ScreenMode.GameLoading && _elements.Count > 0)
                 {
@@ -807,7 +819,7 @@ namespace AccessibleArena.Core.Services
                     if (!string.IsNullOrEmpty(currentLabel) && currentLabel != _lastLoadingStatusText)
                     {
                         _lastLoadingStatusText = currentLabel;
-                        _announcer.AnnounceInterrupt(currentLabel);
+                        _announcer.AnnounceInterrupt($"{Strings.ScreenLoading}. {currentLabel}");
                         Log($"Loading status changed: {currentLabel}");
                     }
                 }
