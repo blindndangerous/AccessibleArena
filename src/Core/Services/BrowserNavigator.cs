@@ -1113,6 +1113,11 @@ namespace AccessibleArena.Core.Services
                 {
                     message = browserName;
                 }
+
+                // Announce the hand card list as a follow-up so the user knows what they have
+                string handSummary = BuildHandSummary();
+                if (!string.IsNullOrEmpty(handSummary))
+                    _announcer.Announce(handSummary, AnnouncementPriority.Normal);
             }
             // Special announcement for RepeatSelection (modal spell modes)
             else if (_browserInfo.BrowserType == "RepeatSelection")
@@ -1387,6 +1392,27 @@ namespace AccessibleArena.Core.Services
                 parent = parent.parent;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Builds a comma-separated list of card names from the current browser cards.
+        /// Used to announce the opening hand during mulligan.
+        /// Returns null if no cards or names are available.
+        /// </summary>
+        private string BuildHandSummary()
+        {
+            if (_browserCards == null || _browserCards.Count == 0) return null;
+
+            var names = new System.Collections.Generic.List<string>(_browserCards.Count);
+            foreach (var card in _browserCards)
+            {
+                string name = CardDetector.GetCardName(card);
+                if (!string.IsNullOrEmpty(name))
+                    names.Add(name);
+            }
+
+            if (names.Count == 0) return null;
+            return "Hand: " + string.Join(", ", names);
         }
 
         /// <summary>
