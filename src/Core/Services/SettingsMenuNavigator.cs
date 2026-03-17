@@ -389,6 +389,8 @@ namespace AccessibleArena.Core.Services
 
             // Remove image-only elements (no text content, useless for screen reader).
             // E.g., ESRBImage is a Button with just a rating badge graphic and no text.
+            // Only remove when the classifier's label is a GO-name fallback (no real text found).
+            // Keep elements where the classifier found meaningful text (e.g., from parent/sibling).
             for (int i = discoveredElements.Count - 1; i >= 0; i--)
             {
                 var go = discoveredElements[i].obj;
@@ -403,6 +405,12 @@ namespace AccessibleArena.Core.Services
                 }
                 if (!hasText)
                 {
+                    // Check if the classifier found a meaningful label (text from parent/sibling)
+                    string label = discoveredElements[i].classification.Label;
+                    if (!string.IsNullOrEmpty(label) &&
+                        !go.name.Replace(" ", "").Equals(label.Replace(" ", ""), System.StringComparison.OrdinalIgnoreCase))
+                        continue; // Label differs from GO name - classifier found real text, keep it
+
                     MelonLogger.Msg($"[{NavigatorId}] Removing image-only element: {go.name}");
                     discoveredElements.RemoveAt(i);
                 }
