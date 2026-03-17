@@ -1305,17 +1305,8 @@ namespace AccessibleArena.Core.Services
             }
 
             // Menu navigation with Arrow Up/Down (hold-to-repeat) and Tab/Shift+Tab
-            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
-                int before = _currentIndex;
-                MovePrevious();
-                return _currentIndex != before;
-            })) return;
-
-            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
-                int before = _currentIndex;
-                MoveNext();
-                return _currentIndex != before;
-            })) return;
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => MovePrevious())) return;
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => MoveNext())) return;
 
             // Tab/Shift+Tab navigation - same as arrow down/up but auto-enters input fields
             // Use GetKeyDownAndConsume to prevent game from also processing Tab
@@ -1692,16 +1683,17 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>Move to next (direction=1) or previous (direction=-1) element without wrapping</summary>
-        protected virtual void Move(int direction)
+        /// <returns>True if moved, false if at boundary or empty.</returns>
+        protected virtual bool Move(int direction)
         {
             _letterSearch.Clear();
-            if (_elements.Count == 0) return;
+            if (_elements.Count == 0) return false;
 
             // Single element: re-announce it instead of saying "end/beginning of list"
             if (_elements.Count == 1)
             {
                 AnnounceCurrentElement();
-                return;
+                return false;
             }
 
             int newIndex = _currentIndex + direction;
@@ -1710,13 +1702,13 @@ namespace AccessibleArena.Core.Services
             if (newIndex < 0)
             {
                 _announcer.AnnounceVerbose(Strings.BeginningOfList, AnnouncementPriority.Normal);
-                return;
+                return false;
             }
 
             if (newIndex >= _elements.Count)
             {
                 _announcer.AnnounceVerbose(Strings.EndOfList, AnnouncementPriority.Normal);
-                return;
+                return false;
             }
 
             _currentIndex = newIndex;
@@ -1728,6 +1720,7 @@ namespace AccessibleArena.Core.Services
 
             AnnounceCurrentElement();
             UpdateCardNavigation();
+            return true;
         }
 
         /// <summary>
@@ -1919,8 +1912,8 @@ namespace AccessibleArena.Core.Services
             }
         }
 
-        protected virtual void MoveNext() => Move(1);
-        protected virtual void MovePrevious() => Move(-1);
+        protected virtual bool MoveNext() => Move(1);
+        protected virtual bool MovePrevious() => Move(-1);
 
         /// <summary>Jump to first element</summary>
         protected virtual void MoveFirst()
@@ -2417,19 +2410,9 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Up arrow (hold-to-repeat)
-            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
-                int before = _currentIndex;
-                NavigatePopupItem(-1);
-                return _currentIndex != before;
-            })) return;
-
-            // Down arrow (hold-to-repeat)
-            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
-                int before = _currentIndex;
-                NavigatePopupItem(1);
-                return _currentIndex != before;
-            })) return;
+            // Up/Down arrows (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => NavigatePopupItem(-1))) return;
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => NavigatePopupItem(1))) return;
 
             // Shift+Tab: previous item / Tab: next item (no hold-repeat)
             if (Input.GetKeyDown(KeyCode.Tab) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
@@ -2483,26 +2466,28 @@ namespace AccessibleArena.Core.Services
                 HandleCustomInput();
         }
 
-        private void NavigatePopupItem(int direction)
+        /// <returns>True if moved, false if at boundary or empty.</returns>
+        private bool NavigatePopupItem(int direction)
         {
             _letterSearch.Clear();
-            if (_elements.Count == 0) return;
+            if (_elements.Count == 0) return false;
 
             int newIndex = _currentIndex + direction;
 
             if (newIndex < 0)
             {
                 _announcer?.AnnounceInterruptVerbose(Strings.BeginningOfList);
-                return;
+                return false;
             }
             if (newIndex >= _elements.Count)
             {
                 _announcer?.AnnounceInterruptVerbose(Strings.EndOfList);
-                return;
+                return false;
             }
 
             _currentIndex = newIndex;
             AnnouncePopupCurrentItem();
+            return true;
         }
 
         private void ActivatePopupItem()

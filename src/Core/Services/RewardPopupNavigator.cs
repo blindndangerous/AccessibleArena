@@ -714,13 +714,8 @@ namespace AccessibleArena.Core.Services
             if (HandleCustomInput()) return;
 
             // Left/Right navigation (hold-to-repeat)
-            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
-                int b = _currentIndex; MovePrevious(); return _currentIndex != b;
-            })) return;
-
-            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
-                int b = _currentIndex; MoveNext(); return _currentIndex != b;
-            })) return;
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => MovePrevious())) return;
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => MoveNext())) return;
 
             // Home/End
             if (Input.GetKeyDown(KeyCode.Home))

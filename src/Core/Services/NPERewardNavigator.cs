@@ -531,12 +531,12 @@ namespace AccessibleArena.Core.Services
             // Left/Right arrows for navigation between cards (hold-to-repeat)
             if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
                 Log($"Input: Left - MovePrevious (current={_currentIndex}, total={_elements.Count})");
-                int b = _currentIndex; MovePrevious(); LogCurrentState(); return _currentIndex != b;
+                bool moved = MovePrevious(); LogCurrentState(); return moved;
             })) return;
 
             if (_holdRepeater.Check(KeyCode.RightArrow, () => {
                 Log($"Input: Right - MoveNext (current={_currentIndex}, total={_elements.Count})");
-                int b = _currentIndex; MoveNext(); LogCurrentState(); return _currentIndex != b;
+                bool moved = MoveNext(); LogCurrentState(); return moved;
             })) return;
 
             // Home/End for quick jump to first/last
