@@ -73,6 +73,16 @@ namespace AccessibleArena.Core.Services
         public float TimeSinceLastPhaseChange => UnityEngine.Time.time - _lastPhaseChangeTime;
 
         /// <summary>
+        /// Returns the current phase string ("Main1", "Main2", "Combat", etc.).
+        /// </summary>
+        public string CurrentPhase => _currentPhase;
+
+        /// <summary>
+        /// Returns true if it is currently the local player's turn.
+        /// </summary>
+        public bool IsUserTurn => _isUserTurn;
+
+        /// <summary>
         /// Returns true if currently in Declare Attackers phase.
         /// </summary>
         public bool IsInDeclareAttackersPhase => _currentPhase == "Combat" && _currentStep == "DeclareAttack";
@@ -507,7 +517,9 @@ namespace AccessibleArena.Core.Services
                 }
                 else if (zoneName == "Graveyard" && diff > 0)
                 {
-                    return isOpponent ? Strings.Duel_CardToOpponentGraveyard : Strings.Duel_CardToYourGraveyard;
+                    // Suppress generic "card to graveyard" — ZoneTransferGroup fires with the specific
+                    // card name and reason (died, destroyed, discarded, etc.) which is more informative.
+                    // We still track the count above for dirty-marking navigators.
                 }
                 else if (zoneName == "Stack")
                 {

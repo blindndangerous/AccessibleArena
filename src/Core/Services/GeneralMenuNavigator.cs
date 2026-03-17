@@ -4402,7 +4402,7 @@ namespace AccessibleArena.Core.Services
         /// In deck builder with Tab, cycles between Collection, Filters, and Deck groups only.
         /// In DeckBuilderInfo group, Down arrow switches to next row with custom announcement.
         /// </summary>
-        protected override void MoveNext()
+        protected override bool MoveNext()
         {
             if (_groupedNavigationEnabled && _groupedNavigator.IsActive)
             {
@@ -4417,7 +4417,7 @@ namespace AccessibleArena.Core.Services
                         AnnounceDeckInfoEntry(includeRowName: true);
                     }
                     // If !moved, GroupedNavigator already announced "End of list"
-                    return;
+                    return moved;
                 }
 
                 // Friend section navigation: Up/Down navigates between friends
@@ -4431,7 +4431,7 @@ namespace AccessibleArena.Core.Services
                         AnnounceFriendEntry();
                         AnnounceFirstFriendAction();
                     }
-                    return;
+                    return moved;
                 }
 
                 // In deck builder with Tab key: cycle between main groups (Collection, Filters, Deck)
@@ -4459,17 +4459,18 @@ namespace AccessibleArena.Core.Services
                             }
                         }
                         UpdateCardNavigationForGroupedElement();
-                        return;
+                        return true;
                     }
+                    return false;
                 }
 
                 // Default behavior: navigate all groups/elements
-                _groupedNavigator.MoveNext();
+                bool result = _groupedNavigator.MoveNext();
                 UpdateEventSystemSelectionForGroupedElement();
                 UpdateCardNavigationForGroupedElement();
-                return;
+                return result;
             }
-            base.MoveNext();
+            return base.MoveNext();
         }
 
         /// <summary>
@@ -4477,7 +4478,7 @@ namespace AccessibleArena.Core.Services
         /// In deck builder with Shift+Tab, cycles between Collection, Filters, and Deck groups only.
         /// In DeckBuilderInfo group, Up arrow switches to previous row with custom announcement.
         /// </summary>
-        protected override void MovePrevious()
+        protected override bool MovePrevious()
         {
             if (_groupedNavigationEnabled && _groupedNavigator.IsActive)
             {
@@ -4492,7 +4493,7 @@ namespace AccessibleArena.Core.Services
                         AnnounceDeckInfoEntry(includeRowName: true);
                     }
                     // If !moved, GroupedNavigator already announced "Beginning of list"
-                    return;
+                    return moved;
                 }
 
                 // Friend section navigation: Up/Down navigates between friends
@@ -4505,7 +4506,7 @@ namespace AccessibleArena.Core.Services
                         AnnounceFriendEntry();
                         AnnounceFirstFriendAction();
                     }
-                    return;
+                    return moved;
                 }
 
                 // In deck builder with Tab key: cycle between main groups (Collection, Filters, Deck)
@@ -4533,17 +4534,18 @@ namespace AccessibleArena.Core.Services
                             }
                         }
                         UpdateCardNavigationForGroupedElement();
-                        return;
+                        return true;
                     }
+                    return false;
                 }
 
                 // Default behavior: navigate all groups/elements
-                _groupedNavigator.MovePrevious();
+                bool result = _groupedNavigator.MovePrevious();
                 UpdateEventSystemSelectionForGroupedElement();
                 UpdateCardNavigationForGroupedElement();
-                return;
+                return result;
             }
-            base.MovePrevious();
+            return base.MovePrevious();
         }
 
         /// <summary>

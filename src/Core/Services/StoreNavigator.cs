@@ -1330,18 +1330,14 @@ namespace AccessibleArena.Core.Services
 
         private void HandleTabInput()
         {
-            // Up/Down navigate tabs
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                MoveTab(-1);
-                return;
-            }
+            // Up/Down navigate tabs (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int b = _currentTabIndex; MoveTab(-1); return _currentTabIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                MoveTab(1);
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int b = _currentTabIndex; MoveTab(1); return _currentTabIndex != b;
+            })) return;
 
             // Tab/Shift+Tab for navigation
             if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
@@ -1401,18 +1397,14 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Up/Down navigate items
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                MoveItem(-1);
-                return;
-            }
+            // Up/Down navigate items (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int b = _currentItemIndex; MoveItem(-1); return _currentItemIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                MoveItem(1);
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int b = _currentItemIndex; MoveItem(1); return _currentItemIndex != b;
+            })) return;
 
             // Tab/Shift+Tab for navigation
             if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
@@ -1422,18 +1414,14 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Left/Right cycle purchase options
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                CyclePurchaseOption(-1);
-                return;
-            }
+            // Left/Right cycle purchase options (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
+                int b = _currentPurchaseOptionIndex; CyclePurchaseOption(-1); return _currentPurchaseOptionIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                CyclePurchaseOption(1);
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
+                int b = _currentPurchaseOptionIndex; CyclePurchaseOption(1); return _currentPurchaseOptionIndex != b;
+            })) return;
 
             // Home/End
             if (Input.GetKeyDown(KeyCode.Home))
@@ -1701,20 +1689,13 @@ namespace AccessibleArena.Core.Services
 
         private void HandleSetFilterInput()
         {
-            // Left/Right or Up/Down: cycle sets
-            if (Input.GetKeyDown(KeyCode.LeftArrow) ||
-                Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                CycleSetFilter(-1);
-                return;
-            }
-
-            if (Input.GetKeyDown(KeyCode.RightArrow) ||
-                Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                CycleSetFilter(1);
-                return;
-            }
+            // Left/Right or Up/Down: cycle sets (hold-to-repeat)
+            Func<bool> cycleBack = () => { int b = _currentSetFilterIndex; CycleSetFilter(-1); return _currentSetFilterIndex != b; };
+            Func<bool> cycleFwd = () => { int b = _currentSetFilterIndex; CycleSetFilter(1); return _currentSetFilterIndex != b; };
+            if (_holdRepeater.Check(KeyCode.LeftArrow, cycleBack)) return;
+            if (_holdRepeater.Check(KeyCode.UpArrow, cycleBack)) return;
+            if (_holdRepeater.Check(KeyCode.RightArrow, cycleFwd)) return;
+            if (_holdRepeater.Check(KeyCode.DownArrow, cycleFwd)) return;
 
             // Tab/Shift+Tab
             if (InputManager.GetKeyDownAndConsume(KeyCode.Tab))
@@ -2242,31 +2223,23 @@ namespace AccessibleArena.Core.Services
 
         private void HandleDetailsInput()
         {
-            // Left/Right: navigate between cards
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                MoveDetailsCard(-1);
-                return;
-            }
+            // Left/Right: navigate between cards (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
+                int b = _detailsCardIndex; MoveDetailsCard(-1); return _detailsCardIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                MoveDetailsCard(1);
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
+                int b = _detailsCardIndex; MoveDetailsCard(1); return _detailsCardIndex != b;
+            })) return;
 
-            // Up/Down: navigate card info blocks
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                MoveDetailsBlock(-1);
-                return;
-            }
+            // Up/Down: navigate card info blocks (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.UpArrow, () => {
+                int b = _detailsBlockIndex; MoveDetailsBlock(-1); return _detailsBlockIndex != b;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                MoveDetailsBlock(1);
-                return;
-            }
+            if (_holdRepeater.Check(KeyCode.DownArrow, () => {
+                int b = _detailsBlockIndex; MoveDetailsBlock(1); return _detailsBlockIndex != b;
+            })) return;
 
             // Home/End: jump to first/last card
             if (Input.GetKeyDown(KeyCode.Home))

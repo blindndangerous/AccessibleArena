@@ -8,6 +8,7 @@ using MelonLoader;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using static AccessibleArena.Core.Utils.ReflectionUtils;
+using T = AccessibleArena.Core.Constants.GameTypeNames;
 
 namespace AccessibleArena.Core.Services
 {
@@ -27,6 +28,7 @@ namespace AccessibleArena.Core.Services
         // Browser state
         private bool _isActive;
         private bool _hasAnnouncedEntry;
+        private float _announceSettleTimer; // Delay announcement for scaffold-less browsers to avoid transient states
         private BrowserInfo _browserInfo;
 
         // Generic browser navigation (non-zone browsers)
@@ -189,6 +191,9 @@ namespace AccessibleArena.Core.Services
             _isActive = true;
             _browserInfo = browserInfo;
             _hasAnnouncedEntry = false;
+            // Scaffold-detected browsers have stable UI — announce immediately.
+            // Generic CardBrowserCardHolder may be a transient pre-mulligan state — settle first.
+            _announceSettleTimer = browserInfo.BrowserType == T.CardBrowserCardHolder ? 0.5f : 0f;
             _currentCardIndex = -1;
             _currentButtonIndex = -1;
             _browserCards.Clear();
@@ -335,9 +340,14 @@ namespace AccessibleArena.Core.Services
         {
             if (!_isActive) return false;
 
-            // Announce browser state on first interaction
+            // Announce browser state once settled
             if (!_hasAnnouncedEntry)
             {
+                if (_announceSettleTimer > 0f)
+                {
+                    _announceSettleTimer -= Time.deltaTime;
+                    return true; // Consume input while settling
+                }
                 AnnounceBrowserState();
                 _hasAnnouncedEntry = true;
             }
@@ -1100,7 +1110,16 @@ namespace AccessibleArena.Core.Services
             {
                 message = GetAssignDamageEntryAnnouncement(cardCount, browserName);
             }
-            // Special announcement for London mulligan
+            // Mulligan keep/mulligan decision: include grouped hand summary in the entry message
+            else if (_browserInfo.BrowserType == BrowserDetector.BrowserTypeMulligan)
+            {
+                string handSummary = BuildGroupedHandSummary();
+                if (!string.IsNullOrEmpty(handSummary))
+                    message = Strings.MulliganEntry(handSummary);
+                else
+                    message = Strings.BrowserCards(cardCount, browserName);
+            }
+            // Special announcement for London mulligan (zone-based drag phase)
             else if (_browserInfo.IsLondon)
             {
                 var londonAnnouncement = _zoneNavigator.GetLondonEntryAnnouncement(cardCount);
@@ -1390,6 +1409,41 @@ namespace AccessibleArena.Core.Services
                 parent = parent.parent;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Builds a grouped, comma-separated list of card names from the current browser cards.
+        /// Duplicates are collapsed: "3x Ebene, Giada, 2x Sternenfeld-Hirtin".
+        /// Preserves order of first appearance. Returns null if no cards are available.
+        /// </summary>
+        private string BuildGroupedHandSummary()
+        {
+            if (_browserCards == null || _browserCards.Count == 0) return null;
+
+            var orderedNames = new List<string>();
+            var counts = new Dictionary<string, int>();
+            foreach (var card in _browserCards)
+            {
+                string name = CardDetector.GetCardName(card);
+                if (string.IsNullOrEmpty(name)) continue;
+                if (counts.ContainsKey(name))
+                    counts[name]++;
+                else
+                {
+                    orderedNames.Add(name);
+                    counts[name] = 1;
+                }
+            }
+
+            if (orderedNames.Count == 0) return null;
+
+            var parts = new List<string>(orderedNames.Count);
+            foreach (var name in orderedNames)
+            {
+                int count = counts[name];
+                parts.Add(count > 1 ? $"{count}x {name}" : name);
+            }
+            return string.Join(", ", parts);
         }
 
         /// <summary>

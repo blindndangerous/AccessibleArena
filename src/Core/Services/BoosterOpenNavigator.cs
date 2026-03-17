@@ -641,18 +641,9 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Left/Right arrows for navigation between cards (horizontal layout)
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                MovePrevious();
-                return;
-            }
-
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                MoveNext();
-                return;
-            }
+            // Left/Right arrows for navigation between cards (horizontal layout, hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => MovePrevious())) return;
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => MoveNext())) return;
 
             // Home/End for quick jump to first/last
             if (Input.GetKeyDown(KeyCode.Home))

@@ -528,22 +528,16 @@ namespace AccessibleArena.Core.Services
             // Handle custom input first (F1 help, etc.)
             if (HandleCustomInput()) return;
 
-            // Left/Right arrows for navigation between cards
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
+            // Left/Right arrows for navigation between cards (hold-to-repeat)
+            if (_holdRepeater.Check(KeyCode.LeftArrow, () => {
                 Log($"Input: Left - MovePrevious (current={_currentIndex}, total={_elements.Count})");
-                MovePrevious();
-                LogCurrentState();
-                return;
-            }
+                bool moved = MovePrevious(); LogCurrentState(); return moved;
+            })) return;
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
+            if (_holdRepeater.Check(KeyCode.RightArrow, () => {
                 Log($"Input: Right - MoveNext (current={_currentIndex}, total={_elements.Count})");
-                MoveNext();
-                LogCurrentState();
-                return;
-            }
+                bool moved = MoveNext(); LogCurrentState(); return moved;
+            })) return;
 
             // Home/End for quick jump to first/last
             if (Input.GetKeyDown(KeyCode.Home))

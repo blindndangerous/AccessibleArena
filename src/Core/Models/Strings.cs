@@ -51,6 +51,7 @@ namespace AccessibleArena.Core.Models
         // MENU NAVIGATION
         // ===========================================
         public static string NavigateWithArrows => L.Get("NavigateWithArrows");
+        public static string NavigateHint => L.Get("NavigateHint");
         public static string BeginningOfList => L.Get("BeginningOfList");
         public static string EndOfList => L.Get("EndOfList");
         public static string OpeningPlayModes => L.Get("OpeningPlayModes");
@@ -288,7 +289,7 @@ namespace AccessibleArena.Core.Models
         // ===========================================
         // DUEL ANNOUNCEMENTS
         // ===========================================
-        public static string Duel_Started(int handCards) => L.Format("Duel_Started_Format", handCards);
+        public static string Duel_Started => L.Get("Duel_Started");
         public static string Duel_YourTurn(int turnNum) => L.Format("Duel_YourTurn_Format", turnNum);
         public static string Duel_OpponentTurn => L.Get("Duel_OpponentTurn");
         public static string Duel_TurnChanged => L.Get("Duel_TurnChanged");
@@ -760,6 +761,7 @@ namespace AccessibleArena.Core.Models
         public static string SettingTutorialMessages => L.Get("SettingTutorialMessages");
         public static string SettingVerboseAnnouncements => L.Get("SettingVerboseAnnouncements");
         public static string SettingBriefCastAnnouncements => L.Get("SettingBriefCastAnnouncements");
+        public static string SettingPhaseSkipWarning => L.Get("SettingPhaseSkipWarning");
         public static string SettingOn => L.Get("SettingOn");
         public static string SettingOff => L.Get("SettingOff");
         public static string SettingChanged(string name, string value) => L.Format("SettingChanged_Format", name, value);
@@ -891,6 +893,7 @@ namespace AccessibleArena.Core.Models
         public static string CouldNotClick(string label) => L.Format("CouldNotClick_Format", label);
         public static string BrowserCards(int count, string browserName) =>
             count == 1 ? L.Format("BrowserCards_One", browserName) : L.Format("BrowserCards_Format", browserName, count);
+        public static string MulliganEntry(string handSummary) => L.Format("MulliganEntry_Format", handSummary);
         public static string BrowserOptions(string browserName) => L.Format("BrowserOptions_Format", browserName);
         public static string RepeatSelectionSelected => L.Get("RepeatSelection_Selected");
         public static string RepeatSelectionEntry(string browserName, int optionCount, int selectedCount, string subheaderText)
@@ -1133,6 +1136,8 @@ namespace AccessibleArena.Core.Models
         public static string ScreenSettingsGraphics => L.Get("ScreenSettingsGraphics");
         public static string ScreenSettingsAudio => L.Get("ScreenSettingsAudio");
         public static string ScreenSettingsAccount => L.Get("ScreenSettingsAccount");
+        public static string ScreenQuickMenu => L.Get("ScreenQuickMenu");
+        public static string QuickMenuOptions => L.Get("QuickMenuOptions");
         public static string ScreenDownload => L.Get("ScreenDownload");
         public static string ScreenAdvancedFilters => L.Get("ScreenAdvancedFilters");
         public static string ScreenPrizeWall => L.Get("ScreenPrizeWall");
@@ -1277,6 +1282,7 @@ namespace AccessibleArena.Core.Models
         public static string PassUntilResponse_Off => L.Get("PassUntilResponse_Off");
         public static string SkipTurn_On => L.Get("SkipTurn_On");
         public static string SkipTurn_Off => L.Get("SkipTurn_Off");
+        public static string PhaseSkipGuard_Warning => L.Get("PhaseSkipGuard_Warning");
         public static string PhaseStop_Set(string phase) => L.Format("PhaseStop_Set_Format", phase);
         public static string PhaseStop_Cleared(string phase) => L.Format("PhaseStop_Cleared_Format", phase);
 
