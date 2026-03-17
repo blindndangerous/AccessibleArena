@@ -93,6 +93,7 @@ namespace AccessibleArena.Core.Services
 
             // Connect PriorityController to PhaseSkipGuard for phase skip warning
             PhaseSkipGuard.SetPriorityController(_priorityController);
+            PhaseSkipGuard.SetModalNavigatorCheck(() => _browserNavigator.IsActive || _chooseXNavigator.IsActive);
 
         }
 

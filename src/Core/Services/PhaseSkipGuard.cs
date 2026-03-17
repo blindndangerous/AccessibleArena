@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
@@ -25,12 +26,19 @@ namespace AccessibleArena.Core.Services
         private static bool _confirmed;       // Pass was confirmed — suppress until phase changes
         private static string _confirmedPhase;
         private static PriorityController _priorityController;
+        private static Func<bool> _isModalNavigatorActive;
 
         // Frame-cached decision so multiple calls per frame are consistent
         private static int _lastDecisionFrame = -1;
         private static bool _blockThisFrame;
 
         public static void SetPriorityController(PriorityController pc) => _priorityController = pc;
+
+        /// <summary>
+        /// Sets a callback that returns true when a modal sub-navigator (browser, chooseX)
+        /// is active. Space should pass through to those navigators, not trigger the guard.
+        /// </summary>
+        public static void SetModalNavigatorCheck(Func<bool> check) => _isModalNavigatorActive = check;
 
         /// <summary>
         /// Called from SendSubmitEventToSelectedObject prefix and GetKeyDown postfix.
@@ -58,6 +66,9 @@ namespace AccessibleArena.Core.Services
                 _blockThisFrame = true;
                 return true;
             }
+
+            // Don't interfere when a modal sub-navigator (browser, chooseX) owns Space
+            if (_isModalNavigatorActive?.Invoke() == true) return false;
 
             var duelAnnouncer = DuelAnnouncer.Instance;
             if (duelAnnouncer == null) return false;
@@ -110,7 +121,7 @@ namespace AccessibleArena.Core.Services
             _blockThisFrame = true;
 
             var announcer = AccessibleArenaMod.Instance?.Announcer;
-            announcer?.Announce("Mana available. Press Space again to pass.", AnnouncementPriority.High);
+            announcer?.Announce(Strings.PhaseSkipGuard_Warning, AnnouncementPriority.High);
             MelonLogger.Msg("[PhaseSkipGuard] Warning shown — blocking until Space released and pressed again");
             return true;
         }
@@ -127,6 +138,7 @@ namespace AccessibleArena.Core.Services
             _confirmedPhase = null;
             _blockThisFrame = false;
             _lastDecisionFrame = -1;
+            _isModalNavigatorActive = null;
         }
 
         private static bool HasUntappedPlayerLands()

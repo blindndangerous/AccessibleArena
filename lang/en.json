@@ -813,6 +813,7 @@
   "PassUntilResponse_Off": "Pass until response off",
   "SkipTurn_On": "Skip turn",
   "SkipTurn_Off": "Skip turn off",
+  "PhaseSkipGuard_Warning": "Mana available. Press Space again to pass.",
   "PhaseStop_Set_Format": "Stop set: {0}",
   "PhaseStop_Cleared_Format": "Stop cleared: {0}",
   "PhaseStop_Upkeep": "Upkeep",

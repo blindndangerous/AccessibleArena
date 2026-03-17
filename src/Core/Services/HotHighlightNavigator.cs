@@ -1270,7 +1270,6 @@ namespace AccessibleArena.Core.Services
             return true;
         }
 
-        /// <summary>
         #endregion
     }
 
