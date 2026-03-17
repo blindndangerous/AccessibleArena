@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
+using UnityEngine.EventSystems;
 using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using static AccessibleArena.Core.Utils.ReflectionUtils;
@@ -197,6 +198,11 @@ namespace AccessibleArena.Core.Services
 
         private new void HandleInput()
         {
+            // Prevent Unity's EventSystem from navigating raw buttons with arrow keys
+            var eventSystem = EventSystem.current;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject != null)
+                eventSystem.SetSelectedGameObject(null);
+
             // Card info navigation (Up/Down for detail blocks)
             var cardNav = AccessibleArenaMod.Instance?.CardNavigator;
             if (cardNav != null && cardNav.IsActive)
