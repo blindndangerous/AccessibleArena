@@ -129,16 +129,18 @@ namespace AccessibleArena.Core.Services
                 SetCursorPos(centerX, centerY);
                 MelonLogger.Msg($"[{NavigatorId}] Centered mouse cursor at ({centerX}, {centerY})");
                 _hasCenteredMouse = true;
-            }
 
-            // Schedule a matchup announcement once the HUD has fully settled
-            _playerNameAnnounceDelay = 1.5f;
+                // Schedule a matchup announcement once the HUD has fully settled
+                _playerNameAnnounceDelay = 1.5f;
+            }
         }
 
         public override void Update()
         {
-            // One-shot matchup announcement after HUD settles
-            if (_playerNameAnnounceDelay > 0f)
+            base.Update();
+
+            // One-shot matchup announcement after HUD settles (only while active)
+            if (_isActive && _playerNameAnnounceDelay > 0f)
             {
                 _playerNameAnnounceDelay -= Time.deltaTime;
                 if (_playerNameAnnounceDelay <= 0f)
@@ -152,8 +154,6 @@ namespace AccessibleArena.Core.Services
                     }
                 }
             }
-
-            base.Update();
         }
 
         public override void OnSceneChanged(string sceneName)
