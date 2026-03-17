@@ -53,10 +53,6 @@ namespace AccessibleArena.Core.Services
         // Post-confirm rescan: force re-entry when scaffold is reused for a new interaction
         private bool _pendingRescan;
 
-        // Mulligan hand summary: delayed announcement so it fires after the entry + first-card announces
-        private string _pendingHandSummary;
-        private float _handSummaryTimer = -1f;
-
         // Multi-zone browser state (SelectCardsMultiZone)
         private bool _isMultiZone;
         private List<GameObject> _zoneButtons = new List<GameObject>();
@@ -134,19 +130,6 @@ namespace AccessibleArena.Core.Services
         public void Update()
         {
             var browserInfo = BrowserDetector.FindActiveBrowser();
-
-            // Fire delayed hand summary (mulligan overview)
-            if (_handSummaryTimer > 0f)
-            {
-                _handSummaryTimer -= UnityEngine.Time.deltaTime;
-                if (_handSummaryTimer <= 0f)
-                {
-                    _handSummaryTimer = -1f;
-                    if (!string.IsNullOrEmpty(_pendingHandSummary))
-                        _announcer.Announce(_pendingHandSummary, AnnouncementPriority.High);
-                    _pendingHandSummary = null;
-                }
-            }
 
             if (browserInfo.IsActive)
             {
@@ -272,8 +255,6 @@ namespace AccessibleArena.Core.Services
             _browserInfo = null;
             _hasAnnouncedEntry = false;
             _pendingRescan = false;
-            _pendingHandSummary = null;
-            _handSummaryTimer = -1f;
             _browserCards.Clear();
             _browserButtons.Clear();
             _currentCardIndex = -1;
@@ -1129,6 +1110,15 @@ namespace AccessibleArena.Core.Services
             {
                 message = GetAssignDamageEntryAnnouncement(cardCount, browserName);
             }
+            // Mulligan keep/mulligan decision: include grouped hand summary in the entry message
+            else if (_browserInfo.BrowserType == BrowserDetector.BrowserTypeMulligan)
+            {
+                string handSummary = BuildGroupedHandSummary();
+                if (!string.IsNullOrEmpty(handSummary))
+                    message = Strings.MulliganEntry(handSummary);
+                else
+                    message = Strings.BrowserCards(cardCount, browserName);
+            }
             // Special announcement for London mulligan (zone-based drag phase)
             else if (_browserInfo.IsLondon)
             {
@@ -1175,18 +1165,6 @@ namespace AccessibleArena.Core.Services
             else
             {
                 message = browserName;
-            }
-
-            // Schedule delayed hand summary for the initial mulligan screen (BrowserTypeMulligan).
-            // Fires 1.5s after entry so the user hears the main message and first-card focus first.
-            if (_browserInfo.BrowserType == BrowserDetector.BrowserTypeMulligan)
-            {
-                string handSummary = BuildHandSummary();
-                if (!string.IsNullOrEmpty(handSummary))
-                {
-                    _pendingHandSummary = handSummary;
-                    _handSummaryTimer = 1.5f;
-                }
             }
 
             _announcer.Announce(message, AnnouncementPriority.High);
@@ -1434,24 +1412,38 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
-        /// Builds a comma-separated list of card names from the current browser cards.
-        /// Used to announce the opening hand during mulligan.
-        /// Returns null if no cards or names are available.
+        /// Builds a grouped, comma-separated list of card names from the current browser cards.
+        /// Duplicates are collapsed: "3x Ebene, Giada, 2x Sternenfeld-Hirtin".
+        /// Preserves order of first appearance. Returns null if no cards are available.
         /// </summary>
-        private string BuildHandSummary()
+        private string BuildGroupedHandSummary()
         {
             if (_browserCards == null || _browserCards.Count == 0) return null;
 
-            var names = new System.Collections.Generic.List<string>(_browserCards.Count);
+            var orderedNames = new List<string>();
+            var counts = new Dictionary<string, int>();
             foreach (var card in _browserCards)
             {
                 string name = CardDetector.GetCardName(card);
-                if (!string.IsNullOrEmpty(name))
-                    names.Add(name);
+                if (string.IsNullOrEmpty(name)) continue;
+                if (counts.ContainsKey(name))
+                    counts[name]++;
+                else
+                {
+                    orderedNames.Add(name);
+                    counts[name] = 1;
+                }
             }
 
-            if (names.Count == 0) return null;
-            return "Hand: " + string.Join(", ", names);
+            if (orderedNames.Count == 0) return null;
+
+            var parts = new List<string>(orderedNames.Count);
+            foreach (var name in orderedNames)
+            {
+                int count = counts[name];
+                parts.Add(count > 1 ? $"{count}x {name}" : name);
+            }
+            return string.Join(", ", parts);
         }
 
         /// <summary>

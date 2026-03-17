@@ -316,6 +316,7 @@
   "CouldNotClick_Format": "{0} konnte nicht angeklickt werden",
   "BrowserCards_Format": "{0}. {1} Karten. Tab zum Navigieren, Enter zum Auswählen",
   "BrowserCards_One": "{0}. 1 Karte. Tab zum Navigieren, Enter zum Auswählen",
+  "MulliganEntry_Format": "Mulligan. {0}. Tab zum Navigieren, Enter zum Auswählen",
   "BrowserOptions_Format": "{0}. Tab zum Navigieren der Optionen",
   "RepeatSelection_Entry_Format": "{0}. {1} Modi. Tab zum Navigieren, Enter zum Auswählen",
   "RepeatSelection_Entry_One": "{0}. 1 Modus. Tab zum Navigieren, Enter zum Auswählen",

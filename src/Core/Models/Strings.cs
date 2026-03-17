@@ -892,6 +892,7 @@ namespace AccessibleArena.Core.Models
         public static string CouldNotClick(string label) => L.Format("CouldNotClick_Format", label);
         public static string BrowserCards(int count, string browserName) =>
             count == 1 ? L.Format("BrowserCards_One", browserName) : L.Format("BrowserCards_Format", browserName, count);
+        public static string MulliganEntry(string handSummary) => L.Format("MulliganEntry_Format", handSummary);
         public static string BrowserOptions(string browserName) => L.Format("BrowserOptions_Format", browserName);
         public static string RepeatSelectionSelected => L.Get("RepeatSelection_Selected");
         public static string RepeatSelectionEntry(string browserName, int optionCount, int selectedCount, string subheaderText)

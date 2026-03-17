@@ -306,6 +306,7 @@
   "CouldNotClick_Format": "No se pudo hacer clic en {0}",
   "BrowserCards_Format": "{0}. {1} cartas. Tab para navegar, Enter para seleccionar",
   "BrowserCards_One": "{0}. 1 carta. Tab para navegar, Enter para seleccionar",
+  "MulliganEntry_Format": "Mulligan. {0}. Tab para navegar, Enter para seleccionar",
   "BrowserOptions_Format": "{0}. Tab para navegar por las opciones",
   "RepeatSelection_Entry_Format": "{0}. {1} modes. Tab to navigate, Enter to select",
   "RepeatSelection_Entry_One": "{0}. 1 mode. Tab to navigate, Enter to select",

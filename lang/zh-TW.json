@@ -306,6 +306,7 @@
   "CouldNotClick_Format": "無法點擊{0}",
   "BrowserCards_Format": "{0}。{1}張卡牌。Tab瀏覽，Enter選取",
   "BrowserCards_One": "{0}。1張卡牌。Tab瀏覽，Enter選取",
+  "MulliganEntry_Format": "調度。{0}。Tab瀏覽，Enter選取",
   "BrowserOptions_Format": "{0}。Tab瀏覽選項",
   "RepeatSelection_Entry_Format": "{0}. {1} modes. Tab to navigate, Enter to select",
   "RepeatSelection_Entry_One": "{0}. 1 mode. Tab to navigate, Enter to select",

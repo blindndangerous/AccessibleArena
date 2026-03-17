@@ -306,6 +306,7 @@
   "CouldNotClick_Format": "Не удалось нажать {0}",
   "BrowserCards_Format": "{0}. {1} карт. Tab для навигации, Enter для выбора",
   "BrowserCards_One": "{0}. 1 карта. Tab для навигации, Enter для выбора",
+  "MulliganEntry_Format": "Маллиган. {0}. Tab для навигации, Enter для выбора",
   "BrowserOptions_Format": "{0}. Tab для навигации по вариантам",
   "RepeatSelection_Entry_Format": "{0}. {1} modes. Tab to navigate, Enter to select",
   "RepeatSelection_Entry_One": "{0}. 1 mode. Tab to navigate, Enter to select",

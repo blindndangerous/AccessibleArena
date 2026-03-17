@@ -306,6 +306,7 @@
   "CouldNotClick_Format": "{0}をクリックできませんでした",
   "BrowserCards_Format": "{0}。カード{1}枚。Tabで移動、Enterで選択",
   "BrowserCards_One": "{0}。カード1枚。Tabで移動、Enterで選択",
+  "MulliganEntry_Format": "マリガン。{0}。Tabで移動、Enterで選択",
   "BrowserOptions_Format": "{0}。Tabでオプションを移動",
   "RepeatSelection_Entry_Format": "{0}. {1} modes. Tab to navigate, Enter to select",
   "RepeatSelection_Entry_One": "{0}. 1 mode. Tab to navigate, Enter to select",
