@@ -25,8 +25,8 @@ namespace AccessibleArena.Core.Services
         private readonly BrowserZoneNavigator _zoneNavigator;
         private readonly ZoneNavigator _duelZoneNavigator;
 
-        // Browser state
-        private bool _isActive;
+        // Browser state (static so EventSystemPatch can block Submit while browser is active)
+        private static bool _isActive;
         private bool _hasAnnouncedEntry;
         private float _announceSettleTimer; // Delay announcement for scaffold-less browsers to avoid transient states
         private BrowserInfo _browserInfo;
@@ -108,7 +108,7 @@ namespace AccessibleArena.Core.Services
 
         #region Public Properties
 
-        public bool IsActive => _isActive;
+        public static bool IsActive => _isActive;
         public string ActiveBrowserType => _browserInfo?.BrowserType;
         public BrowserZoneNavigator ZoneNavigator => _zoneNavigator;
 

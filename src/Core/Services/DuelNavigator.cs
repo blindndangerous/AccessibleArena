@@ -93,7 +93,7 @@ namespace AccessibleArena.Core.Services
 
             // Connect PriorityController to PhaseSkipGuard for phase skip warning
             PhaseSkipGuard.SetPriorityController(_priorityController);
-            PhaseSkipGuard.SetModalNavigatorCheck(() => _browserNavigator.IsActive || _chooseXNavigator.IsActive);
+            PhaseSkipGuard.SetModalNavigatorCheck(() => BrowserNavigator.IsActive || _chooseXNavigator.IsActive);
 
         }
 
@@ -481,7 +481,7 @@ namespace AccessibleArena.Core.Services
             // T key: Announce browser name if active, otherwise turn and phase info
             if (Input.GetKeyDown(KeyCode.T))
             {
-                if (_browserNavigator.IsActive)
+                if (BrowserNavigator.IsActive)
                 {
                     string browserName = BrowserDetector.GetFriendlyBrowserName(_browserNavigator.ActiveBrowserType);
                     _announcer.AnnounceInterrupt(browserName);

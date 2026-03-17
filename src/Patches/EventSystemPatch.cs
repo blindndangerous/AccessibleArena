@@ -159,6 +159,14 @@ namespace AccessibleArena.Patches
                 return false;
             }
 
+            // Block Submit when a browser is active - our mod handles Space via BrowserNavigator
+            // Without this, Unity's EventSystem clicks the focused button (e.g., settings gear)
+            // before our MelonLoader Update() can consume the key
+            if (Input.GetKey(KeyCode.Space) && BrowserNavigator.IsActive)
+            {
+                return false;
+            }
+
             // Block Submit when we're on a toggle - our mod handles toggle activation directly
             if (InputManager.BlockSubmitForToggle)
             {
