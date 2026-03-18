@@ -60,17 +60,13 @@ All notable changes to Accessible Arena.
 - Duplicate graveyard announcement removed (only the specific card name is read)
 - Space in browsers no longer accidentally opens the settings menu
 - Non-creature cards no longer show 0/0 power/toughness in card info
+- Zone/row shortcuts (C, B, G, X, S, W and Shift variants) now always re-announce when pressed again
 
 ### Loading Screen
 - Loading screen no longer repeats the same status message
 - Intermediate loading steps suppressed — only "Loading" announced once
 - Matchmaking screen ("Suche nach Gegner") announced once instead of 4 times during scene transitions
 
-
-### Fix: Zone/row shortcuts always re-announce when pressed again (PR #34)
-- Pressing C, B, G, X, S, W (and Shift variants) now always announces the current card/zone even if content hasn't changed
-- Pressing Shift+C now always announces opponent hand count
-- Previously, a second keypress within the same zone was silently dropped
 
 ## v0.8.5
 
