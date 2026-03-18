@@ -5164,18 +5164,18 @@ namespace AccessibleArena.Core.Services
                         {
                             _groupedNavigator.RequestChallengeMainEntry();
                             LogDebug($"[{NavigatorId}] Challenge folder exit - requesting ChallengeMain entry");
+                            _suppressRescanAnnouncement = true;
+                            TriggerRescan();
                         }
                         // In PlayBlade context, go back to folders list after exiting a folder
                         else if (wasPlayBladeContext)
                         {
                             _groupedNavigator.RequestFoldersEntry(folderName);
                             LogDebug($"[{NavigatorId}] PlayBlade folder exit - requesting folders list entry (restore to: {folderName})");
+                            _suppressRescanAnnouncement = true;
+                            TriggerRescan();
                         }
-
-                        // Always rescan after folder exit to update navigation state
-                        // Suppress the rescan announcement since we announce immediately below
-                        _suppressRescanAnnouncement = true;
-                        TriggerRescan();
+                        // DeckManager folders: no rescan needed, just exit to group level
                     }
 
                     _announcer.AnnounceInterrupt(_groupedNavigator.GetCurrentAnnouncement());
