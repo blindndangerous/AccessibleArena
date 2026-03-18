@@ -34,6 +34,7 @@ All notable changes to Accessible Arena.
 - Recently Played deck selection now correctly starts the game
 - Deck sub-actions (Rename/Edit/Delete) no longer appear on Recently Played tab
 - Most recent deck on Recently Played tab now shows event/mode name like the other entries
+- Recently Played decks now listed most recent first instead of oldest first
 
 ### Duel Fixes
 - Pressing L multiple times now always re-announces life totals

@@ -3551,6 +3551,25 @@ namespace AccessibleArena.Core.Services
                     }
                 }
                 MelonLogger.Msg($"[{NavigatorId}] Recent tab: {recentDeckEventTitles.Count} deck-event mappings, {recentTilePlayButtons.Count} play buttons to hide");
+
+                // Reverse sort order for recently played decks (most recent first)
+                if (recentDeckEventTitles.Count > 1)
+                {
+                    var pairs = new List<(int idx, float order)>();
+                    for (int i = 0; i < discoveredElements.Count; i++)
+                    {
+                        if (recentDeckEventTitles.ContainsKey(discoveredElements[i].obj))
+                            pairs.Add((i, discoveredElements[i].sortOrder));
+                    }
+                    // Sort by current order, then assign reversed orders
+                    pairs.Sort((a, b) => a.order.CompareTo(b.order));
+                    var reversed = pairs.Select(p => p.order).Reverse().ToList();
+                    for (int j = 0; j < pairs.Count; j++)
+                    {
+                        var (o, c, _) = discoveredElements[pairs[j].idx];
+                        discoveredElements[pairs[j].idx] = (o, c, reversed[j]);
+                    }
+                }
             }
 
             // Sort by position and add elements with proper labels
