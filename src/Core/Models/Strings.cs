@@ -571,6 +571,23 @@ namespace AccessibleArena.Core.Models
         public static string TimerNotAvailable => L.Get("TimerNotAvailable");
         public static string Timeouts(int count) =>
             count == 1 ? L.Get("Timeouts_One") : L.Format("Timeouts_Format", count);
+
+        // Timer event announcements
+        public static string TimerTimeoutUsed(uint timeouts) =>
+            L.Format("Timer_Timeout_Used", Timeouts((int)timeouts));
+        public static string TimerOpponentTimeout(uint timeouts) =>
+            L.Format("Timer_Opponent_Timeout", Timeouts((int)timeouts));
+        public static string TimerLowTime => L.Get("Timer_LowTime");
+        public static string TimerOpponentLowTime => L.Get("Timer_Opponent_LowTime");
+        public static string TimerAnnounce(string timerText, int timeouts) =>
+            L.Format("Timer_Announce_Format", timerText, Timeouts(timeouts));
+        public static string TimerOpponentAnnounce(string timerText, int timeouts) =>
+            L.Format("Timer_Opponent_Announce_Format", timerText, Timeouts(timeouts));
+        public static string TimerNoMatchClock => L.Get("Timer_NoMatchClock");
+        public static string TimerRopeAnnounce(string timerText, int timeouts) =>
+            L.Format("Timer_Rope_Format", timerText, Timeouts(timeouts));
+        public static string TimerOpponentRopeAnnounce(string timerText, int timeouts) =>
+            L.Format("Timer_Opponent_Rope_Format", timerText, Timeouts(timeouts));
         public static string GamesWon(int count) =>
             count == 1 ? L.Get("GamesWon_One") : L.Format("GamesWon_Format", count);
         public static string WinsNotAvailable => L.Get("WinsNotAvailable");
@@ -824,6 +841,7 @@ namespace AccessibleArena.Core.Models
         public static string HelpTTurnPhase => L.Get("HelpTTurnPhase");
         public static string HelpVPlayerInfo => L.Get("HelpVPlayerInfo");
         public static string HelpMLandSummary => L.Get("HelpMLandSummary");
+        public static string HelpETimer => L.Get("HelpETimer");
         public static string HelpKCounters => L.Get("HelpKCounters");
 
         // Card navigation

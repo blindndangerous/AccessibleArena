@@ -90,6 +90,16 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | SettingsMenu | Wotc.Mtga.Wrapper.SettingsMenu | Core |
 | GameManager | GameManager | Core |
 | MatchTimer | MatchTimer | Core |
+| LowTimeWarning | LowTimeWarning | Core |
+| PlayerTimeoutDisplay | PlayerTimeoutDisplay | Core |
+| TimeoutNotificationDisplay | TimeoutNotificationDisplay | Core |
+| MtgTimer | GreClient.Rules.MtgTimer | Shared |
+| TimeoutNotification | GreClient.Rules.TimeoutNotification | Shared |
+| TimerUpdate | GreClient.Rules.TimerUpdate | Shared |
+| ClientUpdateBase | GreClient.Rules.ClientUpdateBase | Shared |
+| TimerType (enum) | Wotc.Mtgo.Gre.External.Messaging.TimerType | Gre |
+| TimerBehavior (enum) | Wotc.Mtgo.Gre.External.Messaging.TimerBehavior | Gre |
+| MatchWinCondition (enum) | Wotc.Mtgo.Gre.External.Messaging.MatchWinCondition | Gre |
 | WrapperController | WrapperController | Core |
 
 ## Play Blade & Events

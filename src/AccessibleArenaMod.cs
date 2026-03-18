@@ -77,6 +77,9 @@ namespace AccessibleArena
             var harmony = new HarmonyLib.Harmony("com.accessibility.mtga.eventsystempatch");
             EventSystemPatch.ApplyRuntimePatches(harmony);
 
+            // TimerPatch for intercepting timeout notifications (timeout used events)
+            TimerPatch.Initialize();
+
             LoggerInstance.Msg("Harmony patches initialized");
         }
 

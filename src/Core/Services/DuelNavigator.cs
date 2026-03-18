@@ -553,6 +553,14 @@ namespace AccessibleArena.Core.Services
                 return true;
             }
 
+            // E key: Timer and timeouts (E = your timer, Shift+E = opponent timer)
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                _portraitNavigator.AnnounceTimer(opponent: shift);
+                return true;
+            }
+
             // M key: Land summary (M = your lands, Shift+M = opponent lands)
             if (Input.GetKeyDown(KeyCode.M))
             {

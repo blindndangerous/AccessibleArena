@@ -66,6 +66,7 @@ namespace AccessibleArena.Core.Constants
         // --- Game / Duel Types ---
         public const string GameManager = "GameManager";
         public const string MatchTimer = "MatchTimer";
+        public const string LowTimeWarning = "LowTimeWarning";
 
         // --- Social Types ---
         public const string FriendTile = "FriendTile";

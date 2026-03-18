@@ -168,6 +168,21 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Called from TimerPatch when a timeout notification fires.
+        /// Announces that a timeout was used and remaining timeout count.
+        /// </summary>
+        public void OnTimerTimeout(bool isLocal, uint timeoutCount)
+        {
+            if (!_isActive) return;
+
+            string message = isLocal
+                ? Strings.TimerTimeoutUsed(timeoutCount)
+                : Strings.TimerOpponentTimeout(timeoutCount);
+            // High priority queues after current speech (e.g. card info) instead of interrupting
+            _announcer.Announce(message, AnnouncementPriority.High);
+        }
+
+        /// <summary>
         /// Yields active CDC child GameObjects from a cached holder.
         /// Reads live children each call - no stale card data.
         /// </summary>

@@ -4,6 +4,14 @@ All notable changes to Accessible Arena.
 
 ## v0.8.6
 
+### Timer Announcements
+- E key: Announce your match timer and timeout count
+- Shift+E: Announce opponent's match timer and timeout count
+- Automatic "Low time" / "Opponent low time" when the rope appears (event-driven via LowTimeWarning)
+- Automatic "Timeout used. X remaining" when a timeout fires (event-driven via Harmony patch)
+- Timer reads from MtgTimer game model instead of UI text (accurate, no false 0:00 readings)
+- Falls back to turn (rope) timer in formats without a match clock (Brawl, casual)
+
 ### Best of 3 (Bo3) Support
 - New sideboard navigator for editing your deck between games (C = card pool, D = deck, Enter = move card, Space = submit)
 - Match info zone (Tab to Info) reads intro text, match score, timer, and card counts
