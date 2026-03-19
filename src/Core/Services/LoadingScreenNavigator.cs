@@ -200,6 +200,10 @@ namespace AccessibleArena.Core.Services
             var rootObjects = matchEndScene.GetRootGameObjects();
             Log($"MatchEndScene root objects: {rootObjects.Length}");
 
+            // Filter out CanvasPopup - it hosts survey/overlay popups, not MatchEnd content.
+            // Without this, survey buttons can leak into MatchEnd elements during race conditions.
+            var filteredRoots = rootObjects.Where(r => r.name != "CanvasPopup").ToArray();
+
             // Diagnostic dump of scene hierarchy (first poll only)
             if (!_dumpedHierarchy)
             {
@@ -211,7 +215,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Extract match result text from TMP_Text in MatchEndScene
-            _matchResultText = ExtractMatchResultText(rootObjects);
+            _matchResultText = ExtractMatchResultText(filteredRoots);
             Log($"Match result: {_matchResultText}");
 
             // MatchEndScene uses EventTrigger (not Button/CustomButton) for its click targets.
@@ -219,7 +223,7 @@ namespace AccessibleArena.Core.Services
             // Search for known elements by name, including inactive ones (poll for activation).
 
             // 1. Find ExitMatchOverlayButton (Continue / click to continue)
-            foreach (var root in rootObjects)
+            foreach (var root in filteredRoots)
             {
                 var exitButton = FindChildRecursive(root.transform, "ExitMatchOverlayButton");
                 if (exitButton != null)
@@ -239,7 +243,7 @@ namespace AccessibleArena.Core.Services
 
             // 2. Find any other clickable elements in MatchEndScene
             //    (CustomButton, Selectable, or EventTrigger-based)
-            foreach (var root in rootObjects)
+            foreach (var root in filteredRoots)
             {
                 // Search for EventTrigger components (MatchEndScene's click mechanism)
                 foreach (var et in root.GetComponentsInChildren<EventTrigger>(false))
@@ -283,7 +287,7 @@ namespace AccessibleArena.Core.Services
 
             // 3. Collect info text elements (rank, format, etc.)
             //    These appear after animations, so polling catches them.
-            foreach (var root in rootObjects)
+            foreach (var root in filteredRoots)
             {
                 foreach (var text in root.GetComponentsInChildren<TMP_Text>(false))
                 {
@@ -710,14 +714,38 @@ namespace AccessibleArena.Core.Services
             return false;
         }
 
+        protected override void OnPopupClosed()
+        {
+            if (_currentMode != ScreenMode.MatchEnd) return;
+
+            Log("Survey popup closed, re-discovering elements");
+            _elements.Clear();
+            _currentIndex = -1;
+            DiscoverElements();
+
+            // Restart polling to catch ExitMatchOverlayButton becoming active
+            _pollElapsed = 0f;
+            _pollTimer = 0.1f;
+            _polling = true;
+            _lastElementCount = _elements.Count;
+
+            if (_elements.Count > 0)
+            {
+                _currentIndex = 0;
+                UpdateEventSystemSelection();
+            }
+            _announcer.AnnounceInterrupt(GetActivationAnnouncement());
+        }
+
         #endregion
 
         #region Polling (Update)
 
         protected override void OnActivated()
         {
-            // Start polling for late-loading UI
             StartPolling();
+            if (_currentMode == ScreenMode.MatchEnd)
+                EnablePopupDetection();
         }
 
         private void StartPolling()
@@ -764,7 +792,7 @@ namespace AccessibleArena.Core.Services
             // Run base Update for input handling, validation, etc.
             base.Update();
 
-            if (!_isActive || !_polling) return;
+            if (!_isActive || !_polling || IsInPopupMode) return;
 
             // Poll for new elements
             _pollElapsed += Time.deltaTime;
