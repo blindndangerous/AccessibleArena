@@ -3142,7 +3142,8 @@ namespace AccessibleArena.Core.Services
         {
             string name = obj.name.ToLower();
             return name.Contains("background") || name.Contains("overlay") ||
-                   name.Contains("backdrop") || name.Contains("dismiss");
+                   name.Contains("backdrop") || name.Contains("dismiss") ||
+                   name.Contains("shield");
         }
 
         /// <summary>

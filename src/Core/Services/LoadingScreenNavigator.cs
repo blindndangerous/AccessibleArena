@@ -54,6 +54,9 @@ namespace AccessibleArena.Core.Services
         private TMP_Text _loadingInfoText;
         private string _lastLoadingStatusText = "";
 
+        // Survey popup: content is non-accessible (graphical/web-based)
+        private bool _isSurveyPopup;
+
         // Diagnostic: dump hierarchy once per activation
         private bool _dumpedHierarchy;
 
@@ -714,8 +717,44 @@ namespace AccessibleArena.Core.Services
             return false;
         }
 
+        protected override void OnPopupDetected(PanelInfo panel)
+        {
+            if (panel?.GameObject == null) return;
+
+            // GameEndSurveyPopup content is non-accessible (graphical/web-based).
+            // Enter popup mode so Backspace can dismiss via ClickShield.
+            if (panel.Name.Contains("Survey"))
+            {
+                Log($"Survey popup detected: {panel.Name} — entering dismiss-only popup mode");
+                _isSurveyPopup = true;
+                EnterPopupMode(panel.GameObject);
+                return;
+            }
+
+            base.OnPopupDetected(panel);
+        }
+
+        protected override void DiscoverPopupElements(GameObject popup)
+        {
+            if (_isSurveyPopup)
+            {
+                // Survey content is graphical — no native UI to discover.
+                // Add a description so the announcement is meaningful.
+                _elements.Add(new NavigableElement
+                {
+                    GameObject = popup,
+                    Label = Strings.WithHint("Game survey (not accessible)", "HelpBackspaceCancel"),
+                    Role = UIElementClassifier.ElementRole.TextBlock
+                });
+                return;
+            }
+
+            base.DiscoverPopupElements(popup);
+        }
+
         protected override void OnPopupClosed()
         {
+            _isSurveyPopup = false;
             if (_currentMode != ScreenMode.MatchEnd) return;
 
             Log("Survey popup closed, re-discovering elements");
@@ -941,6 +980,7 @@ namespace AccessibleArena.Core.Services
             _timerText = null;
             _loadingInfoText = null;
             _lastLoadingStatusText = "";
+            _isSurveyPopup = false;
             _dumpedHierarchy = false;
         }
 
