@@ -17,6 +17,11 @@ All notable changes to Accessible Arena.
 - Previously, Backspace clicked the wrong button (duel-level PromptButton_Secondary) which left the ConfirmWidget UI stuck
 - New reflection-based cancel finds the ConfirmWidget and calls Cancel() directly, with fallback to workflow variant cancellation and request undo
 
+### Feat: Browser entry hints respect TutorialMessages setting (PR #35)
+- When TutorialMessages is off, browser entry says only the zone/card count without "Tab to navigate, Enter to select" appended
+- Applies to Scry, Surveil, Mulligan, and all generic browser types
+- Default (TutorialMessages on) behavior unchanged
+
 ## v0.8.6
 
 ### Timer Announcements
