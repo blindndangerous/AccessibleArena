@@ -61,6 +61,21 @@ When clicking a non-attacking token during declare attackers, the game always se
 
 ## Under Investigation
 
+### Challenge Invite Popup — Dropdown Only Shows 1 Friend
+
+The "Invite Friend to Challenge" popup contains a `cTMP_Dropdown` (DropdownHitbox) that only has 1 option (a single friend name), even when the user has multiple friends. The dropdown genuinely contains only 1 Toggle item — this is how the game populates it, not a mod bug.
+
+**Open questions:**
+- Does the dropdown show only online friends? Only the most recent? Only 1 by design?
+- Is the dropdown useful at all, or is the input field ("Opponent") the intended way to select a friend?
+- Should the mod skip the dropdown in this popup and guide users to the input field instead?
+
+**Current behavior:** The mod correctly handles it as a single-item dropdown (arrow keys re-announce the one item, Enter selects it). The input field works for typing any friend's display name.
+
+**Files:** `DropdownEditHelper.cs`, `GeneralMenuNavigator.cs` (popup mode)
+
+---
+
 ### Steam Overlay Hijacks Shift+Tab
 
 Steam's default overlay hotkey (Shift+Tab) conflicts with the mod's backward navigation (Shift+Tab for previous item, previous color in mana picker, etc.). When pressed, the Steam overlay opens instead of navigating. The overlay is not accessible to screen readers, so blind users must dismiss it and lose their navigation context.
@@ -220,6 +235,7 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 **4. Contextual explanations for mod-specific controls**
 - F1 and F2 menus: explain that F1 opens the help overlay with all shortcuts and F2 opens the mod settings menu
+- Attacking: explain that in MTG, attackers always attack the opponent (or a planeswalker) — you do NOT choose which creature to attack. The opponent then decides how to block. This is a key difference from Hearthstone where you pick a target for each attacker. During Declare Attackers, simply toggle your creatures as attacking (Enter) and confirm (Space) — there is no target selection step
 - Blocking: explain how to assign blockers during Declare Blockers step (navigate to attacker, press Enter, select blocker)
 - Mana costs: explain how mana payment works when a card requires specific colors, and how the mana color picker (Tab/number keys) appears for any-color sources
 - Confirming with Space: explain that Space acts as the primary confirm/pass/next button during duels (pass priority, confirm attacks, submit choices)

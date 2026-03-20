@@ -119,7 +119,11 @@ namespace AccessibleArena.Core.Services
             }
 
             // Single-item dropdown: consume arrow keys and re-announce instead of
-            // passing through to Unity (which would escape focus out of the dropdown)
+            // passing through to Unity (which would escape focus out of the dropdown).
+            // Recount first — cTMP_Dropdown (e.g. challenge invite) may create items
+            // asynchronously, so the initial count from TryFocusFirstItem can be stale.
+            if (_itemCount == 1)
+                CountItems();
             if (_itemCount == 1 && (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)))
             {
                 if (_firstItemObject != null)
