@@ -288,7 +288,7 @@ namespace AccessibleArena.Core.Services
         {
             // ExitMatchOverlayButton on MatchEndScene shows "View Battlefield" but actually continues to home
             if (objectName == "ExitMatchOverlayButton")
-                return "Continue";
+                return Strings.Continue;
 
             // NewDeckButton shows "Enter deck name..." placeholder but is actually a create deck button
             if (objectName.Contains("NewDeckButton"))

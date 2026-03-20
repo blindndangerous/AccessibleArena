@@ -70,6 +70,7 @@ namespace AccessibleArena.Core.Models
         public static string ClosingPlayBlade => L.Get("ClosingPlayBlade");
         public static string ExitingDeckBuilder => L.Get("ExitingDeckBuilder");
         public static string NewDeck => L.Get("NewDeck");
+        public static string Continue => L.Get("Continue");
 
         // ===========================================
         // DECK BUILDER INFO
