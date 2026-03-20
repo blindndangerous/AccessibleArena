@@ -512,15 +512,22 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        public override string GetTutorialHint() =>
+            LocaleManager.Instance.Get(_isDeckReward ? "NPERewardDeckHint" : "NPERewardCardHint");
+
         protected override string GetActivationAnnouncement()
         {
+            string hintKey;
             if (_isDeckReward)
             {
                 string deckInfo = _totalCards > 0 ? $" {_totalCards} {(_totalCards == 1 ? "deck" : "decks")}." : "";
-                return $"{ScreenName}. Left and Right to navigate. Enter to open.{deckInfo}";
+                string core = $"{ScreenName}.{deckInfo}".TrimEnd();
+                hintKey = "NPERewardDeckHint";
+                return Strings.WithHint(core, hintKey);
             }
             string cardInfo = _totalCards > 0 ? $" {_totalCards} {(_totalCards == 1 ? "card" : "cards")}." : "";
-            return $"{ScreenName}. Left and Right to navigate, Up and Down for card details.{cardInfo}";
+            string coreCard = $"{ScreenName}.{cardInfo}".TrimEnd();
+            return Strings.WithHint(coreCard, "NPERewardCardHint");
         }
 
         protected override void HandleInput()

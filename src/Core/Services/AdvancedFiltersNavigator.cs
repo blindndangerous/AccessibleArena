@@ -317,10 +317,13 @@ namespace AccessibleArena.Core.Services
 
         #region Navigation
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("AdvancedFiltersHint");
+
         protected override string GetActivationAnnouncement()
         {
             int totalItems = _rows.Sum(r => r.Items.Count);
-            return $"Advanced Filters. Up and Down to switch sections. Left and Right to navigate. Enter to toggle. {_rows.Count} sections, {totalItems} items.";
+            string core = $"Advanced Filters. {_rows.Count} sections, {totalItems} items";
+            return Strings.WithHint(core, "AdvancedFiltersHint");
         }
 
         protected override void HandleInput()

@@ -1120,10 +1120,13 @@ namespace AccessibleArena.Core.Services
 
         #region Announcements
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("AchievementsHint");
+
         protected override string GetActivationAnnouncement()
         {
             int tabCount = _overviewEntries.Count(e => e.Type == OverviewEntryType.SetTab);
-            return Strings.AchievementsActivation(tabCount);
+            string core = Strings.AchievementsActivation(tabCount);
+            return Strings.WithHint(core, "AchievementsHint");
         }
 
         protected override string GetElementAnnouncement(int index)

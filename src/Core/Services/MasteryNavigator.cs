@@ -1126,11 +1126,14 @@ namespace AccessibleArena.Core.Services
 
         #region Announcements
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("MasteryHint");
+
         protected override string GetActivationAnnouncement()
         {
             if (_mode == MasteryMode.PrizeWall)
             {
-                return Strings.PrizeWallActivation(_prizeWallItems.Count, _sphereCount);
+                string prizeCore = Strings.PrizeWallActivation(_prizeWallItems.Count, _sphereCount);
+                return Strings.WithHint(prizeCore, "MasteryHint");
             }
 
             if (_levelData.Count == 0)
@@ -1147,7 +1150,8 @@ namespace AccessibleArena.Core.Services
                     xpStr = "completed";
             }
 
-            return Strings.MasteryActivation(_trackTitle, _levelData[_currentPlayerLevel].LevelNumber, _totalLevels, xpStr);
+            string core = Strings.MasteryActivation(_trackTitle, _levelData[_currentPlayerLevel].LevelNumber, _totalLevels, xpStr);
+            return Strings.WithHint(core, "MasteryHint");
         }
 
         protected override string GetElementAnnouncement(int index)

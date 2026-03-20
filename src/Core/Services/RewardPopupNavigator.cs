@@ -703,10 +703,13 @@ namespace AccessibleArena.Core.Services
 
         #region Input Handling
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("RewardPopupHint");
+
         protected override string GetActivationAnnouncement()
         {
             string rewardInfo = _rewardCount > 0 ? $" {_rewardCount} rewards." : "";
-            return $"Rewards. Left and Right to navigate. Up and Down for card details. Backspace to continue.{rewardInfo}";
+            string core = $"Rewards.{rewardInfo}".TrimEnd();
+            return Strings.WithHint(core, "RewardPopupHint");
         }
 
         protected override void HandleInput()

@@ -357,6 +357,8 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("DuelKeybindingsHint");
+
         protected override string GetActivationAnnouncement()
         {
             string core = Models.Strings.Duel_Started;

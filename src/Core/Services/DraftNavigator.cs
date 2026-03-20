@@ -241,10 +241,13 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("DraftHint");
+
         protected override string GetActivationAnnouncement()
         {
             string countInfo = _totalCards > 0 ? $" {_totalCards} cards." : "";
-            return $"Draft Pick. Left and Right to navigate cards, Enter to select, Space to confirm.{countInfo}";
+            string core = $"Draft Pick.{countInfo}".TrimEnd();
+            return Strings.WithHint(core, "DraftHint");
         }
 
         protected override void HandleInput()

@@ -1077,6 +1077,11 @@ namespace AccessibleArena.Core.Services
 
         #region Announcements
 
+        public override string GetTutorialHint() =>
+            _navLevel == NavigationLevel.Items
+                ? LocaleManager.Instance.Get("StoreItemsHint")
+                : LocaleManager.Instance.Get("NavigateHint");
+
         protected override string GetActivationAnnouncement()
         {
             // If on Packs tab, enter SetFilter level
@@ -1105,13 +1110,15 @@ namespace AccessibleArena.Core.Services
                     ? _tabs[_currentTabIndex].DisplayName
                     : "Store";
 
-                return $"Store, {tabName}. {Strings.NavigateWithArrows}, Enter to buy, Backspace for tabs. {_items.Count} items.";
+                string core = $"Store, {tabName}. {_items.Count} items";
+                return Strings.WithHint(core, "StoreItemsHint");
             }
 
             // No items - stay at tab level
             _navLevel = NavigationLevel.Tabs;
             int realTabCount = _tabs.Count(t => !t.IsUtility);
-            return $"Store. {Strings.NavigateWithArrows}, Enter to select. {realTabCount} tabs.";
+            string tabCore = $"Store. {realTabCount} tabs";
+            return Strings.WithHint(tabCore, "NavigateHint");
         }
 
         protected override string GetElementAnnouncement(int index)

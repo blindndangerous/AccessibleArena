@@ -4,6 +4,13 @@ All notable changes to Accessible Arena.
 
 ## v0.8.7
 
+### Ctrl+F1: Tutorial Hint Hotkey
+- New global shortcut Ctrl+F1 announces the tutorial hint for the current screen at any time
+- Works regardless of the TutorialMessages setting (always available as an on-demand reminder)
+- Each navigator provides its own context-specific hint (e.g. duel keybindings, draft controls, sideboard shortcuts)
+- Refactored all navigators to use the consistent WithHint pattern for hint display on activation
+- Added to help menu (F1)
+
 ### Fix: Backspace now cancels workflow browsers (ability activation prompts)
 - Pressing Backspace in a workflow browser (e.g. "Activate ability" prompt on Evolving Wilds) now properly cancels the action
 - Previously, Backspace clicked the wrong button (duel-level PromptButton_Secondary) which left the ConfirmWidget UI stuck

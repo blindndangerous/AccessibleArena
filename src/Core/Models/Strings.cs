@@ -806,6 +806,7 @@ namespace AccessibleArena.Core.Models
         public static string HelpF1Help => L.Get("HelpF1Help");
         public static string HelpF2Settings => L.Get("HelpF2Settings");
         public static string HelpF3Context => L.Get("HelpF3Context");
+        public static string HelpCtrlF1Tutorial => L.Get("HelpCtrlF1Tutorial");
         public static string HelpCtrlRRepeat => L.Get("HelpCtrlRRepeat");
         public static string HelpBackspace => L.Get("HelpBackspace");
 

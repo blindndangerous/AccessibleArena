@@ -202,6 +202,7 @@ namespace AccessibleArena
             _shortcuts.RegisterShortcut(KeyCode.F1, ToggleHelpMenu, "Help menu");
             _shortcuts.RegisterShortcut(KeyCode.F2, ToggleSettingsMenu, "Settings menu");
             _shortcuts.RegisterShortcut(KeyCode.R, KeyCode.LeftControl, RepeatLastAnnouncement, "Repeat last announcement");
+            _shortcuts.RegisterShortcut(KeyCode.F1, KeyCode.LeftControl, AnnounceTutorialHint, "Repeat tutorial hint");
             _shortcuts.RegisterShortcut(KeyCode.F3, AnnounceCurrentScreen, "Announce current screen");
             _shortcuts.RegisterShortcut(KeyCode.F12, KeyCode.LeftShift, SpeakDebugLog, "Speak recent debug log entries");
         }
@@ -231,6 +232,15 @@ namespace AccessibleArena
             else
             {
                 _announcer.AnnounceInterrupt(Strings.NoActiveScreen);
+            }
+        }
+
+        private void AnnounceTutorialHint()
+        {
+            var nav = _navigatorManager?.ActiveNavigator as BaseNavigator;
+            if (nav != null)
+            {
+                _announcer.AnnounceInterrupt(nav.GetTutorialHint());
             }
         }
 

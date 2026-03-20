@@ -205,6 +205,9 @@ namespace AccessibleArena.Core.Services
             return IsDecorativePanel(panel.Name);
         }
 
+        /// <summary>Return the tutorial hint for this navigator (used by Ctrl+F1)</summary>
+        public virtual string GetTutorialHint() => LocaleManager.Instance.Get("NavigateHint");
+
         /// <summary>Build the initial screen announcement</summary>
         protected virtual string GetActivationAnnouncement()
         {

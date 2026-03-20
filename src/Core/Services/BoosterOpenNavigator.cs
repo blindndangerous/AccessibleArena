@@ -600,10 +600,13 @@ namespace AccessibleArena.Core.Services
             return 0; // Not found or not a card (e.g., vault progress)
         }
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("BoosterOpenHint");
+
         protected override string GetActivationAnnouncement()
         {
             string countInfo = _totalCards > 0 ? $" {_totalCards} cards." : "";
-            return $"Pack Contents. Left and Right to navigate cards, Up and Down for card details.{countInfo}";
+            string core = $"Pack Contents.{countInfo}".TrimEnd();
+            return Strings.WithHint(core, "BoosterOpenHint");
         }
 
         protected override void HandleInput()

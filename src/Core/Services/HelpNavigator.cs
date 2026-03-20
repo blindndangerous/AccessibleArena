@@ -50,6 +50,7 @@ namespace AccessibleArena.Core.Services
                 Strings.HelpF2Settings,
                 Strings.HelpF3Context,
                 Strings.HelpF4Friends,
+                Strings.HelpCtrlF1Tutorial,
                 Strings.HelpCtrlRRepeat,
                 Strings.HelpBackspace,
 

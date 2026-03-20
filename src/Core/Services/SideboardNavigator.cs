@@ -131,6 +131,8 @@ namespace AccessibleArena.Core.Services
             _deckCards.Clear();
         }
 
+        public override string GetTutorialHint() => LocaleManager.Instance.Get("SideboardHint");
+
         protected override string GetActivationAnnouncement()
         {
             string introText = GetIntroText();
@@ -144,10 +146,10 @@ namespace AccessibleArena.Core.Services
             int poolCount = _poolCards.Count;
             int deckCount = _deckCards.Count;
 
-            string announcement = Strings.Sideboard_Activated(playerName, playerWins, opponentName, opponentWins, poolCount, deckCount);
+            string core = Strings.Sideboard_Activated(playerName, playerWins, opponentName, opponentWins, poolCount, deckCount);
             if (!string.IsNullOrEmpty(introText))
-                announcement = $"{introText}. {announcement}";
-            return announcement;
+                core = $"{introText}. {core}";
+            return Strings.WithHint(core, "SideboardHint");
         }
 
         protected override void DiscoverElements()

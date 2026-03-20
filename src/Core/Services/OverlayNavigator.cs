@@ -383,10 +383,12 @@ namespace AccessibleArena.Core.Services
             // Try to include content summary for What's New
             if (_overlayType == "WhatsNew")
             {
-                return $"{ScreenName} overlay. {Models.Strings.NavigateWithArrows}, Enter to continue.{countInfo}";
+                string core = $"{ScreenName} overlay.{countInfo}".TrimEnd();
+                return Strings.WithHint(core, "NavigateHint");
             }
 
-            return $"{ScreenName}. {Models.Strings.NavigateWithArrows}, Enter to select.{countInfo}";
+            string coreDefault = $"{ScreenName}.{countInfo}".TrimEnd();
+            return Strings.WithHint(coreDefault, "NavigateHint");
         }
 
         public override void OnSceneChanged(string sceneName)
