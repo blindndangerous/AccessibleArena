@@ -379,6 +379,7 @@
   "SideboardHint": "C for pool, D for deck, T for timer, L for score. Enter to move cards, Space to submit",
   "MasteryHint": "Стрелки для навигации по уровням",
   "AchievementsHint": "Вверх и Вниз для навигации",
+  "DeckBuilderHint": "Arrow keys to navigate, Enter to select or move card. Tab to switch between filters, cards and deck info",
   "ItemsCount_One": "1 предмет",
   "ItemsCount_Format": "{0} предметов",
   "ActivationWithItems_Format": "{0}. {1}. {2}",

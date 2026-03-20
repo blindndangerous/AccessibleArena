@@ -4488,6 +4488,11 @@ namespace AccessibleArena.Core.Services
             }
         }
 
+        public override string GetTutorialHint() =>
+            _activeContentController == "WrapperDeckBuilder"
+                ? LocaleManager.Instance.Get("DeckBuilderHint")
+                : LocaleManager.Instance.Get("NavigateHint");
+
         protected override string GetActivationAnnouncement()
         {
             string menuName = GetMenuScreenName();
@@ -4499,7 +4504,10 @@ namespace AccessibleArena.Core.Services
             // Use grouped navigator announcement when enabled
             if (_groupedNavigationEnabled && _groupedNavigator.IsActive)
             {
-                return _groupedNavigator.GetActivationAnnouncement(menuName);
+                string groupAnnouncement = _groupedNavigator.GetActivationAnnouncement(menuName);
+                if (_activeContentController == "WrapperDeckBuilder")
+                    return Models.Strings.WithHint(groupAnnouncement, "DeckBuilderHint");
+                return groupAnnouncement;
             }
 
             return Models.Strings.ScreenItemsSummary(menuName, Models.Strings.ItemCount(_elements.Count),

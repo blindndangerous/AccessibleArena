@@ -9,6 +9,7 @@ All notable changes to Accessible Arena.
 - Works regardless of the TutorialMessages setting (always available as an on-demand reminder)
 - Each navigator provides its own context-specific hint (e.g. duel keybindings, draft controls, sideboard shortcuts)
 - Refactored all navigators to use the consistent WithHint pattern for hint display on activation
+- Deck builder screen includes its own hint: "Tab to switch between filters, cards and deck info"
 - Added to help menu (F1)
 
 ### Fix: Backspace now cancels workflow browsers (ability activation prompts)
