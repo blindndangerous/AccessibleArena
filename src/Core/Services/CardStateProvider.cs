@@ -437,10 +437,10 @@ namespace AccessibleArena.Core.Services
                         foreach (var cardType in cardTypes)
                         {
                             string typeStr = cardType?.ToString() ?? "";
-                            if (typeStr.Contains("Planeswalker")) return "Planeswalker";
-                            if (typeStr.Contains("Artifact")) return "Artifact";
-                            if (typeStr.Contains("Enchantment")) return "Enchantment";
-                            if (typeStr.Contains("Battle")) return "Battle";
+                            if (typeStr.Contains("Planeswalker")) return Models.Strings.CardType_Planeswalker;
+                            if (typeStr.Contains("Artifact")) return Models.Strings.CardType_Artifact;
+                            if (typeStr.Contains("Enchantment")) return Models.Strings.CardType_Enchantment;
+                            if (typeStr.Contains("Battle")) return Models.Strings.CardType_Battle;
                         }
                     }
                 }

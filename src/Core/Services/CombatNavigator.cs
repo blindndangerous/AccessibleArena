@@ -480,7 +480,12 @@ namespace AccessibleArena.Core.Services
                         names.Add(nameWithPT);
                 }
                 if (names.Count == 0) return null;
-                return Models.Strings.Combat_BlockedBy(string.Join(" and ", names));
+                if (names.Count == 1)
+                    return Models.Strings.Combat_BlockedBy(names[0]);
+                if (names.Count == 2)
+                    return Models.Strings.Combat_BlockedByTwo(names[0], names[1]);
+                string allButLast = string.Join(", ", names.GetRange(0, names.Count - 1));
+                return Models.Strings.Combat_BlockedByMany(allButLast, names[names.Count - 1]);
             }
             catch { return null; }
         }
