@@ -33,7 +33,8 @@ namespace AccessibleArena.Core.Services
             T.EventPageContentController,
             "ProgressionTracksContentController",
             T.PacketSelectContentController,
-            "DraftContentController"
+            "DraftContentController",
+            "BoosterChamberController"
         };
 
         // Settings submenu panel names
@@ -183,16 +184,6 @@ namespace AccessibleArena.Core.Services
                     }
                     catch { /* Reflection may fail on different game versions */ }
                 }
-            }
-
-            // BoosterChamber (pack opening screen) - elements ARE children of controller
-            // so we set _activeControllerGameObject to filter NavBar and show only pack elements
-            var boosterChamberObj = GameObject.Find("ContentController - BoosterChamber_v2_Desktop_16x9(Clone)");
-            if (boosterChamberObj != null && boosterChamberObj.activeInHierarchy)
-            {
-                _activeControllerGameObject = boosterChamberObj;
-                _activeContentController = "BoosterChamber";
-                return "BoosterChamber";
             }
 
             // Fallback: Check for rewards/claim overlay by object name pattern
@@ -388,7 +379,7 @@ namespace AccessibleArena.Core.Services
                 T.PacketSelectContentController => Strings.ScreenPacketSelect,
                 "DraftContentController" => Strings.ScreenDraft,
                 "RewardsOverlay" => Strings.ScreenRewards,
-                "BoosterChamber" => Strings.ScreenPacks,
+                "BoosterChamberController" => Strings.ScreenPacks,
                 "NPERewards" => Strings.ScreenCardUnlocked,
                 "ProgressionTracksContentController" => Strings.ScreenMastery,
                 _ => controllerTypeName?.Replace("ContentController", "").Replace("Controller", "").Trim()

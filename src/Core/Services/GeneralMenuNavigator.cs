@@ -1195,7 +1195,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // F11: Dump booster pack details (when in BoosterChamber)
-            if (Input.GetKeyDown(KeyCode.F11) && _activeContentController == "BoosterChamber")
+            if (Input.GetKeyDown(KeyCode.F11) && _activeContentController == "BoosterChamberController")
             {
                 GameObject currentElement = null;
                 if (_groupedNavigationEnabled && _groupedNavigator.IsActive)
@@ -2594,7 +2594,7 @@ namespace AccessibleArena.Core.Services
 
             // Allow Nav_WildCard in deck builder and booster screens so blind users can check wildcard counts
             if (obj.name == "Nav_WildCard" &&
-                (_activeContentController == "WrapperDeckBuilder" || _activeContentController == "BoosterChamber"))
+                (_activeContentController == "WrapperDeckBuilder" || _activeContentController == "BoosterChamberController"))
                 return true;
 
             // Normal content panel: only show its elements
@@ -3283,7 +3283,7 @@ namespace AccessibleArena.Core.Services
             DetectActiveContentController();
 
             // Disable grouped navigation for BoosterChamber - flat list is better for pack carousel
-            if (_activeContentController == "BoosterChamber")
+            if (_activeContentController == "BoosterChamberController")
                 _groupedNavigationEnabled = false;
 
             // Debug: Dump DeckFolder hierarchy on DeckManager screen
@@ -3310,7 +3310,7 @@ namespace AccessibleArena.Core.Services
 
             // Reset booster carousel state
             _boosterPackHitboxes.Clear();
-            _isBoosterCarouselActive = _activeContentController == "BoosterChamber";
+            _isBoosterCarouselActive = _activeContentController == "BoosterChamberController";
             if (!_isBoosterCarouselActive)
                 _boosterCarouselIndex = 0;
 
