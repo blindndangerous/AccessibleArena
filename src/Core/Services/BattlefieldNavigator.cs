@@ -706,7 +706,8 @@ namespace AccessibleArena.Core.Services
             if (includeRowName)
             {
                 string rowName = GetRowName(_currentRow);
-                prefix = isRowSwitch ? $"{Strings.EnteringRow(rowName)}, " : $"{rowName}, ";
+                bool verbose = AccessibleArenaMod.Instance?.Settings?.VerboseAnnouncements != false;
+                prefix = (!isRowSwitch || verbose) ? $"{rowName}, " : "";
             }
             _announcer.Announce($"{prefix}{cardName}{typeLabel}{combatState}{attachmentText}{targetingText}, {position} of {total}", priority);
 
