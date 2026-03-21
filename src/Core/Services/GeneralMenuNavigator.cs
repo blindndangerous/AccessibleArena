@@ -3342,6 +3342,15 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
+                // Booster chamber: filter out pack-opening overlay buttons that can remain
+                // active in the hierarchy after a pack is dismissed (stale RevealAll/Dismiss)
+                if (_isBoosterCarouselActive &&
+                    (obj.name.Contains("RevealAll") || obj.name.Contains("Dismiss_MainButton")))
+                {
+                    addedObjects.Add(obj);
+                    return;
+                }
+
                 // Debug: log objectives and Blade_ListItem filtering
                 bool isObjective = obj.name.Contains("Objective") || GetParentPath(obj).Contains("Objective");
                 bool isBladeListItem = GetParentPath(obj).Contains("Blade_ListItem");
