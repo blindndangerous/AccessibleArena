@@ -290,8 +290,9 @@ namespace AccessibleArena.Core.Services
             if (objectName == "ExitMatchOverlayButton")
                 return Strings.Continue;
 
-            // NewDeckButton shows "Enter deck name..." placeholder but is actually a create deck button
-            if (objectName.Contains("NewDeckButton"))
+            // Deck builder title panel picks up English "New Deck Name" from InputField Placeholder child.
+            // DeckManager "NewDeckButton" shows "Enter deck name..." placeholder.
+            if (objectName.Contains("NewDeckButton") || objectName == "TitlePanel_MainDeck")
                 return Strings.NewDeck;
 
             return null;
