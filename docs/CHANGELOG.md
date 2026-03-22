@@ -29,6 +29,9 @@ All notable changes to Accessible Arena.
 - Previously, the SelectCards browser only announced the parent card name for each option
 - Fixed RulesTextOverride extraction to try all source GrpIds as card context for ability text resolution
 
+### Fix: Recently Played tab lists most recent first again
+- Restored reverse sort order for Recently Played decks that was accidentally removed during deck submenu polish
+
 ### Feat: Browser entry hints respect TutorialMessages setting (PR #35)
 - When TutorialMessages is off, browser entry says only the zone/card count without "Tab to navigate, Enter to select" appended
 - Applies to Scry, Surveil, Mulligan, and all generic browser types
