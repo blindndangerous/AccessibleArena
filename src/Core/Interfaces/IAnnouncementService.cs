@@ -14,6 +14,7 @@ namespace AccessibleArena.Core.Interfaces
         void SetEnabled(bool enabled);
         bool IsEnabled { get; }
         IReadOnlyList<string> History { get; }
+        void LogToHistory(string message);
         void ClearHistory();
     }
 }

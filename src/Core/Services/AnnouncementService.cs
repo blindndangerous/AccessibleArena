@@ -24,7 +24,6 @@ namespace AccessibleArena.Core.Services
                 return;
 
             _lastAnnouncement = message;
-            _history.Add(message);
 
             // Log what we're speaking
             MelonLogger.Msg($"[Announce] {priority}: {message}");
@@ -67,6 +66,12 @@ namespace AccessibleArena.Core.Services
             {
                 ScreenReaderOutput.Speak(_lastAnnouncement, true);
             }
+        }
+
+        public void LogToHistory(string message)
+        {
+            if (!string.IsNullOrEmpty(message))
+                _history.Add(message);
         }
 
         public void ClearHistory()

@@ -29,6 +29,13 @@ namespace AccessibleArena.Core.Services
         private readonly IAnnouncementService _announcer;
         private bool _isActive;
 
+        /// <summary>Announces and logs to game log history.</summary>
+        private void AnnounceToLog(string message, AnnouncementPriority priority)
+        {
+            _announcer.Announce(message, priority);
+            _announcer.LogToHistory(message);
+        }
+
         private readonly Dictionary<string, DuelEventType> _eventTypeMap;
         private readonly Dictionary<string, int> _zoneCounts = new Dictionary<string, int>();
 
@@ -179,7 +186,7 @@ namespace AccessibleArena.Core.Services
                 ? Strings.TimerTimeoutUsed(timeoutCount)
                 : Strings.TimerOpponentTimeout(timeoutCount);
             // High priority queues after current speech (e.g. card info) instead of interrupting
-            _announcer.Announce(message, AnnouncementPriority.High);
+            AnnounceToLog(message, AnnouncementPriority.High);
         }
 
         /// <summary>
@@ -215,7 +222,7 @@ namespace AccessibleArena.Core.Services
             _phaseDebounceTimer -= UnityEngine.Time.deltaTime;
             if (_phaseDebounceTimer <= 0)
             {
-                _announcer.Announce(_pendingPhaseAnnouncement, AnnouncementPriority.Low);
+                AnnounceToLog(_pendingPhaseAnnouncement, AnnouncementPriority.Low);
                 _lastAnnouncement = _pendingPhaseAnnouncement;
                 _lastAnnouncementTime = DateTime.Now;
                 _pendingPhaseAnnouncement = null;
@@ -360,7 +367,7 @@ namespace AccessibleArena.Core.Services
 
                 if (IsDuplicateAnnouncement(announcement)) return;
 
-                _announcer.Announce(announcement, GetPriority(eventType));
+                AnnounceToLog(announcement, GetPriority(eventType));
                 _lastAnnouncement = announcement;
                 _lastAnnouncementTime = DateTime.Now;
             }
@@ -2302,7 +2309,7 @@ namespace AccessibleArena.Core.Services
             if ((DateTime.Now - _lastStackUndoTime).TotalMilliseconds < 500)
                 yield break;
 
-            _announcer.Announce(Strings.Duel_SpellResolved, AnnouncementPriority.Normal);
+            AnnounceToLog(Strings.Duel_SpellResolved, AnnouncementPriority.Normal);
         }
 
         private IEnumerator AnnounceStackCardDelayed()
@@ -2315,7 +2322,7 @@ namespace AccessibleArena.Core.Services
 
             if (stackCard != null)
             {
-                _announcer.Announce(BuildCastAnnouncement(stackCard), AnnouncementPriority.High);
+                AnnounceToLog(BuildCastAnnouncement(stackCard), AnnouncementPriority.High);
             }
             else
             {
@@ -2323,9 +2330,9 @@ namespace AccessibleArena.Core.Services
                 stackCard = GetTopStackCard();
 
                 if (stackCard != null)
-                    _announcer.Announce(BuildCastAnnouncement(stackCard), AnnouncementPriority.High);
+                    AnnounceToLog(BuildCastAnnouncement(stackCard), AnnouncementPriority.High);
                 else
-                    _announcer.Announce(Strings.SpellCast, AnnouncementPriority.High);
+                    AnnounceToLog(Strings.SpellCast, AnnouncementPriority.High);
             }
         }
 

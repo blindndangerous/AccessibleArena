@@ -4,6 +4,13 @@ All notable changes to Accessible Arena.
 
 ## v0.8.7
 
+### Game Log (O key)
+- New modal game log accessible via the O key during duels
+- Records all duel-relevant announcements (turns, phases, life changes, damage, spells, zone transfers, combat)
+- Navigate with Up/Down arrows (newest first), Home/End to jump, O/Backspace/Escape to close
+- History clears automatically when a new duel starts
+- Added to help menu (F1) under Card Details section
+
 ### Battlefield Announcement Polish (initial PR by blindndangerous, PR #40)
 - Phase announcements now prefix with "Your" or "Opponent's" based on whose turn it is (e.g. "Your First main phase", "Opponent's Declare Attackers")
 - Non-creature rows now include the primary card type in announcements (Artifact, Enchantment, Planeswalker, Battle), localized via Strings keys
