@@ -1850,6 +1850,9 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
+            // Capture selection state BEFORE click to detect toggle direction
+            bool wasSelected = GetCardCDCSelectionState(card) != null;
+
             // For non-zone browsers, use generic click
             var result = UIActivator.SimulatePointerClick(card);
             if (!result.Success)
@@ -1859,13 +1862,14 @@ namespace AccessibleArena.Core.Services
             }
 
             // Wait for game state to update
-            MelonCoroutines.Start(AnnounceStateChangeAfterDelay(cardName));
+            MelonCoroutines.Start(AnnounceStateChangeAfterDelay(cardName, wasSelected));
         }
 
         /// <summary>
         /// Waits for UI update then announces the new state.
+        /// Uses pre-click selection state to determine toggle direction.
         /// </summary>
-        private IEnumerator AnnounceStateChangeAfterDelay(string cardName)
+        private IEnumerator AnnounceStateChangeAfterDelay(string cardName, bool wasSelected)
         {
             yield return new WaitForSeconds(0.2f);
 
@@ -1894,10 +1898,10 @@ namespace AccessibleArena.Core.Services
 
             if (card != null)
             {
-                string stateAfter = GetCardCDCSelectionState(card);
-                // If CDC says Selected → "selected", otherwise → "deselected" (toggled off)
+                // If the card was Selected before click, this is a toggle-off → "deselected".
+                // Otherwise (was Hot/Cold/None before) this is a selection → "selected".
                 _announcer.Announce(
-                    !string.IsNullOrEmpty(stateAfter) ? Strings.Selected : Strings.Deselected,
+                    wasSelected ? Strings.Deselected : Strings.Selected,
                     AnnouncementPriority.Normal);
 
                 // Update the card reference
