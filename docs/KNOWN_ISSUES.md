@@ -12,15 +12,15 @@ During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful
 
 ---
 
-### Rate Match Screen Not Accessible
-
-The post-match rating screen is not navigable or announced by the mod.
-
----
-
 ### Command Zone Shows Wrong Cards for Opponent
 
 When the opponent's commander is played, the command zone sometimes displays random other cards or shows your own commander in the opponent's command zone.
+
+---
+
+### Registration Does Not Auto-Advance After Account Confirmation
+
+After successfully sending the account confirmation email during registration, the game does not automatically advance to the tutorial. Under investigation — requires deep investigation by project owner.
 
 ---
 
@@ -154,6 +154,10 @@ Adding cards to a deck reportedly moves the user out of the Collection group to 
 
 ---
 
+### Challenge Friends Sometimes Not Working
+
+Challenging friends sometimes fails: deck selection not available and screen elements auto-change unexpectedly. Exact reproduction steps unknown.
+
 ## Technical Debt
 
 ### Code Archaeology
@@ -216,15 +220,11 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 
 1. Manual trigger ordering - allow players to manually choose the order of their triggered abilities when multiple triggers happen simultaneously
 2. Display counters on players - announce counters like poison, energy, experience, etc. on players
-3. Better combat announcements when multiple attackers - clearer announcement when two or more enemies are attackable
-4. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access
-5. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-6. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
-7. Ctrl+F1 to announce tutorial message - read the context-sensitive tutorial tip for the current screen or duel phase on demand
-8. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
-9. Ownership in phase transitions - as part of verbose announcements, indicate whose turn/phase it is when phases change (e.g., "Opponent's Main Phase" vs "Your Main Phase")
-10. Improve mod settings - reorganize settings into useful categories with category splitting for better navigation
-11. Summoning sickness announcement - announce summoning sickness status on creatures, controlled by a user setting
+3. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
+4. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+5. Game log - accessible scrollable log of recent game events (spells cast, damage dealt, cards drawn, etc.) for reviewing what happened
+6. Improve mod settings - reorganize settings into useful categories with category splitting for better navigation
+7. Summoning sickness announcement - announce summoning sickness status on creatures, controlled by a user setting
 
 ### Tutorial System
 
@@ -259,21 +259,15 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 ### Polish
 
 1. Check all tutorial messages for completeness and correctness - review every context-sensitive tutorial tip for accuracy, missing steps, and outdated references
-2. Add tutorial messages to deck building screen, player zone, and multi-zone browser - these screens currently lack onboarding guidance for new users
-3. Improve left battlefield announcements - clearer and more informative readouts when navigating the left (friendly) battlefield rows
-5. Add player counters to player zone - player zone now shows only working entries but is missing counters on players (poison, energy, experience, etc.)
-6. Useful text for all browsers - add contextual help text describing what each browser type expects (e.g. "choose a mode", "put cards on top or bottom") and make these announcements optional via a setting
-7. Better group announcements - improve how element groups are announced when entering/switching groups
-8. Next button in deck building screen - make the Next/Done button accessible during deck construction
-9. "New Deck" not translated - the "New Deck" label is not properly localized in non-English languages
-10. Hardcoded "vs" in duel start announcement - the "vs" string in the matchup announcement should use a localized string instead of being hardcoded
-11. Improve role reading for choose-options browsers - better announce the player's role/task when entering choose-options browsers (e.g., "choose cards to discard", "choose a mode")
-12. Mail tag vanishes when inbox has messages - when there are unread mails, only the count number is read instead of the full "Mail" label with count, making it unclear what the number refers to
+2. Better group announcements - improve how element groups are announced when entering/switching groups
+3. Next button in deck building screen - make the Next/Done button accessible during deck construction
+4. Improve role reading for choose-options browsers - better announce the player's role/task when entering choose-options browsers (e.g., "choose cards to discard", "choose a mode")
 
 ### Low Priority / v1.1
 
 1. Auto version checking and auto update - check for new mod versions on launch and optionally auto-update. May be too problematic to implement reliably.
 2. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
 3. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
+4. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access. Highly speculative; unlikely to be implemented unless requested by users.
 
 
