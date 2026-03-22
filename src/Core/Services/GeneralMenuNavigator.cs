@@ -4565,8 +4565,8 @@ namespace AccessibleArena.Core.Services
                 return groupAnnouncement;
             }
 
-            return Models.Strings.ScreenItemsSummary(menuName, Models.Strings.ItemCount(_elements.Count),
-                $"{Models.Strings.NavigateWithArrows}, {Models.Strings.EnterToSelect}");
+            MelonLogger.Msg($"[MenuNavigator] Screen '{menuName}': {Models.Strings.ItemCount(_elements.Count)}");
+            return menuName;
         }
 
         #region Grouped Navigation Overrides

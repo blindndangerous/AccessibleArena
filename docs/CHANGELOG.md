@@ -66,6 +66,11 @@ All notable changes to Accessible Arena.
 - Applies to Scry, Surveil, Mulligan, and all generic browser types
 - Default (TutorialMessages on) behavior unchanged
 
+### Clean up group announcements
+- Groups now announce just their name (e.g. "Play") instead of name with item count ("Play, 3 items")
+- Screen activation no longer announces group count ("6 groups") or total item count
+- Detailed group/item counts are still logged for debugging
+
 ## v0.8.6
 
 ### Timer Announcements

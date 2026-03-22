@@ -1719,11 +1719,13 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 string firstLabel = firstElem.HasValue
                     ? BaseNavigator.RefreshElementLabel(firstElem.Value.GameObject, firstElem.Value.Label, firstElem.Value.Role)
                     : "";
-                return Strings.ScreenItemsSummary(screenName, Strings.ItemCount(group.Count),
-                    Strings.ItemPositionOf(1, group.Count, firstLabel));
+                MelonLogger.Msg($"[GroupedNavigator] Screen '{screenName}': 1 group '{group.DisplayName}', {Strings.ItemCount(group.Count)}");
+                return Strings.ItemPositionOf(1, group.Count, firstLabel);
             }
 
-            return Strings.ScreenGroupsSummary(screenName, Strings.GroupCount(_groups.Count), GetCurrentAnnouncement());
+            string currentAnnouncement = GetCurrentAnnouncement();
+            MelonLogger.Msg($"[GroupedNavigator] Screen '{screenName}': {Strings.GroupCount(_groups.Count)}, current='{currentAnnouncement}'");
+            return $"{screenName}. {currentAnnouncement}";
         }
 
         private bool MoveNextGroup()
@@ -1809,7 +1811,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 return BaseNavigator.RefreshElementLabel(elem.GameObject, elem.Label, elem.Role);
             }
 
-            return Strings.GroupItemCount(group.DisplayName, Strings.ItemCount(group.Count));
+            MelonLogger.Msg($"[GroupedNavigator] Group '{group.DisplayName}': {Strings.ItemCount(group.Count)}");
+            return group.DisplayName;
         }
 
         private string GetElementAnnouncement()
