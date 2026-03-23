@@ -55,9 +55,6 @@ namespace AccessibleArena.Core.Services
             _cachedSideboardFrame = -1;
         }
 
-        /// <summary>
-        /// Gets the full hierarchy path of a transform for debugging.
-        /// </summary>
         private static string GetTransformPath(Transform t)
         {
             if (t == null) return "null";
@@ -644,7 +641,9 @@ namespace AccessibleArena.Core.Services
         {
             public uint GrpId;
             public int Quantity;
-            public GameObject CardGameObject; // StaticColumnMetaCardView(Clone) gameObject
+            public GameObject CardGameObject; // ListCommanderView gameObject (for card info extraction)
+            public GameObject TileButton;     // CustomButton - Tile (navigable element)
+            public GameObject TagButton;      // CustomButton - Tag (to be excluded from scan)
             public bool IsCompanion;
             public bool IsPartner;
             public bool IsValid => GrpId != 0 && CardGameObject != null;
@@ -655,7 +654,7 @@ namespace AccessibleArena.Core.Services
         private static int _cachedCommanderFrame = -1;
 
         /// <summary>
-        /// Gets all commander/companion cards from CommanderSlotCardHolder components.
+        /// Gets all commander/companion cards from ListCommanderHolder components (list view).
         /// Uses caching to avoid repeated reflection calls within the same frame.
         /// </summary>
         public static List<CommanderCardInfo> GetCommanderCards()
@@ -668,119 +667,109 @@ namespace AccessibleArena.Core.Services
 
             try
             {
-                // Find CommanderSlotCardHolder components in the scene
+                // Find ListCommanderHolder components (the list view holders, not the column view ones)
                 var holders = new List<MonoBehaviour>();
                 foreach (var mb in GameObject.FindObjectsOfType<MonoBehaviour>(true))
                 {
-                    if (mb != null && mb.GetType().Name == T.CommanderSlotCardHolder)
+                    if (mb != null && mb.GetType().Name == T.ListCommanderHolder)
                         holders.Add(mb);
                 }
 
+                MelonLogger.Msg($"[DeckCardProvider] Found {holders.Count} ListCommanderHolder(s)");
                 if (holders.Count == 0)
                     return _cachedCommanderCards;
-
-                DebugConfig.LogIf(DebugConfig.LogCardInfo, "DeckCardProvider",
-                    $"Found {holders.Count} CommanderSlotCardHolder(s)");
 
                 foreach (var holder in holders)
                 {
                     var holderType = holder.GetType();
+                    string holderName = holder.gameObject.name;
+                    bool active = holder.gameObject.activeInHierarchy;
 
-                    // Check _populated field - do NOT skip inactive holders,
-                    // the game sets holder inactive but the card view children may still be active
-                    var populatedField = holderType.GetField("_populated", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (populatedField != null)
-                    {
-                        bool populated = (bool)populatedField.GetValue(holder);
-                        if (!populated)
-                            continue;
-                    }
+                    // Check IsEmpty property (public, private setter)
+                    var isEmptyProp = holderType.GetProperty("IsEmpty");
+                    bool isEmpty = true;
+                    if (isEmptyProp != null)
+                        isEmpty = (bool)isEmptyProp.GetValue(holder);
 
-                    // Get _commanderCardView field (private StaticColumnMetaCardView)
-                    var cardViewField = holderType.GetField("_commanderCardView", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (cardViewField == null)
+                    MelonLogger.Msg($"[DeckCardProvider] ListCommanderHolder '{holderName}' active={active} isEmpty={isEmpty}");
+
+                    if (!active || isEmpty)
+                        continue;
+
+                    // Get _cardInstance field (private ListCommanderView)
+                    var cardInstanceField = holderType.GetField("_cardInstance", BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (cardInstanceField == null)
                     {
-                        // Fallback: try CardViews property (inherited from MetaCardHolder)
-                        var cardViewsProp = holderType.GetProperty("CardViews");
-                        if (cardViewsProp != null)
-                        {
-                            var cardViews = cardViewsProp.GetValue(holder) as IEnumerable;
-                            if (cardViews != null)
-                            {
-                                foreach (var cv in cardViews)
-                                {
-                                    if (cv == null) continue;
-                                    var cmdInfo = ExtractCommanderCardViewInfo(cv, holder);
-                                    if (cmdInfo.IsValid)
-                                        _cachedCommanderCards.Add(cmdInfo);
-                                }
-                            }
-                        }
+                        MelonLogger.Msg($"[DeckCardProvider]   _cardInstance field NOT FOUND");
                         continue;
                     }
 
-                    var cardView = cardViewField.GetValue(holder);
+                    var cardView = cardInstanceField.GetValue(holder);
                     if (cardView == null)
+                    {
+                        MelonLogger.Msg($"[DeckCardProvider]   _cardInstance is null");
                         continue;
+                    }
 
-                    var info = ExtractCommanderCardViewInfo(cardView, holder);
+                    MelonLogger.Msg($"[DeckCardProvider]   _cardInstance type={cardView.GetType().Name}");
+
+                    // ListCommanderView extends ListMetaCardView_Expanding — same extraction as deck list
+                    var info = new CommanderCardInfo();
+                    var viewType = cardView.GetType();
+
+                    if (cardView is Component viewComponent)
+                        info.CardGameObject = viewComponent.gameObject;
+
+                    // Card.GrpId
+                    var cardProp = viewType.GetProperty("Card");
+                    if (cardProp != null)
+                    {
+                        var card = cardProp.GetValue(cardView);
+                        if (card != null)
+                        {
+                            var grpIdProp = card.GetType().GetProperty("GrpId");
+                            if (grpIdProp != null)
+                                info.GrpId = (uint)grpIdProp.GetValue(card);
+                        }
+                    }
+
+                    // Quantity
+                    var qtyProp = viewType.GetProperty("Quantity");
+                    if (qtyProp != null)
+                        info.Quantity = (int)qtyProp.GetValue(cardView);
+
+                    // TileButton (CustomButton - Tile)
+                    var tileBtnProp = viewType.GetProperty("TileButton");
+                    if (tileBtnProp?.GetValue(cardView) is Component tileBtn)
+                        info.TileButton = tileBtn.gameObject;
+
+                    // TagButton (CustomButton - Tag)
+                    var tagBtnProp = viewType.GetProperty("TagButton");
+                    if (tagBtnProp?.GetValue(cardView) is Component tagBtn)
+                        info.TagButton = tagBtn.gameObject;
+
+                    // IsCompanion / IsPartner on holder
+                    var companionField = holderType.GetField("IsCompanion", BindingFlags.Public | BindingFlags.Instance);
+                    if (companionField != null)
+                        info.IsCompanion = (bool)companionField.GetValue(holder);
+
+                    var partnerField = holderType.GetField("IsPartner", BindingFlags.Public | BindingFlags.Instance);
+                    if (partnerField != null)
+                        info.IsPartner = (bool)partnerField.GetValue(holder);
+
+                    MelonLogger.Msg($"[DeckCardProvider]   Extracted: GrpId={info.GrpId}, Qty={info.Quantity}, Tile={info.TileButton?.name}, Tag={info.TagButton?.name}, Valid={info.IsValid}");
                     if (info.IsValid)
                         _cachedCommanderCards.Add(info);
                 }
 
-                DebugConfig.LogIf(DebugConfig.LogCardInfo, "DeckCardProvider",
-                    $"Found {_cachedCommanderCards.Count} commander card(s)");
+                MelonLogger.Msg($"[DeckCardProvider] Commander cards found: {_cachedCommanderCards.Count}");
             }
             catch (Exception ex)
             {
-                DebugConfig.LogIf(DebugConfig.LogCardInfo, "DeckCardProvider",
-                    $"Error getting commander cards: {ex.Message}");
+                MelonLogger.Msg($"[DeckCardProvider] Error getting commander cards: {ex.Message}\n{ex.StackTrace}");
             }
 
             return _cachedCommanderCards;
-        }
-
-        /// <summary>
-        /// Extract commander card info from a card view object and its holder.
-        /// </summary>
-        private static CommanderCardInfo ExtractCommanderCardViewInfo(object cardView, MonoBehaviour holder)
-        {
-            var info = new CommanderCardInfo();
-            var viewType = cardView.GetType();
-
-            // Store the view's gameObject
-            if (cardView is Component viewComponent)
-                info.CardGameObject = viewComponent.gameObject;
-
-            // Get Card.GrpId
-            var cardProp = viewType.GetProperty("Card");
-            if (cardProp != null)
-            {
-                var card = cardProp.GetValue(cardView);
-                if (card != null)
-                {
-                    var grpIdProp = card.GetType().GetProperty("GrpId");
-                    if (grpIdProp != null)
-                        info.GrpId = (uint)grpIdProp.GetValue(card);
-                }
-            }
-
-            // Get Quantity
-            var qtyProp = viewType.GetProperty("Quantity");
-            if (qtyProp != null)
-                info.Quantity = (int)qtyProp.GetValue(cardView);
-
-            // Check IsCompanion / IsPartner on holder
-            var holderType = holder.GetType();
-            var companionField = holderType.GetField("IsCompanion", BindingFlags.Public | BindingFlags.Instance);
-            if (companionField != null)
-                info.IsCompanion = (bool)companionField.GetValue(holder);
-
-            var partnerField = holderType.GetField("IsPartner", BindingFlags.Public | BindingFlags.Instance);
-            if (partnerField != null)
-                info.IsPartner = (bool)partnerField.GetValue(holder);
-
-            return info;
         }
 
         /// <summary>
@@ -794,7 +783,9 @@ namespace AccessibleArena.Core.Services
             var cards = GetCommanderCards();
             foreach (var card in cards)
             {
-                if (card.CardGameObject == element)
+                if (card.CardGameObject == element ||
+                    card.TileButton == element ||
+                    card.TagButton == element)
                     return card;
 
                 // Check if element is a child of the card view

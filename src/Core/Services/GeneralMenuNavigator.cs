@@ -3525,6 +3525,22 @@ namespace AccessibleArena.Core.Services
             // Elements to skip = all deck elements EXCEPT the main buttons we're keeping
             var deckElementsToSkip = new HashSet<GameObject>(allDeckElements.Where(e => !deckMainButtons.Contains(e)));
 
+            // Commander/Companion cards: add their sub-elements to deckElementsToSkip
+            // so the final loop doesn't add them with generic labels.
+            // FindCommanderCards() (called after the loop) adds them back with proper labels.
+            // Also remove from addedObjects so FindCommanderCards can re-add them.
+            if (_activeContentController == "WrapperDeckBuilder")
+            {
+                var commanderCards = DeckCardProvider.GetCommanderCards();
+                foreach (var cmdCard in commanderCards)
+                {
+                    if (!cmdCard.IsValid) continue;
+                    if (cmdCard.TileButton != null) { deckElementsToSkip.Add(cmdCard.TileButton); addedObjects.Remove(cmdCard.TileButton); }
+                    if (cmdCard.TagButton != null) { deckElementsToSkip.Add(cmdCard.TagButton); addedObjects.Remove(cmdCard.TagButton); }
+                    if (cmdCard.CardGameObject != null) { deckElementsToSkip.Add(cmdCard.CardGameObject); addedObjects.Remove(cmdCard.CardGameObject); }
+                }
+            }
+
             // Map main deck buttons to their edit buttons for alternate action
             var deckEditButtons = deckPairs
                 .Where(p => p.Value.mainButton != null && p.Value.editButton != null)
@@ -4037,27 +4053,30 @@ namespace AccessibleArena.Core.Services
         /// Uses GrpId for language-agnostic card identification.
         /// </summary>
         /// <summary>
-        /// Find commander/companion cards in Brawl deck builder (CommanderSlotCardHolder).
-        /// These are the commander and companion cards shown in special slots above the deck list.
+        /// Find commander/companion cards in Brawl deck builder (ListCommanderHolder).
+        /// These are the commander and companion cards shown in PinnedCards above the deck list.
         /// </summary>
         private void FindCommanderCards(HashSet<GameObject> addedObjects)
         {
+            MelonLogger.Msg($"[{NavigatorId}] FindCommanderCards: activeCC={_activeContentController}");
+
             // Only active in deck builder
             if (_activeContentController != "WrapperDeckBuilder")
                 return;
 
             var commanderCards = DeckCardProvider.GetCommanderCards();
+            MelonLogger.Msg($"[{NavigatorId}] FindCommanderCards: {commanderCards.Count} commander card(s)");
             if (commanderCards.Count == 0)
                 return;
-
-            LogDebug($"[{NavigatorId}] Found {commanderCards.Count} commander/companion card(s)");
 
             foreach (var cmdCard in commanderCards)
             {
                 if (!cmdCard.IsValid) continue;
 
-                var cardObj = cmdCard.CardGameObject;
-                if (cardObj == null || addedObjects.Contains(cardObj))
+                // Use TileButton as the navigable element (same as regular deck list cards)
+                var tileBtn = cmdCard.TileButton;
+                MelonLogger.Msg($"[{NavigatorId}] FindCommanderCards: TileBtn={tileBtn?.name}, inAddedObjects={addedObjects.Contains(tileBtn)}");
+                if (tileBtn == null || addedObjects.Contains(tileBtn))
                     continue;
 
                 // Get card name from GrpId
@@ -4073,27 +4092,14 @@ namespace AccessibleArena.Core.Services
 
                 LogDebug($"[{NavigatorId}] Adding commander card: {label}");
 
-                AddElement(cardObj, label);
-                addedObjects.Add(cardObj);
+                AddElement(tileBtn, label);
+                addedObjects.Add(tileBtn);
 
-                // Also add child buttons to addedObjects to prevent duplicate entries from generic scan
-                foreach (Transform child in cardObj.transform)
-                {
-                    if (child != null)
-                        addedObjects.Add(child.gameObject);
-                }
-                // Add parent commander container children too
-                var parent = cardObj.transform.parent;
-                if (parent != null)
-                {
-                    foreach (Transform sibling in parent)
-                    {
-                        if (sibling != null)
-                            addedObjects.Add(sibling.gameObject);
-                    }
-                    // Also mark the parent holder itself
-                    addedObjects.Add(parent.gameObject);
-                }
+                // Mark TagButton and other siblings for exclusion from generic scan
+                if (cmdCard.TagButton != null)
+                    addedObjects.Add(cmdCard.TagButton);
+                if (cmdCard.CardGameObject != null)
+                    addedObjects.Add(cmdCard.CardGameObject);
             }
         }
 

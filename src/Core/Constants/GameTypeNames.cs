@@ -19,6 +19,7 @@ namespace AccessibleArena.Core.Constants
         public const string CardRolloverZoomHandler = "CardRolloverZoomHandler";
         public const string StaticColumnMetaCardHolder = "StaticColumnMetaCardHolder";
         public const string CommanderSlotCardHolder = "CommanderSlotCardHolder";
+        public const string ListCommanderHolder = "ListCommanderHolder";
 
         // --- UI Component Types ---
         public const string CustomButton = "CustomButton";
