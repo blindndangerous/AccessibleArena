@@ -43,6 +43,13 @@ namespace AccessibleArena.Core.Services
         private static float _lastTargetingScanTime;
         private static bool _cachedTargetingResult;
 
+        // Cached reflection for reading Commanders filter state via Pantry
+        private static System.Reflection.MethodInfo _pantryGetFilterProviderMethod;
+        private static System.Reflection.PropertyInfo _filterProperty;
+        private static System.Reflection.MethodInfo _isSetMethod;
+        private static object _commandersEnumValue;
+        private static bool _filterReflectionInit;
+
         /// <summary>
         /// Checks if a MonoBehaviour is a CustomButton by type name.
         /// </summary>
@@ -239,12 +246,26 @@ namespace AccessibleArena.Core.Services
                 // Login scene buttons: game handles activation natively via
                 // ActionSystem → Panel.OnAccept(). No mod intervention needed.
 
-                var pointerResult2 = SimulatePointerClick(element);
-
                 // Empty slot buttons (commander/companion in Brawl deck builder):
-                // SimulatePointerClick above already fires _onClick via OnPointerUp.
-                // Do NOT call Click() additionally — that would double-toggle the Commanders
-                // filter (ON then OFF), breaking re-entry after commander removal.
+                // The game auto-enables the Commanders filter when there's no commander.
+                // SimulatePointerClick fires _onClick which TOGGLES the filter.
+                // If already ON, this would toggle it OFF — the opposite of what the user expects.
+                // Read the filter state first: if already ON, skip the click entirely.
+                if (element.name == "CustomButton - EmptySlot" && IsInCommanderContainer(element))
+                {
+                    bool? filterState = IsCommandersFilterActive();
+                    if (filterState == true)
+                    {
+                        Log($"Empty slot: Commanders filter already active, skipping click to avoid toggle-off");
+                        return new ActivationResult(true, "Kommandeurmodus aktiv", ActivationType.Button);
+                    }
+                    // Filter is OFF or unknown — click to toggle ON
+                    Log($"Empty slot: Commanders filter is {(filterState == false ? "OFF" : "unknown")}, clicking to activate");
+                    SimulatePointerClick(element);
+                    return new ActivationResult(true, "Kommandeurmodus aktiviert", ActivationType.Button);
+                }
+
+                var pointerResult2 = SimulatePointerClick(element);
 
                 // Special handling for deck builder MainButton - its onClick listener has NULL target
                 // We need to find the WrapperDeckBuilder component and invoke the method directly
@@ -2104,6 +2125,77 @@ namespace AccessibleArena.Core.Services
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Checks if an element is inside a commander/partner/companion container.
+        /// Used for empty slot detection (CustomButton - EmptySlot).
+        /// </summary>
+        private static bool IsInCommanderContainer(GameObject element)
+        {
+            if (element == null) return false;
+            Transform current = element.transform.parent;
+            while (current != null)
+            {
+                string name = current.name;
+                if (name.Contains("CardTileCommander_CONTAINER") ||
+                    name.Contains("CardTilePartner_CONTAINER") ||
+                    name.Contains("CardTileCompanion_CONTAINER"))
+                    return true;
+                if (name.Contains("MainDeckContentCONTAINER"))
+                    return false;
+                current = current.parent;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Reads the current state of the Commanders card filter via Pantry reflection.
+        /// Returns true if ON, false if OFF, null if reflection fails.
+        /// </summary>
+        private static bool? IsCommandersFilterActive()
+        {
+            try
+            {
+                if (!_filterReflectionInit)
+                {
+                    _filterReflectionInit = true;
+                    var pantryType = FindType("Wizards.Mtga.Pantry");
+                    var filterProviderType = FindType("Core.Code.Decks.DeckBuilderCardFilterProvider");
+                    var cardFilterTypeEnum = FindType("Core.Shared.Code.CardFilters.CardFilterType");
+                    if (pantryType == null || filterProviderType == null || cardFilterTypeEnum == null)
+                    {
+                        Log($"Filter reflection init failed: pantry={pantryType != null}, provider={filterProviderType != null}, enum={cardFilterTypeEnum != null}");
+                        return null;
+                    }
+                    var getMethod = pantryType.GetMethod("Get", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (getMethod != null && getMethod.IsGenericMethod)
+                        _pantryGetFilterProviderMethod = getMethod.MakeGenericMethod(filterProviderType);
+                    _filterProperty = filterProviderType.GetProperty("Filter", PublicInstance);
+                    // Find IsSet method on IReadOnlyCardFilter
+                    if (_filterProperty != null)
+                    {
+                        var filterType = _filterProperty.PropertyType;
+                        _isSetMethod = filterType.GetMethod("IsSet", PublicInstance);
+                    }
+                    // Get the Commanders enum value
+                    _commandersEnumValue = System.Enum.Parse(cardFilterTypeEnum, "Commanders");
+                    Log($"Filter reflection init: getMethod={_pantryGetFilterProviderMethod != null}, filter={_filterProperty != null}, isSet={_isSetMethod != null}, commanders={_commandersEnumValue}");
+                }
+                if (_pantryGetFilterProviderMethod == null || _filterProperty == null || _isSetMethod == null || _commandersEnumValue == null)
+                    return null;
+
+                var provider = _pantryGetFilterProviderMethod.Invoke(null, null);
+                if (provider == null) return null;
+                var filter = _filterProperty.GetValue(provider, null);
+                if (filter == null) return null;
+                return (bool)_isSetMethod.Invoke(filter, new object[] { _commandersEnumValue });
+            }
+            catch (System.Exception ex)
+            {
+                Log($"IsCommandersFilterActive failed: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
