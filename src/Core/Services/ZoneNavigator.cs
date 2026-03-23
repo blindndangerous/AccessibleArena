@@ -537,20 +537,8 @@ namespace AccessibleArena.Core.Services
             // Showing hidden cards would be cheating.
             if (zone.Type == ZoneType.Library || zone.Type == ZoneType.OpponentLibrary)
             {
-                // Diagnostic: log all library cards and their properties before filtering
-                if (zone.Cards.Count > 0)
-                {
-                    MelonLogger.Msg($"[ZoneNavigator] Library diagnostic: {zone.Cards.Count} CDCs before filter");
-                    // Log first 3 cards for debugging
-                    for (int i = 0; i < System.Math.Min(3, zone.Cards.Count); i++)
-                    {
-                        var c = zone.Cards[i];
-                        string cardName = CardDetector.GetCardName(c);
-                        bool hasHL = CardDetector.HasHotHighlight(c);
-                        bool faceUp = CardDetector.IsDisplayedFaceUp(c);
-                        MelonLogger.Msg($"[ZoneNavigator]   [{i}] {c.name} '{cardName}' HL={hasHL} FaceUp={faceUp} pos={c.transform.position}");
-                    }
-                }
+                DebugConfig.LogIf(DebugConfig.LogCardInfo, "ZoneNavigator",
+                    $"Library zone: {zone.Cards.Count} CDCs before filter");
 
                 zone.Cards.RemoveAll(c => !CardDetector.HasHotHighlight(c) && !CardDetector.IsDisplayedFaceUp(c));
             }

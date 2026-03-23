@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using MelonLoader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using T = AccessibleArena.Core.Constants.GameTypeNames;
+using SceneNames = AccessibleArena.Core.Constants.SceneNames;
 
 namespace AccessibleArena.Core.Services
 {
@@ -288,6 +290,20 @@ namespace AccessibleArena.Core.Services
         public static object GetCardModel(Component cdcComponent)
             => CardModelProvider.GetCardModel(cdcComponent);
 
+        // Cached scene check for skipping deck builder lookups during duels
+        private static string _cachedSceneName = "";
+        private static int _cachedSceneFrame = -1;
+
+        private static bool IsInDuelScene()
+        {
+            if (_cachedSceneFrame != Time.frameCount)
+            {
+                _cachedSceneFrame = Time.frameCount;
+                _cachedSceneName = SceneManager.GetActiveScene().name;
+            }
+            return _cachedSceneName == SceneNames.DuelScene;
+        }
+
         /// <summary>
         /// Extracts all available information from a card GameObject.
         /// For DuelScene cards, tries Model data first (works for compacted cards).
@@ -298,36 +314,41 @@ namespace AccessibleArena.Core.Services
         {
             if (cardObj == null) return new CardInfo();
 
-            // Check if this is a deck list card (MainDeck_MetaCardHolder)
-            var deckListInfo = DeckCardProvider.ExtractDeckListCardInfo(cardObj);
-            if (deckListInfo.HasValue && deckListInfo.Value.IsValid)
+            // Skip deck builder lookups in DuelScene - these holders don't exist in duels
+            // and each lookup does expensive FindObjectsOfType calls (~5ms each)
+            if (!IsInDuelScene())
             {
-                MelonLogger.Msg($"[CardDetector] Using DECK LIST extraction: {deckListInfo.Value.Name} (Qty: {deckListInfo.Value.Quantity})");
-                return deckListInfo.Value;
-            }
+                // Check if this is a deck list card (MainDeck_MetaCardHolder)
+                var deckListInfo = DeckCardProvider.ExtractDeckListCardInfo(cardObj);
+                if (deckListInfo.HasValue && deckListInfo.Value.IsValid)
+                {
+                    MelonLogger.Msg($"[CardDetector] Using DECK LIST extraction: {deckListInfo.Value.Name} (Qty: {deckListInfo.Value.Quantity})");
+                    return deckListInfo.Value;
+                }
 
-            // Check if this is a sideboard card (non-MainDeck holder)
-            var sideboardInfo = DeckCardProvider.ExtractSideboardCardInfo(cardObj);
-            if (sideboardInfo.HasValue && sideboardInfo.Value.IsValid)
-            {
-                MelonLogger.Msg($"[CardDetector] Using SIDEBOARD extraction: {sideboardInfo.Value.Name} (Qty: {sideboardInfo.Value.Quantity})");
-                return sideboardInfo.Value;
-            }
+                // Check if this is a sideboard card (non-MainDeck holder)
+                var sideboardInfo = DeckCardProvider.ExtractSideboardCardInfo(cardObj);
+                if (sideboardInfo.HasValue && sideboardInfo.Value.IsValid)
+                {
+                    MelonLogger.Msg($"[CardDetector] Using SIDEBOARD extraction: {sideboardInfo.Value.Name} (Qty: {sideboardInfo.Value.Quantity})");
+                    return sideboardInfo.Value;
+                }
 
-            // Check if this is a commander/companion card (CommanderSlotCardHolder)
-            var commanderInfo = DeckCardProvider.ExtractCommanderCardInfo(cardObj);
-            if (commanderInfo.HasValue && commanderInfo.Value.IsValid)
-            {
-                MelonLogger.Msg($"[CardDetector] Using COMMANDER extraction: {commanderInfo.Value.Name}");
-                return commanderInfo.Value;
-            }
+                // Check if this is a commander/companion card (CommanderSlotCardHolder)
+                var commanderInfo = DeckCardProvider.ExtractCommanderCardInfo(cardObj);
+                if (commanderInfo.HasValue && commanderInfo.Value.IsValid)
+                {
+                    MelonLogger.Msg($"[CardDetector] Using COMMANDER extraction: {commanderInfo.Value.Name}");
+                    return commanderInfo.Value;
+                }
 
-            // Check if this is a read-only deck card (StaticColumnMetaCardView)
-            var readOnlyInfo = DeckCardProvider.ExtractReadOnlyDeckCardInfo(cardObj);
-            if (readOnlyInfo.HasValue && readOnlyInfo.Value.IsValid)
-            {
-                MelonLogger.Msg($"[CardDetector] Using READ-ONLY DECK extraction: {readOnlyInfo.Value.Name} (Qty: {readOnlyInfo.Value.Quantity})");
-                return readOnlyInfo.Value;
+                // Check if this is a read-only deck card (StaticColumnMetaCardView)
+                var readOnlyInfo = DeckCardProvider.ExtractReadOnlyDeckCardInfo(cardObj);
+                if (readOnlyInfo.HasValue && readOnlyInfo.Value.IsValid)
+                {
+                    MelonLogger.Msg($"[CardDetector] Using READ-ONLY DECK extraction: {readOnlyInfo.Value.Name} (Qty: {readOnlyInfo.Value.Quantity})");
+                    return readOnlyInfo.Value;
+                }
             }
 
             // Try Model-based extraction first (works for compacted battlefield cards)
