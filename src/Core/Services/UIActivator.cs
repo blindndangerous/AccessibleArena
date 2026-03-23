@@ -82,6 +82,33 @@ namespace AccessibleArena.Core.Services
                 InputManager.BlockNextEnterKeyUp = true;
             }
 
+            // Commander/companion/partner card tiles in Brawl deck builder:
+            // SimulatePointerClick fires pointerDown→pointerUp→pointerClick on the same element.
+            // pointerUp triggers _onClick → OnRemoveClicked → destroys the card instance (and tile).
+            // Then pointerClick fires on the destroyed object, and EventSystem.selectedGameObject
+            // points to a destroyed reference, leaving the game in a broken state.
+            // Fix: invoke OnClick directly — no EventSystem selection, no pointerClick on destroyed object.
+            if (IsCommanderSlotCard(element))
+            {
+                var cb = FindComponentByName(element, CustomButtonTypeName);
+                if (cb != null)
+                {
+                    var onClickProp = cb.GetType().GetProperty("OnClick", PublicInstance);
+                    if (onClickProp != null)
+                    {
+                        var onClick = onClickProp.GetValue(cb, null) as UnityEngine.Events.UnityEvent;
+                        if (onClick != null)
+                        {
+                            Log($"Commander slot card: invoking OnClick directly on '{element.name}'");
+                            onClick.Invoke();
+                            return new ActivationResult(true, Models.Strings.ActivatedBare, ActivationType.Button);
+                        }
+                    }
+                }
+                Log($"Commander slot card: OnClick not found, falling back to SimulatePointerClick");
+                return SimulatePointerClick(element);
+            }
+
             // Special handling for deck entries - they need direct selection via DeckViewSelector
             // because MTGA's CustomButton onClick on decks doesn't reliably trigger selection
             if (IsDeckEntry(element))
@@ -214,18 +241,10 @@ namespace AccessibleArena.Core.Services
 
                 var pointerResult2 = SimulatePointerClick(element);
 
-                // Special handling for empty slot buttons (commander/companion in Brawl deck builder)
-                // SimulatePointerClick doesn't trigger CustomButton.OnClick because OnPointerUp
-                // requires _mouseOver state. Call Click() directly which bypasses this check.
-                if (element.name == "CustomButton - EmptySlot")
-                {
-                    var customButton = FindComponentByName(element, CustomButtonTypeName);
-                    if (customButton != null)
-                    {
-                        Log($"Empty slot button detected, invoking Click() directly");
-                        TryInvokeMethod(customButton, "Click");
-                    }
-                }
+                // Empty slot buttons (commander/companion in Brawl deck builder):
+                // SimulatePointerClick above already fires _onClick via OnPointerUp.
+                // Do NOT call Click() additionally — that would double-toggle the Commanders
+                // filter (ON then OFF), breaking re-entry after commander removal.
 
                 // Special handling for deck builder MainButton - its onClick listener has NULL target
                 // We need to find the WrapperDeckBuilder component and invoke the method directly
@@ -2082,6 +2101,31 @@ namespace AccessibleArena.Core.Services
                         return true;
                     current = current.parent;
                 }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if an element is a commander/companion/partner card tile in the Brawl deck builder.
+        /// These are "CustomButton - Tile" elements inside CardTileCommander/Partner/Companion containers.
+        /// </summary>
+        public static bool IsCommanderSlotCard(GameObject element)
+        {
+            if (element == null) return false;
+            if (element.name != "CustomButton - Tile") return false;
+
+            Transform current = element.transform.parent;
+            while (current != null)
+            {
+                string name = current.name;
+                if (name.Contains("CardTileCommander_CONTAINER") ||
+                    name.Contains("CardTilePartner_CONTAINER") ||
+                    name.Contains("CardTileCompanion_CONTAINER"))
+                    return true;
+                if (name.Contains("MainDeckContentCONTAINER"))
+                    return false;
+                current = current.parent;
             }
 
             return false;
