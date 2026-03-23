@@ -2131,7 +2131,7 @@ namespace AccessibleArena.Core.Services
         /// Checks if an element is inside a commander/partner/companion container.
         /// Used for empty slot detection (CustomButton - EmptySlot).
         /// </summary>
-        private static bool IsInCommanderContainer(GameObject element)
+        public static bool IsInCommanderContainer(GameObject element)
         {
             if (element == null) return false;
             Transform current = element.transform.parent;

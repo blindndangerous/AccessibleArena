@@ -5390,6 +5390,14 @@ namespace AccessibleArena.Core.Services
                 TriggerRescan();
             }
 
+            // Brawl deck builder: activating the commander empty slot toggles the Commanders
+            // filter, which changes the collection card pool. Rescan so the collection group
+            // picks up the newly filtered cards instead of showing stale entries.
+            if (element.name == "CustomButton - EmptySlot" && UIActivator.IsInCommanderContainer(element))
+            {
+                TriggerRescan();
+            }
+
             // Note: Mailbox mail item selection is detected via Harmony patch on OnLetterSelected
             // which announces the mail content directly with actual letter data
 
