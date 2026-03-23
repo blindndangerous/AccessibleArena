@@ -4,6 +4,11 @@ All notable changes to Accessible Arena.
 
 ## v0.8.7
 
+### Brawl Commander Cards in Deck Builder
+- Commander and companion cards are now correctly displayed in the deck list with a "Commander:" or "Companion:" prefix
+- Full card info navigation (Arrow Up/Down) works on commander cards: type line, mana cost, power/toughness, rules text, etc.
+- Commander cards no longer appear as unlabeled duplicate entries
+
 ### Game Log (O key)
 - New modal game log accessible via the O key during duels
 - Records all duel-relevant announcements (turns, phases, life changes, damage, spells, zone transfers, combat)

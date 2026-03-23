@@ -4858,12 +4858,13 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // Check if it's a regular card (collection), deck list card, or sideboard card
+            // Check if it's a regular card (collection), deck list card, sideboard card, or commander card
             bool isCard = CardDetector.IsCard(gameObject);
             bool isDeckListCard = DeckCardProvider.IsDeckListCard(gameObject);
             bool isSideboardCard = DeckCardProvider.IsSideboardCard(gameObject);
+            bool isCommanderCard = DeckCardProvider.GetCommanderCardInfo(gameObject) != null;
 
-            if (isCard || isDeckListCard || isSideboardCard)
+            if (isCard || isDeckListCard || isSideboardCard || isCommanderCard)
             {
                 // Prepare card navigation for both collection cards and deck list cards
                 cardNavigator.PrepareForCard(gameObject, ZoneType.Hand);

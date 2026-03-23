@@ -114,11 +114,13 @@ namespace AccessibleArena.Core.Services
                 if (component == null) continue;
                 string typeName = component.GetType().Name;
                 // Use Contains for ListMetaCardView to also match ListMetaCardView_Expanding (deck list cards)
+                // ListCommanderView extends ListMetaCardView_Expanding but has a different name
                 if (typeName == T.PagesMetaCardView ||
                     typeName == T.MetaCardView ||
                     typeName == T.BoosterMetaCardView ||
                     typeName == T.DraftPackCardView ||
-                    typeName.Contains("ListMetaCardView"))
+                    typeName.Contains("ListMetaCardView") ||
+                    typeName == "ListCommanderView")
                 {
                     // Log once when we find a MetaCardView
                     if (!_metaCardViewComponentsLogged)
