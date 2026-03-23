@@ -2276,6 +2276,7 @@ namespace AccessibleArena.Core.Services
             // Switch to popup mode
             _isInPopupMode = true;
             _popupGameObject = popup;
+            InputManager.PopupModeActive = true;
             _elements.Clear();
             _currentIndex = -1;
 
@@ -2325,6 +2326,7 @@ namespace AccessibleArena.Core.Services
             _popupDropdownHelper = null;
 
             _isInPopupMode = false;
+            InputManager.PopupModeActive = false;
 
             // Restore saved elements
             if (_savedElements != null)
@@ -2488,10 +2490,11 @@ namespace AccessibleArena.Core.Services
             if (_holdRepeater.Check(KeyCode.LeftArrow, () => HandleCarouselArrow(false))) return;
             if (_holdRepeater.Check(KeyCode.RightArrow, () => HandleCarouselArrow(true))) return;
 
-            // Backspace: dismiss popup
-            if (Input.GetKeyDown(KeyCode.Backspace))
+            // Backspace/Escape: dismiss popup
+            if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Escape))
             {
                 InputManager.ConsumeKey(KeyCode.Backspace);
+                InputManager.ConsumeKey(KeyCode.Escape);
                 DismissPopup();
                 return;
             }

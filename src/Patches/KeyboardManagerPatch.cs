@@ -82,8 +82,8 @@ namespace AccessibleArena.Patches
             }
 
             // Block Escape when WebBrowser is active, input field is focused,
-            // or a mod menu (Help/Settings) is open
-            if (key == KeyCode.Escape && (BlockEscape || InputManager.ModMenuActive))
+            // a mod menu (Help/Settings) is open, or a popup is being navigated
+            if (key == KeyCode.Escape && (BlockEscape || InputManager.ModMenuActive || InputManager.PopupModeActive))
             {
                 return true;
             }

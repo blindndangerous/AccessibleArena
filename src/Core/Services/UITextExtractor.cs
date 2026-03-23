@@ -304,6 +304,10 @@ namespace AccessibleArena.Core.Services
             if (objectName == "TitlePanel_MainDeck")
                 return Strings.ChangeDeckDetails;
 
+            // Image-only back buttons (e.g., DeckDetailsPopup header) — provide localized label.
+            if (objectName == "BackButton")
+                return Strings.Back;
+
             return null;
         }
 

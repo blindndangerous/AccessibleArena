@@ -26,6 +26,12 @@ namespace AccessibleArena.Core.Services
         public static bool ModMenuActive { get; set; }
 
         /// <summary>
+        /// Set when a popup is being navigated in popup mode.
+        /// Used by KeyboardManagerPatch to block Escape from reaching the game.
+        /// </summary>
+        public static bool PopupModeActive { get; set; }
+
+        /// <summary>
         /// When true, the next Enter KeyUp event will be blocked from reaching the game.
         /// Used when our mod opens a popup via KeyDown (e.g., collection card → card viewer),
         /// to prevent the game's PopupManager.HandleKeyUp from calling OnEnter() on the
