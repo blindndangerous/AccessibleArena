@@ -55,6 +55,14 @@ All notable changes to Accessible Arena.
 - Ctrl+F1 during a browser (Scry, Surveil, etc.) now announces the browser-specific hint instead of the general duel hint
 - Added to help menu (F1)
 
+### Feat: Ranked match end screen shows win progress and rank changes
+- Match end screen now announces win progress: "Constructed-Rang: Platin Stufe 2, 4 von 6 Siegen" (4 of 6 wins)
+- Rank promotions announced: "Aufgestiegen! Gold Stufe 1" (Rank up!)
+- Rank demotions announced: "Abgestiegen. Silber Stufe 3" (Rank down.)
+- Mythic rank shows percentile or leaderboard placement from the game's display
+- Reads RankDisplay component data (RankProgress, pip counts, RankUp flag) via reflection
+- All 12 locale files updated with rank progress strings
+
 ### Fix: Backspace now cancels workflow browsers (ability activation prompts)
 - Pressing Backspace in a workflow browser (e.g. "Activate ability" prompt on Evolving Wilds) now properly cancels the action
 - Previously, Backspace clicked the wrong button (duel-level PromptButton_Secondary) which left the ConfirmWidget UI stuck

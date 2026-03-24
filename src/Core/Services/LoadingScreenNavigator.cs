@@ -9,7 +9,9 @@ using AccessibleArena.Core.Models;
 using AccessibleArena.Core.Services.PanelDetection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using static AccessibleArena.Core.Constants.SceneNames;
+using static AccessibleArena.Core.Utils.ReflectionUtils;
 using SceneNames = AccessibleArena.Core.Constants.SceneNames;
 
 namespace AccessibleArena.Core.Services
@@ -291,31 +293,11 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
-            // 3. Collect info text elements (rank, format, etc.)
+            // 3. Collect rank info and other text elements.
             //    These appear after animations, so polling catches them.
             foreach (var root in filteredRoots)
             {
-                foreach (var text in root.GetComponentsInChildren<TMP_Text>(false))
-                {
-                    if (text == null) continue;
-                    string content = text.text?.Trim();
-                    if (string.IsNullOrEmpty(content)) continue;
-
-                    string objName = text.gameObject.name;
-
-                    // Build combined rank info: "Constructed-Rang: Silber Stufe 4"
-                    if (objName == "Text_Rank" || objName == "Text_RankFormat")
-                    {
-                        // Collect both rank parts, add as single combined element below
-                        continue;
-                    }
-
-                    // Skip text already used for result or generic UI labels
-                    if (objName == "text_Title") continue; // Already in announcement
-                    if (objName == "text_ClicktoContinue") continue; // Redundant with Backspace hint
-                }
-
-                // Find and combine rank info
+                // Find and combine rank info with progress data
                 string rankText = FindTextByName(root, "Text_Rank");
                 string rankFormat = FindTextByName(root, "Text_RankFormat");
                 if (!string.IsNullOrEmpty(rankText))
@@ -323,6 +305,11 @@ namespace AccessibleArena.Core.Services
                     string rankLabel = !string.IsNullOrEmpty(rankFormat)
                         ? $"{rankFormat}: {rankText}"
                         : rankText;
+
+                    // Read rank progress from RankDisplay component
+                    string progressInfo = ExtractRankProgress(root);
+                    if (!string.IsNullOrEmpty(progressInfo))
+                        rankLabel = $"{rankLabel}, {progressInfo}";
 
                     // Use the Text_Rank GameObject as the navigable element
                     var rankObj = FindChildRecursive(root.transform, "Text_Rank");
@@ -1187,6 +1174,184 @@ namespace AccessibleArena.Core.Services
                     return found;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Extract rank progress info from the RankDisplay component on the match end screen.
+        /// Reads pip animator parameters and RankProgress data via reflection.
+        /// Returns a formatted string like "4 of 6 wins" or "Rank up! Gold Tier 1" or null.
+        /// </summary>
+        private string ExtractRankProgress(GameObject root)
+        {
+            try
+            {
+                // Find RankDisplay MonoBehaviour in the hierarchy
+                MonoBehaviour rankDisplay = null;
+                foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (mb != null && mb.GetType().Name == "RankDisplay")
+                    {
+                        rankDisplay = mb;
+                        break;
+                    }
+                }
+                if (rankDisplay == null)
+                {
+                    Log("  RankProgress: No RankDisplay found");
+                    return null;
+                }
+
+                var rdType = rankDisplay.GetType();
+
+                // Read RankUp (public bool field)
+                bool rankUp = false;
+                var rankUpField = rdType.GetField("RankUp", PublicInstance);
+                if (rankUpField != null)
+                    rankUp = (bool)rankUpField.GetValue(rankDisplay);
+
+                // Read _rankProgress (private field) for old/new rank data
+                var progressField = rdType.GetField("_rankProgress", PrivateInstance);
+                object rankProgress = progressField?.GetValue(rankDisplay);
+
+                // Read pip data from private fields on RankDisplay itself
+                int maxPips = GetIntField(rdType, rankDisplay, "maxPips");
+                int oldStep = GetIntField(rdType, rankDisplay, "oldStep");
+                int newStep = GetIntField(rdType, rankDisplay, "newStep");
+
+                Log($"  RankProgress: rankUp={rankUp}, oldStep={oldStep}, newStep={newStep}, maxPips={maxPips}");
+
+                if (rankProgress != null)
+                {
+                    var progressType = rankProgress.GetType();
+                    int oldClass = GetIntField(progressType, rankProgress, "oldClass");
+                    int newClass = GetIntField(progressType, rankProgress, "newClass");
+                    int oldLevel = GetIntField(progressType, rankProgress, "oldLevel");
+                    int newLevel = GetIntField(progressType, rankProgress, "newLevel");
+                    int seasonOrdinal = GetIntField(progressType, rankProgress, "seasonOrdinal");
+
+                    Log($"  RankProgress: oldClass={oldClass} lvl={oldLevel}, newClass={newClass} lvl={newLevel}, season={seasonOrdinal}");
+
+                    // No ranked data (unranked/casual match)
+                    if (seasonOrdinal == 0) return null;
+
+                    // Rank up: class or tier changed upward
+                    if (rankUp)
+                    {
+                        string newRankText = ReadNewRankText(root, rdType, rankDisplay);
+                        if (!string.IsNullOrEmpty(newRankText))
+                            return Strings.RankUp(newRankText);
+                    }
+
+                    // Rank down: class went down, or same class but tier went up numerically (tier 1 > tier 2 = demotion)
+                    bool rankDown = newClass < oldClass ||
+                                    (newClass == oldClass && newLevel > oldLevel);
+                    if (rankDown)
+                    {
+                        string newRankText = ReadNewRankText(root, rdType, rankDisplay);
+                        if (!string.IsNullOrEmpty(newRankText))
+                            return Strings.RankDown(newRankText);
+                    }
+
+                    // Mythic: show percentile or placement instead of wins
+                    if (newClass == 7) // RankingClassType.Mythic
+                    {
+                        return ExtractMythicProgress(root);
+                    }
+                }
+
+                // Normal case: show wins progress (newStep of maxPips)
+                if (maxPips > 0)
+                    return Strings.RankWinsProgress(newStep, maxPips);
+
+                return null;
+            }
+            catch (System.Exception ex)
+            {
+                Log($"  RankProgress error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Read the new rank text from the NewRankText TMP field on MatchEndDisplay,
+        /// or fall back to the _rankTierText on RankDisplay.
+        /// </summary>
+        private string ReadNewRankText(GameObject root, System.Type rdType, MonoBehaviour rankDisplay)
+        {
+            // Try NewRankText on parent MatchEndDisplay first (set during rank-up animation)
+            foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb != null && mb.GetType().Name == "MatchEndDisplay")
+                {
+                    var newRankTextField = mb.GetType().GetField("NewRankText", PublicInstance);
+                    if (newRankTextField != null)
+                    {
+                        var tmpText = newRankTextField.GetValue(mb) as TMP_Text;
+                        string text = tmpText?.text?.Trim();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            Log($"  RankProgress: NewRankText = '{text}'");
+                            return text;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            // Fall back to _rankTierText on RankDisplay (shows current rank tier)
+            var tierTextField = rdType.GetField("_rankTierText", PrivateInstance);
+            if (tierTextField != null)
+            {
+                var tmpText = tierTextField.GetValue(rankDisplay) as TMP_Text;
+                string text = tmpText?.text?.Trim();
+                if (!string.IsNullOrEmpty(text))
+                {
+                    Log($"  RankProgress: _rankTierText = '{text}'");
+                    return text;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Extract Mythic-specific progress (percentile or leaderboard placement)
+        /// from the _mythicPlacementText on RankDisplay.
+        /// </summary>
+        private string ExtractMythicProgress(GameObject root)
+        {
+            foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (mb != null && mb.GetType().Name == "RankDisplay")
+                {
+                    var mythicTextField = mb.GetType().GetField("_mythicPlacementText", PrivateInstance);
+                    if (mythicTextField != null)
+                    {
+                        var tmpText = mythicTextField.GetValue(mb) as TMP_Text;
+                        string text = tmpText?.text?.Trim();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            Log($"  RankProgress: MythicText = '{text}'");
+                            return text; // Already formatted as "#1234" or "95%"
+                        }
+                    }
+                    break;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Read an int field from an object, returning 0 if not found.
+        /// Tries public first, then private instance.
+        /// </summary>
+        private int GetIntField(System.Type type, object obj, string fieldName)
+        {
+            var field = type.GetField(fieldName, PublicInstance)
+                     ?? type.GetField(fieldName, PrivateInstance);
+            if (field != null)
+                return System.Convert.ToInt32(field.GetValue(obj));
+            return 0;
         }
 
         /// <summary>
