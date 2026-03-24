@@ -101,7 +101,10 @@ All notable changes to Accessible Arena.
 ### Objective readability improvements (reported by blindndangerous, PRs #45, #46)
 - Daily and Weekly objectives now include the task description alongside progress and reward
 - Empty quest slot (timer) now reads the game's localized "waiting for quest" text and explanatory tooltip instead of a hardcoded English "Bonus Timer"
-- Added localized `ObjectiveQuestTimer` fallback string to all 12 locale files
+- All objective type labels (Achievement, Daily, Weekly, Battle Pass Level) now use localized strings instead of hardcoded English
+- "wins" and "gold" suffixes in Daily/Weekly/Quest objectives now use localized strings
+- Quest rewards now use the game's localized reward text (handles gold, gems, packs, etc.) via ObjectiveBubble popup data
+- Added localized objective keys to all 12 locale files
 
 ### Fix: Chat panel not closable (contributed by blindndangerous, PR #46)
 - Chat window is now found anywhere in the social panel hierarchy, fixing cases where Backspace failed to close it

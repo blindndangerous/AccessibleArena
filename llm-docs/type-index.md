@@ -175,6 +175,20 @@ Used by `tools/decompile.ps1` and `tools/decompile-all.ps1`.
 | PresetManaWheel | Wotc.Mtga.DuelScene.UI.PresetManaWheel | Core |
 | Spinner_OptionSelector | Spinner_OptionSelector | Core |
 
+## Home Page / Objectives
+
+| Short Name | Full Namespace | DLL |
+|---|---|---|
+| HomePageBillboard | HomePageBillboard | Core |
+| ObjectiveBubble | ObjectiveBubble | Core |
+| ContentControllerObjectives | ContentControllerObjectives | Core |
+| NotificationPopup | NotificationPopup | Core |
+| NotificationPopup.PopupData | NotificationPopup (nested class PopupData) | Core |
+| MTGALocalizedString | MTGALocalizedString | Core |
+| EBillboardType (enum) | EBillboardType | Core |
+| EventTimerState (enum) | EventTimerState | Core |
+| BillboardData | BillboardData | Core |
+
 ## Mastery / Rewards
 
 | Short Name | Full Namespace | DLL |
@@ -286,6 +300,10 @@ Some types have members that are fields (not properties) - reflection with `GetP
 - **Client_ColorChallengeMatchNode**: `Id` (string field), `IsPvpMatch` (bool field), `DeckUpgradeData` (field, null if none), `Reward` (field → RewardDisplayData with `MainText`/`RewardText` fields)
 - **CampaignGraphObjectiveBubble**: `ID` (public property), `_circleText` (private TMP field, roman numeral), `_animator` (private, use GetBool for "Locked"/"Completed"/"Selected"), `_notificationPopup` (private, has `_titleLabel`/`_descriptionLabel` Localize fields)
 - **RegistrationPanel**: 5 serialized `UIWidget_InputField_Registration` fields (`displayName_inputField`, `email_inputField`, `email2_inputField`, `password_inputField`, `password2_inputField`), 5 serialized `Toggle` fields (`receiveOffers_Toggle`, `dataShare_Toggle`, `termsAndConditions_Toggle`, `codeOfConduct_Toggle`, `privacyPolicy_Toggle`), `submitButton` (GameObject), `generalError` (TMP), `_validDisplayName` (private bool, default false)
+- **ObjectiveBubble**: `_popupData` (protected field, type `NotificationPopup.PopupData`) holds localization keys for popup text. Timer type sets `HeaderString1="MainNav/Quest/Quest_Wait_Text"`, `FooterString="MainNav/Popups/QuestRewardPopupDetailsForWaiting"`. Reward types set `HeaderString1="MainNav/EventRewards/Reward"`, `HeaderString2=reward.MainText` (localized reward description). Read via `_popupData` → field access on PopupData fields
+- **NotificationPopup.PopupData**: Public fields: `HeaderString1`, `HeaderString2`, `DescriptionString`, `FooterString`, `ProgressString`, `RefreshButtonString` (all MTGALocalizedString). `ApplyData(NotificationPopup)` pushes data to the visual popup
+- **MTGALocalizedString**: `Key` is a PUBLIC FIELD (not property!). `ToString()` resolves localization via `Languages.ActiveLocProvider.GetLocalizedText(Key, Parameters)`. Implicit string operators exist
+- **HomePageBillboard**: `Title`, `Description`, `TimerText` (all TMP public fields), `locTitle`, `locDescription` (Localize). `SetEvent()` only sets `locTitle` — `Description`/`locDescription` are NEVER populated. Timer text set dynamically in `Update()` with loc keys `MainNav/HomePage/Billboards/EventStartTimer`, `SignUpEndTimer`, `EventEndTimer`
 - **RegistrationPanel._checkFields()**: runs in `Update()` every frame, controls button enabled state. Required: `_validDisplayName==true`, displayname 3-23 chars, email non-empty, email1==email2, password>=8, password1==password2, password rules, `termsAndConditions_Toggle.isOn && codeOfConduct_Toggle.isOn && privacyPolicy_Toggle.isOn`. Offers and Data toggles are NOT required.
 - **RegistrationPanel._validDisplayName**: only set to `true` by `Coroutine_ValidateUsername` (server call), triggered by `_displayName_endEdit`. Reset to `false` by `_displayName_select`. If displayname validation fails (taken, invalid), button stays permanently disabled.
 - **RegistrationPanel.Show()**: Data toggle visibility depends on `CountryCodes.DataShareCountries.ContainsKey(selectedCountry)` — shown for EU/GDPR countries, hidden (auto-checked) otherwise

@@ -1093,14 +1093,15 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
+                string achieveLabel = LocaleManager.Instance?.Get("ObjectiveAchievement") ?? "Achievement";
                 if (!string.IsNullOrEmpty(description))
                 {
                     if (!string.IsNullOrEmpty(progress))
-                        return $"Achievement: {description}, {progress}";
-                    return $"Achievement: {description}";
+                        return $"{achieveLabel}: {description}, {progress}";
+                    return $"{achieveLabel}: {description}";
                 }
                 if (!string.IsNullOrEmpty(progress))
-                    return $"Achievement: {progress}";
+                    return $"{achieveLabel}: {progress}";
             }
 
             // For quest objectives (QuestNormal), get description + progress
@@ -1136,14 +1137,21 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
-                // Build the label: "Quest description, progress, reward gold"
+                // Build the label: "Quest description, progress, reward"
                 if (!string.IsNullOrEmpty(description))
                 {
                     var parts = new System.Collections.Generic.List<string> { description };
                     if (!string.IsNullOrEmpty(progress))
                         parts.Add(progress);
-                    if (!string.IsNullOrEmpty(reward))
-                        parts.Add($"{reward} gold");
+                    // Try popup HeaderString2 for fully localized reward text (handles gold, gems, packs)
+                    string popupReward = TryGetObjectiveBubblePopupText(gameObject, "HeaderString2");
+                    if (!string.IsNullOrEmpty(popupReward))
+                        parts.Add(popupReward);
+                    else if (!string.IsNullOrEmpty(reward))
+                    {
+                        string goldLabel = LocaleManager.Instance?.Get("CurrencyGold") ?? "Gold";
+                        parts.Add($"{reward} {goldLabel}");
+                    }
                     return string.Join(", ", parts);
                 }
             }
@@ -1180,12 +1188,16 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
-                // Clean up type names for readability
+                // Clean up type names for readability — use localized labels
                 string typeLabel = objectiveType;
                 if (objectiveType == "BattlePass - Level")
-                    typeLabel = "Battle Pass Level";
+                    typeLabel = LocaleManager.Instance?.Get("ObjectiveBattlePassLevel") ?? "Battle Pass Level";
                 else if (objectiveType == "SparkRankTier1")
                     typeLabel = "Spark Rank";
+                else if (objectiveType == "Daily")
+                    typeLabel = LocaleManager.Instance?.Get("ObjectiveDaily") ?? "Daily";
+                else if (objectiveType == "Weekly")
+                    typeLabel = LocaleManager.Instance?.Get("ObjectiveWeekly") ?? "Weekly";
                 else if (objectiveType == "Timer")
                 {
                     // Empty quest slot with countdown — read popup text from ObjectiveBubble
@@ -1207,6 +1219,9 @@ namespace AccessibleArena.Core.Services
                 }
 
                 // Build label based on objective type
+                string winsLabel = LocaleManager.Instance?.Get("ObjectiveWins") ?? "wins";
+                string goldLabel = LocaleManager.Instance?.Get("CurrencyGold") ?? "Gold";
+
                 if (objectiveType == "Daily")
                 {
                     // If game provides a TextLine description, use it.
@@ -1215,9 +1230,13 @@ namespace AccessibleArena.Core.Services
                     if (!string.IsNullOrEmpty(description))
                         parts.Add(description);
                     if (!string.IsNullOrEmpty(progressValue))
-                        parts.Add(string.IsNullOrEmpty(description) ? progressValue + " wins" : progressValue);
-                    if (!string.IsNullOrEmpty(mainValue))
-                        parts.Add($"{mainValue} gold");
+                        parts.Add(string.IsNullOrEmpty(description) ? $"{progressValue} {winsLabel}" : progressValue);
+                    // Try popup HeaderString2 for localized reward, fall back to our locale
+                    string popupReward = TryGetObjectiveBubblePopupText(gameObject, "HeaderString2");
+                    if (!string.IsNullOrEmpty(popupReward))
+                        parts.Add(popupReward);
+                    else if (!string.IsNullOrEmpty(mainValue))
+                        parts.Add($"{mainValue} {goldLabel}");
                     if (parts.Count > 0)
                         return $"{typeLabel}: {string.Join(", ", parts)}";
                 }
@@ -1232,12 +1251,12 @@ namespace AccessibleArena.Core.Services
                 else
                 {
                     // Weekly, SparkRank, etc: prefer description from TextLine, fall back to progress.
-                    // Weekly is also win-based, so append "wins" when no description is available.
+                    // Weekly is also win-based, so append localized "wins" when no description is available.
                     var parts = new System.Collections.Generic.List<string>();
                     if (!string.IsNullOrEmpty(description))
                         parts.Add(description);
                     if (!string.IsNullOrEmpty(progressValue))
-                        parts.Add(string.IsNullOrEmpty(description) && objectiveType == "Weekly" ? progressValue + " wins" : progressValue);
+                        parts.Add(string.IsNullOrEmpty(description) && objectiveType == "Weekly" ? $"{progressValue} {winsLabel}" : progressValue);
                     else if (!string.IsNullOrEmpty(mainValue))
                         parts.Add(mainValue);
                     if (parts.Count > 0)
