@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
@@ -543,6 +544,7 @@ namespace AccessibleArena.Core.Services
                 // OrderCards: Tab also uses clamped navigation (same as Left/Right)
                 if (_isOrderCards && _browserCards.Count > 0)
                 {
+                    ClearEventSystemSelection();
                     if (shift)
                     {
                         if (_currentCardIndex > 0) { _currentCardIndex--; AnnounceCurrentCard(); }
@@ -657,6 +659,7 @@ namespace AccessibleArena.Core.Services
                 {
                     if (Input.GetKeyDown(KeyCode.LeftArrow))
                     {
+                        ClearEventSystemSelection();
                         if (_currentCardIndex > 0)
                         {
                             _currentCardIndex--;
@@ -670,6 +673,7 @@ namespace AccessibleArena.Core.Services
                     }
                     if (Input.GetKeyDown(KeyCode.RightArrow))
                     {
+                        ClearEventSystemSelection();
                         if (_currentCardIndex < _browserCards.Count - 1)
                         {
                             _currentCardIndex++;
@@ -4120,6 +4124,17 @@ namespace AccessibleArena.Core.Services
 
                 _browserCards.Add(cdcComp.gameObject);
             }
+        }
+
+        /// <summary>
+        /// Clears Unity EventSystem selection to prevent scaffold buttons from
+        /// stealing focus when the mod handles arrow/tab keys.
+        /// </summary>
+        private void ClearEventSystemSelection()
+        {
+            var es = EventSystem.current;
+            if (es != null && es.currentSelectedGameObject != null)
+                es.SetSelectedGameObject(null);
         }
 
         #endregion
