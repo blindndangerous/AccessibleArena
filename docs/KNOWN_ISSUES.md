@@ -109,6 +109,22 @@ Per-browser-type tutorial hints were added for 16 browser types (Scry, Surveil, 
 
 **Files:** `BrowserNavigator.cs` (GetBrowserHintKey), `lang/*.json` (BrowserHint_* keys)
 
+### SelectCardsMultiZone: Space Without Selection Dismisses Silently
+
+In SelectCardsMultiZone browsers (e.g. Abprall/Rebound triggers from Ojer Pakpatiq), pressing Space without first selecting a card via Enter clicks SingleButton which is "Ablehnen" (Decline). This silently declines the ability to cast the exiled spell. The help hint correctly says "Enter to select, Space to confirm", but the UX is confusing because:
+- The card is announced on browser entry, making it feel already selected when it isn't
+- Space = confirm with nothing selected = decline is consistent with other duel phases (pass), but unexpected when you're presented with a card you want to cast
+- No warning is given that you're about to decline without having selected anything
+
+**Possible improvements:**
+- Warn the user when Space would confirm an empty selection in a SelectCardsMultiZone browser (e.g. "Keine Karte ausgewählt. Leertaste erneut zum Ablehnen" / "No card selected. Space again to decline")
+- Auto-select the card when there's only one option, so Space immediately casts it
+- Announce "Ablehnen" more prominently before executing it
+
+**Observed in:** Abprall (Rebound) triggers during upkeep with Ojer Pakpatiq, Tiefste Epoche on the battlefield. Two triggers (Gedankenwirbel, Abtauchen) both dismissed unintentionally.
+
+**Files:** `BrowserNavigator.cs` (ClickConfirmButton), `BrowserDetector.cs` (ConfirmPatterns includes "Single")
+
 ---
 
 ## Needs Testing
@@ -272,5 +288,6 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 2. Cube and other draft event accessibility - make Cube drafts and similar special draft events fully accessible (pick screens, pack navigation, deck building within event)
 3. Cosmetic handling support - accessible navigation and selection for emotes, avatars, card sleeves, card styles, and companions
 4. Ctrl+key shortcuts for navigating opponent's cards - additional Ctrl-modified zone shortcuts for quick opponent board access. Highly speculative; unlikely to be implemented unless requested by users.
+5. Replace Tolk with Prism library - Tolk is Windows-only (NVDA/JAWS/Narrator). Prism supports multiple platforms (macOS VoiceOver, Linux Orca, etc.), which would enable multi-OS accessibility if MTGA ever runs on other platforms or via Proton/Wine.
 
 
