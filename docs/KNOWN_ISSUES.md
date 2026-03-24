@@ -8,7 +8,7 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ### Blocking Sometimes Announces "0 0"
 
-During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information.
+During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information. Theory: this may happen when a single creature tries to block an attacker with menace (which requires at least two blockers), and the game rejects the illegal block assignment.
 
 ---
 
