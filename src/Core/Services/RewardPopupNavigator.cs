@@ -603,6 +603,41 @@ namespace AccessibleArena.Core.Services
                     return $"Avatar {index}";
 
                 default:
+                    // Try to extract name from Text_Note (may be inactive, e.g. Mastery Orb)
+                    string rewardName = null;
+                    string rewardQuantity = null;
+                    var defaultTexts = rewardPrefab.GetComponentsInChildren<TMPro.TMP_Text>(true);
+                    foreach (var text in defaultTexts)
+                    {
+                        if (text == null) continue;
+                        string content = text.text?.Trim();
+                        if (string.IsNullOrEmpty(content)) continue;
+
+                        if (text.gameObject.name == "Text_Note")
+                            rewardName = content;
+                        else if (text.gameObject.name == "Text_Quantity" && text.gameObject.activeInHierarchy)
+                            rewardQuantity = content;
+                    }
+
+                    // Fallback: extract type from prefab name (RewardPrefab_<Type>_...)
+                    if (string.IsNullOrEmpty(rewardName))
+                    {
+                        string prefabName = rewardPrefab.name;
+                        if (prefabName.StartsWith("RewardPrefab_"))
+                        {
+                            string extracted = prefabName.Substring("RewardPrefab_".Length);
+                            int sep = extracted.IndexOf('_');
+                            if (sep > 0) extracted = extracted.Substring(0, sep);
+                            int paren = extracted.IndexOf('(');
+                            if (paren > 0) extracted = extracted.Substring(0, paren);
+                            if (extracted.Length > 1)
+                                rewardName = extracted;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(rewardName))
+                        return !string.IsNullOrEmpty(rewardQuantity) ? $"{rewardQuantity} {rewardName}" : rewardName;
+
                     return $"Reward {index}";
             }
         }

@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.8.7
 
+### Reward Popup
+- Mastery Orbs and other previously unrecognized reward types now display their name and quantity instead of a generic "Reward 1" label
+
 ### Manual Trigger and Card Ordering
 - New OrderCards/TriggerOrderCards browser support for reordering cards and triggers
 - Pick up a card with Enter, navigate with Left/Right, place with Enter or Space, cancel with Backspace
