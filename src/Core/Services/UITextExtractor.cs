@@ -1193,12 +1193,13 @@ namespace AccessibleArena.Core.Services
                 // Build label based on objective type
                 if (objectiveType == "Daily")
                 {
-                    // Daily: "description, progress, reward gold"
+                    // If game provides a TextLine description, use it.
+                    // Otherwise fall back to the win-count format (Daily is always win-based).
                     var parts = new System.Collections.Generic.List<string>();
                     if (!string.IsNullOrEmpty(description))
                         parts.Add(description);
                     if (!string.IsNullOrEmpty(progressValue))
-                        parts.Add(progressValue);
+                        parts.Add(string.IsNullOrEmpty(description) ? progressValue + " wins" : progressValue);
                     if (!string.IsNullOrEmpty(mainValue))
                         parts.Add($"{mainValue} gold");
                     if (parts.Count > 0)
@@ -1214,12 +1215,13 @@ namespace AccessibleArena.Core.Services
                 }
                 else
                 {
-                    // Weekly, SparkRank, etc: show description, progress, main value
+                    // Weekly, SparkRank, etc: prefer description from TextLine, fall back to progress.
+                    // Weekly is also win-based, so append "wins" when no description is available.
                     var parts = new System.Collections.Generic.List<string>();
                     if (!string.IsNullOrEmpty(description))
                         parts.Add(description);
                     if (!string.IsNullOrEmpty(progressValue))
-                        parts.Add(progressValue);
+                        parts.Add(string.IsNullOrEmpty(description) && objectiveType == "Weekly" ? progressValue + " wins" : progressValue);
                     else if (!string.IsNullOrEmpty(mainValue))
                         parts.Add(mainValue);
                     if (parts.Count > 0)
