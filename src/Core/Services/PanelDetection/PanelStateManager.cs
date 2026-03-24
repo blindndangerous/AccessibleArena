@@ -114,6 +114,14 @@ namespace AccessibleArena.Core.Services.PanelDetection
         /// </summary>
         private readonly HashSet<string> _announcedPanels = new HashSet<string>();
 
+        /// <summary>
+        /// True after a scene change until the first non-popup panel is reported opened.
+        /// During this window, alpha-detected popups are suppressed because scene
+        /// initialization can create transient popup GOs (e.g., Store's ConfirmationModal)
+        /// that are active with alpha=1 but contain placeholder content.
+        /// </summary>
+        public bool IsSceneLoading { get; private set; }
+
         #endregion
 
         #region Initialization
@@ -205,6 +213,13 @@ namespace AccessibleArena.Core.Services.PanelDetection
                 // Still add to stack, just don't fire event
                 AddToStack(panel);
                 return false;
+            }
+
+            // First non-popup panel after scene change clears the loading gate
+            if (IsSceneLoading && panel.Type != PanelType.Popup)
+            {
+                IsSceneLoading = false;
+                MelonLogger.Msg($"[PanelStateManager] Scene loading complete (first panel: {panel.Name})");
             }
 
             // Add to stack and update active panel
@@ -417,6 +432,7 @@ namespace AccessibleArena.Core.Services.PanelDetection
             _announcedPanels.Clear();
             ActivePanel = null;
             PlayBladeState = 0;
+            IsSceneLoading = true;
 
             if (oldActive != null)
             {

@@ -224,6 +224,12 @@ namespace AccessibleArena.Core.Services.PanelDetection
                 // Detect visibility changes at stable states only
                 if (isFullyVisible && !panel.WasVisible)
                 {
+                    // Suppress popups during scene loading - transient prefab children
+                    // (e.g., Store's ConfirmationModal) can be active with alpha=1
+                    // before the content panel finishes loading
+                    if (_stateManager.IsSceneLoading)
+                        continue; // Keep WasVisible=false so it's re-checked after loading
+
                     panel.WasVisible = true;
 
                     // Check if already announced to prevent duplicates

@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.8.7
 
+### Popup Detection
+- Fixed transient popup with placeholder content ("000000", "$X.XX") being announced when opening the Store — scene initialization popups are now suppressed until the content panel finishes loading
+
 ### Reward Popup
 - Mastery Orbs and other previously unrecognized reward types now display their name and quantity instead of a generic "Reward 1" label
 
