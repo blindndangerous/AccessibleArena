@@ -15,6 +15,9 @@ All notable changes to Accessible Arena.
 - Skipped unnecessary DeckCardProvider lookups in duel scene
 - Removed library diagnostic logging for cleaner logs
 
+### Zone Navigation
+- Graveyard zones (yours and opponent's) now show newest card first (left), matching hand and battlefield ordering
+
 ### Browser Fixes
 - SelectCards browsers with 2-button scaffold layout (e.g. choosing among multiple counterspells) now confirm via workflow reflection instead of falling through to the wrong button
 - OrderCards/TriggerOrderCards browsers no longer have scaffold buttons steal focus when navigating with arrow keys
