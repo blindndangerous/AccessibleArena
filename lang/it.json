@@ -992,5 +992,6 @@
   "NPE_UnknownCard": "Carta sconosciuta",
   "NPE_UnlockedCardNumber_Format": "Carta sbloccata {0}: {1}",
   "NPE_TakeReward": "Prendi ricompensa",
-  "NPE_RewardClaimed": "Ricompensa ottenuta"
+  "NPE_RewardClaimed": "Ricompensa ottenuta",
+  "NPE_Stage_Format": "Fase {0}"
 }

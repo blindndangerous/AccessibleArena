@@ -1008,5 +1008,6 @@
   "NPE_UnknownCard": "Unknown card",
   "NPE_UnlockedCardNumber_Format": "Unlocked card {0}: {1}",
   "NPE_TakeReward": "Take reward",
-  "NPE_RewardClaimed": "Reward claimed"
+  "NPE_RewardClaimed": "Reward claimed",
+  "NPE_Stage_Format": "Stage {0}"
 }

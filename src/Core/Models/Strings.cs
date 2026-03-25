@@ -470,6 +470,7 @@ namespace AccessibleArena.Core.Models
         public static string NPE_UnlockedCardNumber(int num, string name) => L.Format("NPE_UnlockedCardNumber_Format", num, name);
         public static string NPE_TakeReward => L.Get("NPE_TakeReward");
         public static string NPE_RewardClaimed => L.Get("NPE_RewardClaimed");
+        public static string NPE_Stage(string roman) => L.Format("NPE_Stage_Format", roman);
 
         // ===========================================
         // COMBAT

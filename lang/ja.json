@@ -992,6 +992,7 @@
   "NPE_UnknownCard": "\u4e0d\u660e\u306a\u30ab\u30fc\u30c9",
   "NPE_UnlockedCardNumber_Format": "\u30a2\u30f3\u30ed\u30c3\u30af\u3057\u305f\u30ab\u30fc\u30c9 {0}: {1}",
   "NPE_TakeReward": "\u5831\u916c\u3092\u53d7\u3051\u53d6\u308b",
-  "NPE_RewardClaimed": "\u5831\u916c\u3092\u7372\u5f97\u3057\u307e\u3057\u305f"
+  "NPE_RewardClaimed": "\u5831\u916c\u3092\u7372\u5f97\u3057\u307e\u3057\u305f",
+  "NPE_Stage_Format": "\u30b9\u30c6\u30fc\u30b8{0}"
 }
 

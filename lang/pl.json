@@ -1005,5 +1005,6 @@
   "NPE_UnknownCard": "Nieznana karta",
   "NPE_UnlockedCardNumber_Format": "Odblokowana karta {0}: {1}",
   "NPE_TakeReward": "Odbierz nagrod\u0119",
-  "NPE_RewardClaimed": "Nagroda odebrana"
+  "NPE_RewardClaimed": "Nagroda odebrana",
+  "NPE_Stage_Format": "Etap {0}"
 }

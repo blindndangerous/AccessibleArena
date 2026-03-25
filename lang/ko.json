@@ -992,5 +992,6 @@
   "NPE_UnknownCard": "\uc54c \uc218 \uc5c6\ub294 \uce74\ub4dc",
   "NPE_UnlockedCardNumber_Format": "\uc7a0\uae08 \ud574\uc81c\ub41c \uce74\ub4dc {0}: {1}",
   "NPE_TakeReward": "\ubcf4\uc0c1 \ubc1b\uae30",
-  "NPE_RewardClaimed": "\ubcf4\uc0c1 \ud68d\ub4dd"
+  "NPE_RewardClaimed": "\ubcf4\uc0c1 \ud68d\ub4dd",
+  "NPE_Stage_Format": "\uc2a4\ud14c\uc774\uc9c0 {0}"
 }

@@ -1357,92 +1357,152 @@ namespace AccessibleArena.Core.Services
         /// <summary>
         /// Extracts text from NPE (New Player Experience) objective elements.
         /// These are the tutorial stage indicators (Stage I, II, III, etc.) with completion status.
+        /// Uses the NPEObjective component's Animator to reliably detect state
+        /// (completed vs unlocked vs locked) and returns fully localized text.
         /// </summary>
+        private static Type _npeObjectiveType;
+        private static FieldInfo _npeCircleTextField;
+        private static FieldInfo _npeAnimatorField;
+        private static bool _npeFieldsCached;
+
         private static string TryGetNPEObjectiveText(GameObject gameObject)
         {
             if (gameObject == null || !gameObject.name.StartsWith("Objective_NPE"))
                 return null;
 
-            var texts = gameObject.GetComponentsInChildren<TMP_Text>(true);
-
-            string romanNumeral = null;
-            bool romanNumeralIsActive = false;
-            bool isCompleted = false;
-            bool isLocked = false;
-
-            // Extract Roman numeral from child elements (check both active and inactive)
-            foreach (var text in texts)
+            // Cache reflection lookups
+            if (!_npeFieldsCached)
             {
-                if (text == null) continue;
-                string objNameLower = text.gameObject.name.ToLower();
-
-                // Look for RomanNumeral element specifically
-                if (objNameLower.Contains("roman") || objNameLower.Contains("numeral"))
+                _npeObjectiveType = FindType("NPEObjective");
+                if (_npeObjectiveType != null)
                 {
-                    string content = text.text?.Trim();
+                    _npeCircleTextField = _npeObjectiveType.GetField("_circleText", PrivateInstance);
+                    _npeAnimatorField = _npeObjectiveType.GetField("_animator", PrivateInstance);
+                }
+                _npeFieldsCached = true;
+            }
+
+            // Get NPEObjective component
+            Component npeObjective = null;
+            if (_npeObjectiveType != null)
+                npeObjective = gameObject.GetComponent(_npeObjectiveType);
+
+            // Read roman numeral from _circleText (works even when inactive)
+            string roman = null;
+            if (npeObjective != null && _npeCircleTextField != null)
+            {
+                var tmp = _npeCircleTextField.GetValue(npeObjective) as TMP_Text;
+                if (tmp != null)
+                {
+                    string content = tmp.text?.Trim();
                     if (!string.IsNullOrEmpty(content) && content != "\u200B")
-                    {
-                        content = StripRichText(content).Trim();
-                        if (!string.IsNullOrEmpty(content))
-                        {
-                            romanNumeral = content;
-                            romanNumeralIsActive = text.gameObject.activeInHierarchy;
-                        }
-                    }
+                        roman = StripRichText(content).Trim();
                 }
             }
 
-            // If no Roman numeral found from named elements, try to detect from any active text
-            if (string.IsNullOrEmpty(romanNumeral))
+            // Fallback: scan TMP_Text children for roman numeral
+            if (string.IsNullOrEmpty(roman))
             {
-                foreach (var text in texts)
+                foreach (var text in gameObject.GetComponentsInChildren<TMP_Text>(true))
                 {
-                    if (text == null || !text.gameObject.activeInHierarchy) continue;
+                    if (text == null) continue;
                     string content = text.text?.Trim();
                     if (string.IsNullOrEmpty(content)) continue;
                     content = StripRichText(content).Trim();
-
-                    // Check if content is a Roman numeral (I, II, III, IV, V, VI, VII, VIII, IX, X)
-                    if (System.Text.RegularExpressions.Regex.IsMatch(content, @"^[IVX]+$"))
+                    if (Regex.IsMatch(content, @"^[IVX]+$"))
                     {
-                        romanNumeral = content;
-                        romanNumeralIsActive = true;
+                        roman = content;
                         break;
                     }
                 }
             }
 
-            // Detect completion: if RomanNumeral exists but is inactive, stage is completed
-            // (completed stages hide their Roman numeral and show a checkmark instead)
-            if (!string.IsNullOrEmpty(romanNumeral) && !romanNumeralIsActive)
+            // Determine state from Animator (pure reflection, same pattern as EventAccessor)
+            string status = null;
+            if (npeObjective != null && _npeAnimatorField != null)
             {
-                isCompleted = true;
+                var animator = _npeAnimatorField.GetValue(npeObjective);
+                if (animator != null)
+                    status = GetNPEObjectiveStatus(animator);
             }
 
-            // Also check for explicit completion/lock indicators in child objects
-            foreach (Transform child in gameObject.transform)
+            // Build localized label
+            string stageLabel = !string.IsNullOrEmpty(roman)
+                ? Strings.NPE_Stage(roman) : Strings.NPE_Stage("?");
+
+            if (!string.IsNullOrEmpty(status))
+                return $"{stageLabel}, {status}";
+
+            return stageLabel;
+        }
+
+        /// <summary>
+        /// Determines the NPE objective status from its Animator via reflection.
+        /// NPEObjective uses SetTrigger (not SetBool), so we check state names first,
+        /// then fall back to GetBool parameters.
+        /// </summary>
+        private static MethodInfo _animGetStateInfo;
+        private static MethodInfo _stateInfoIsName;
+
+        private static string GetNPEObjectiveStatus(object animator)
+        {
+            var animType = animator.GetType();
+
+            // Try checking animator state name via GetCurrentAnimatorStateInfo(0).IsName(...)
+            if (_animGetStateInfo == null)
+                _animGetStateInfo = animType.GetMethod("GetCurrentAnimatorStateInfo", new[] { typeof(int) });
+
+            if (_animGetStateInfo != null)
             {
-                string childName = child.name.ToLower();
-                if ((childName.Contains("complete") || childName.Contains("check") || childName.Contains("done"))
-                    && child.gameObject.activeInHierarchy)
-                    isCompleted = true;
-                if (childName.Contains("lock") && child.gameObject.activeInHierarchy)
-                    isLocked = true;
+                var stateInfo = _animGetStateInfo.Invoke(animator, new object[] { 0 });
+                if (stateInfo != null)
+                {
+                    if (_stateInfoIsName == null)
+                        _stateInfoIsName = stateInfo.GetType().GetMethod("IsName", new[] { typeof(string) });
+
+                    if (_stateInfoIsName != null)
+                    {
+                        // Check completed state (trigger "toComplete")
+                        if ((bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Complete" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Completed" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "toComplete" }))
+                            return Strings.ColorChallengeNodeCompleted;
+
+                        // Check locked state (trigger "toLock")
+                        if ((bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Lock" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Locked" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "toLock" }))
+                            return Strings.ColorChallengeNodeLocked;
+
+                        // Check unlocked/normal state (trigger "toNormal" / "Unlock")
+                        if ((bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Normal" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Unlock" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Unlocked" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "toNormal" })
+                            || (bool)_stateInfoIsName.Invoke(stateInfo, new object[] { "Idle" }))
+                            return Strings.ColorChallengeNodeAvailable;
+                    }
+                }
             }
 
-            // Build the label
-            string stageLabel = "Stage";
-            if (!string.IsNullOrEmpty(romanNumeral))
-                stageLabel = $"Stage {romanNumeral}";
+            // Fallback: try GetBool parameters (like CampaignGraphObjectiveBubble uses)
+            try
+            {
+                var getBool = animType.GetMethod("GetBool", new[] { typeof(string) });
+                if (getBool != null)
+                {
+                    bool completed = (bool)getBool.Invoke(animator, new object[] { "Completed" });
+                    if (completed) return Strings.ColorChallengeNodeCompleted;
 
-            string result = stageLabel;
+                    bool locked = (bool)getBool.Invoke(animator, new object[] { "Locked" });
+                    if (locked) return Strings.ColorChallengeNodeLocked;
 
-            if (isCompleted)
-                result += ". Completed";
-            else if (isLocked)
-                result += ". Locked";
+                    return Strings.ColorChallengeNodeAvailable;
+                }
+            }
+            catch { /* Parameter doesn't exist */ }
 
-            return result;
+            return null;
         }
 
         /// <summary>

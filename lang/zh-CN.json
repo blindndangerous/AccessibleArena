@@ -992,7 +992,8 @@
   "NPE_UnknownCard": "\u672a\u77e5\u5361\u724c",
   "NPE_UnlockedCardNumber_Format": "\u89e3\u9501\u5361\u724c {0}\uff1a{1}",
   "NPE_TakeReward": "\u9886\u53d6\u5956\u52b1",
-  "NPE_RewardClaimed": "\u5956\u52b1\u5df2\u9886\u53d6"
+  "NPE_RewardClaimed": "\u5956\u52b1\u5df2\u9886\u53d6",
+  "NPE_Stage_Format": "\u9636\u6bb5 {0}"
 }
 
 
