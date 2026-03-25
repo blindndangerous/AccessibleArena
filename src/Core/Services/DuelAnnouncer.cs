@@ -36,22 +36,6 @@ namespace AccessibleArena.Core.Services
             _announcer.LogToHistory(message);
         }
 
-        private const float NPE_ANNOUNCE_DELAY = 0.5f;
-
-        private IEnumerator DelayedAnnounce(string message, AnnouncementPriority priority)
-        {
-            yield return new WaitForSeconds(NPE_ANNOUNCE_DELAY);
-            AnnounceToLog(message, priority);
-        }
-
-        private static bool IsNPEEvent(DuelEventType eventType)
-        {
-            return eventType == DuelEventType.NPEDialog
-                || eventType == DuelEventType.NPEReminder
-                || eventType == DuelEventType.NPETooltip
-                || eventType == DuelEventType.NPEWarning;
-        }
-
         private readonly Dictionary<string, DuelEventType> _eventTypeMap;
         private readonly Dictionary<string, int> _zoneCounts = new Dictionary<string, int>();
 
@@ -98,12 +82,6 @@ namespace AccessibleArena.Core.Services
         private string _pendingPhaseAnnouncement;
         private float _phaseDebounceTimer;
         private const float PHASE_DEBOUNCE_SECONDS = 0.1f;
-
-        // Suppress duplicate NPE BlockingReminder in same blockers phase
-        private bool _shownBlockingReminderThisStep;
-
-        // Suppress the generic ActionReminder that fires right after a tooltip with custom text
-        private bool _suppressNextActionReminder;
 
         // Track time of last phase change for external consumers
         private float _lastPhaseChangeTime;
@@ -1021,7 +999,7 @@ namespace AccessibleArena.Core.Services
                 _currentPhase = phase;
                 _currentStep = step;
                 _lastPhaseChangeTime = UnityEngine.Time.time;
-                if (step == "DeclareBlock")
+                if (_isNPETutorial && step == "DeclareBlock")
                     _shownBlockingReminderThisStep = false;
                 DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Phase change: {phase}/{step}");
 
@@ -2366,6 +2344,28 @@ namespace AccessibleArena.Core.Services
 
         #region NPE Tutorial Handlers
 
+        private const float NPE_ANNOUNCE_DELAY = 0.5f;
+
+        private IEnumerator DelayedAnnounce(string message, AnnouncementPriority priority)
+        {
+            yield return new WaitForSeconds(NPE_ANNOUNCE_DELAY);
+            AnnounceToLog(message, priority);
+        }
+
+        private static bool IsNPEEvent(DuelEventType eventType)
+        {
+            return eventType == DuelEventType.NPEDialog
+                || eventType == DuelEventType.NPEReminder
+                || eventType == DuelEventType.NPETooltip
+                || eventType == DuelEventType.NPEWarning;
+        }
+
+        // Suppress duplicate NPE BlockingReminder in same blockers phase
+        private bool _shownBlockingReminderThisStep;
+
+        // Suppress the generic ActionReminder that fires right after a tooltip with custom text
+        private bool _suppressNextActionReminder;
+
         // Reflection cache for NPE types
         private static FieldInfo _npeDialogLineField;
         private static FieldInfo _npeReminderField;
@@ -2443,7 +2443,7 @@ namespace AccessibleArena.Core.Services
                 if (_localizedStringKeyField != null)
                     locKey = _localizedStringKeyField.GetValue(lineObj) as string;
 
-                MelonLogger.Msg($"[DuelAnnouncer] NPE Dialog: {text} (key: {locKey})");
+                DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"NPE Dialog: {text} (key: {locKey})");
 
                 // Check if we have a supplementary keyboard hint for this dialog line
                 string hint = NPETutorialTextProvider.GetDialogHint(locKey);
@@ -2453,7 +2453,7 @@ namespace AccessibleArena.Core.Services
                 // These must be read aloud so blind players understand why their action was rejected
                 if (NPETutorialTextProvider.ShouldReadAloud(locKey))
                 {
-                    MelonLogger.Msg($"[DuelAnnouncer] Reading AlwaysReminder aloud: {text}");
+                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Reading AlwaysReminder aloud: {text}");
                     return text;
                 }
 
@@ -2516,14 +2516,14 @@ namespace AccessibleArena.Core.Services
                     }
                 }
 
-                MelonLogger.Msg($"[DuelAnnouncer] NPE Reminder: {text} (key: {locKey})" + (cardHint != null ? $" (cards: {cardHint})" : ""));
+                DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"NPE Reminder: {text} (key: {locKey})" + (cardHint != null ? $" (cards: {cardHint})" : ""));
 
                 // Suppress duplicate BlockingReminder in same blockers phase
                 if (locKey != null && locKey.Contains("/BlockingReminder"))
                 {
                     if (_shownBlockingReminderThisStep)
                     {
-                        MelonLogger.Msg("[DuelAnnouncer] Suppressing duplicate BlockingReminder");
+                        DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", "Suppressing duplicate BlockingReminder");
                         return null;
                     }
                     _shownBlockingReminderThisStep = true;
@@ -2533,7 +2533,7 @@ namespace AccessibleArena.Core.Services
                 if (_suppressNextActionReminder && locKey != null && locKey.Contains("/ActionReminder"))
                 {
                     _suppressNextActionReminder = false;
-                    MelonLogger.Msg("[DuelAnnouncer] Suppressing ActionReminder after tooltip hint");
+                    DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", "Suppressing ActionReminder after tooltip hint");
                     return null;
                 }
                 _suppressNextActionReminder = false;
@@ -2565,7 +2565,7 @@ namespace AccessibleArena.Core.Services
                 if (typeObj == null) return null;
 
                 string tooltipType = typeObj.ToString();
-                MelonLogger.Msg($"[DuelAnnouncer] NPE Tooltip: {tooltipType}");
+                DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"NPE Tooltip: {tooltipType}");
 
                 // DominariaFall fires at the very start of the first tutorial duel,
                 // overlapping with NPC intro dialogs and matchup info — suppress it.
@@ -2605,7 +2605,7 @@ namespace AccessibleArena.Core.Services
                 string text = textObj.ToString();
                 if (string.IsNullOrEmpty(text)) return null;
 
-                MelonLogger.Msg($"[DuelAnnouncer] NPE Warning: {text}");
+                DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"NPE Warning: {text}");
                 return text;
             }
             catch (Exception ex)
@@ -2701,7 +2701,7 @@ namespace AccessibleArena.Core.Services
             if (focused == null) return;
 
             // Check if focused object is a DuelScene_CDC
-            var cdcComponent = GetDuelSceneCDC(focused);
+            var cdcComponent = GetDuelSceneCDCOrParent(focused);
             if (cdcComponent == null) return;
 
             // Track whether this CDC is on the Stack
@@ -2723,22 +2723,20 @@ namespace AccessibleArena.Core.Services
             return false;
         }
 
-        private static object GetDuelSceneCDC(GameObject go)
+        /// <summary>
+        /// Finds a DuelScene_CDC on the given object or its parent.
+        /// Reuses CardModelProvider for self-lookup; parent fallback is needed because
+        /// NPE hover simulation may focus a child element within the CDC hierarchy.
+        /// </summary>
+        private static object GetDuelSceneCDCOrParent(GameObject go)
         {
-            foreach (var mb in go.GetComponents<MonoBehaviour>())
-            {
-                if (mb != null && mb.GetType().Name == "DuelScene_CDC")
-                    return mb;
-            }
-            // Also check parent (CDC components may be on parent of focused child)
+            var cdc = CardModelProvider.GetDuelSceneCDC(go);
+            if (cdc != null) return cdc;
+
+            // Focused element may be a child of the CDC (e.g. card art, text)
             if (go.transform.parent != null)
-            {
-                foreach (var mb in go.transform.parent.GetComponents<MonoBehaviour>())
-                {
-                    if (mb != null && mb.GetType().Name == "DuelScene_CDC")
-                        return mb;
-                }
-            }
+                return CardModelProvider.GetDuelSceneCDC(go.transform.parent.gameObject);
+
             return null;
         }
 

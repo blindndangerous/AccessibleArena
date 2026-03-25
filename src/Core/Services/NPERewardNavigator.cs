@@ -123,7 +123,7 @@ namespace AccessibleArena.Core.Services
 
             // Only log full details on state change to "success"
             string successState = _isDeckReward ? "success_deck" : "success";
-            if (_lastDetectState != successState)
+            if (_lastDetectState != successState && DebugConfig.LogNavigation)
             {
                 Log($"=== NPE REWARD SCREEN DETECTION: SUCCESS ({(_isDeckReward ? "DECK" : "CARD")} mode) ===");
                 Log($"  Path: {GetPath(npeContainer.transform)}");
@@ -232,28 +232,21 @@ namespace AccessibleArena.Core.Services
                     continue;
                 }
 
-                Log($"    MATCHED as card prefab");
-
-                // Log hierarchy of this card prefab
-                Log($"    Children of card prefab:");
-                foreach (Transform cardChild in child)
-                {
-                    Log($"      - {cardChild.name} (active={cardChild.gameObject.activeInHierarchy})");
-                }
-
                 // Get the card anchor or the prefab itself for navigation
                 var cardAnchor = child.Find("CardAnchor");
                 GameObject cardObj = cardAnchor?.gameObject ?? child.gameObject;
 
-                Log($"    Navigation target: {cardObj.name} (used CardAnchor={cardAnchor != null})");
-                Log($"    Target path: {GetPath(cardObj.transform)}");
-
-                // Log components on the navigation target
-                var components = cardObj.GetComponents<Component>();
-                Log($"    Target components ({components.Length}):");
-                foreach (var comp in components)
+                if (DebugConfig.LogNavigation)
                 {
-                    Log($"      - {comp?.GetType().Name ?? "null"}");
+                    Log($"    MATCHED as card prefab");
+                    foreach (Transform cardChild in child)
+                        Log($"      - {cardChild.name} (active={cardChild.gameObject.activeInHierarchy})");
+                    Log($"    Navigation target: {cardObj.name} (used CardAnchor={cardAnchor != null})");
+                    Log($"    Target path: {GetPath(cardObj.transform)}");
+                    var components = cardObj.GetComponents<Component>();
+                    Log($"    Target components ({components.Length}):");
+                    foreach (var comp in components)
+                        Log($"      - {comp?.GetType().Name ?? "null"}");
                 }
 
                 if (addedObjects.Contains(cardObj))
@@ -262,14 +255,11 @@ namespace AccessibleArena.Core.Services
                     continue;
                 }
 
-                // Extract card info with detailed logging
-                Log($"    Extracting card info from: {child.gameObject.name}");
                 var cardInfo = CardDetector.ExtractCardInfo(child.gameObject);
-                Log($"    CardInfo.IsValid: {cardInfo.IsValid}");
-                Log($"    CardInfo.Name: {cardInfo.Name ?? "null"}");
-                Log($"    CardInfo.TypeLine: {cardInfo.TypeLine ?? "null"}");
-                Log($"    CardInfo.ManaCost: {cardInfo.ManaCost ?? "null"}");
-                Log($"    CardInfo.RulesText: {(cardInfo.RulesText?.Length > 50 ? cardInfo.RulesText.Substring(0, 50) + "..." : cardInfo.RulesText ?? "null")}");
+                if (DebugConfig.LogNavigation)
+                {
+                    Log($"    CardInfo: Name={cardInfo.Name ?? "null"}, Valid={cardInfo.IsValid}, Type={cardInfo.TypeLine ?? "null"}");
+                }
 
                 string cardName = cardInfo.IsValid ? cardInfo.Name : Strings.NPE_UnknownCard;
                 string typeLine = cardInfo.IsValid ? cardInfo.TypeLine : "";
@@ -351,13 +341,11 @@ namespace AccessibleArena.Core.Services
                     continue;
                 }
 
-                Log($"    MATCHED as deck prefab (Hitbox_LidOpen found)");
-
-                // Log hierarchy for debugging
-                Log($"    Children of deck prefab:");
-                foreach (Transform deckChild in child)
+                if (DebugConfig.LogNavigation)
                 {
-                    Log($"      - {deckChild.name} (active={deckChild.gameObject.activeInHierarchy})");
+                    Log($"    MATCHED as deck prefab (Hitbox_LidOpen found)");
+                    foreach (Transform deckChild in child)
+                        Log($"      - {deckChild.name} (active={deckChild.gameObject.activeInHierarchy})");
                 }
 
                 if (addedObjects.Contains(hitboxObj))
@@ -426,41 +414,24 @@ namespace AccessibleArena.Core.Services
 
                 if (transform.name == "NullClaimButton")
                 {
-                    Log($"  Found NullClaimButton:");
-                    Log($"    Path: {GetPath(transform)}");
-                    Log($"    Active: {transform.gameObject.activeInHierarchy}");
-
                     if (!transform.gameObject.activeInHierarchy)
                     {
-                        Log($"    SKIPPED: not active");
+                        Log($"  NullClaimButton: SKIPPED (not active)");
                         continue;
-                    }
-
-                    // Log all components
-                    var components = transform.GetComponents<Component>();
-                    Log($"    Components ({components.Length}):");
-                    bool hasCustomButton = false;
-                    foreach (var comp in components)
-                    {
-                        string compName = comp?.GetType().Name ?? "null";
-                        Log($"      - {compName}");
-                        if (compName == "CustomButton")
-                        {
-                            hasCustomButton = true;
-                            // Log CustomButton fields
-                            LogCustomButtonDetails(comp as MonoBehaviour);
-                        }
-                    }
-
-                    if (!hasCustomButton)
-                    {
-                        Log($"    WARNING: No CustomButton component found!");
                     }
 
                     if (addedObjects.Contains(transform.gameObject))
                     {
-                        Log($"    SKIPPED: already added");
+                        Log($"  NullClaimButton: SKIPPED (already added)");
                         continue;
+                    }
+
+                    if (DebugConfig.LogNavigation)
+                    {
+                        Log($"  Found NullClaimButton: {GetPath(transform)}");
+                        foreach (var comp in transform.GetComponents<Component>())
+                            Log($"    - {comp?.GetType().Name ?? "null"}");
+                        LogCustomButtonDetails(transform);
                     }
 
                     foundButton = transform.gameObject;
@@ -483,37 +454,41 @@ namespace AccessibleArena.Core.Services
             }
         }
 
-        private void LogCustomButtonDetails(MonoBehaviour customButton)
+        /// <summary>
+        /// Logs interesting CustomButton fields on a transform (debug only).
+        /// Caller must gate with DebugConfig.LogNavigation.
+        /// </summary>
+        private void LogCustomButtonDetails(Transform buttonTransform)
         {
+            if (buttonTransform == null) return;
+
+            MonoBehaviour customButton = null;
+            foreach (var mb in buttonTransform.GetComponents<MonoBehaviour>())
+            {
+                if (mb != null && mb.GetType().Name == "CustomButton")
+                {
+                    customButton = mb;
+                    break;
+                }
+            }
             if (customButton == null) return;
 
-            var type = customButton.GetType();
-            var flags = AllInstanceFlags;
-
-            Log($"      CustomButton fields:");
-            foreach (var field in type.GetFields(flags))
+            foreach (var field in customButton.GetType().GetFields(AllInstanceFlags))
             {
+                if (!field.Name.Contains("click") && !field.Name.Contains("Click") &&
+                    !field.Name.Contains("event") && !field.Name.Contains("Event") &&
+                    !field.Name.Contains("action") && !field.Name.Contains("Action") &&
+                    !field.Name.Contains("interactable") && !field.Name.Contains("Interactable"))
+                    continue;
+
                 try
                 {
                     var val = field.GetValue(customButton);
-                    string valStr;
-                    if (val == null)
-                        valStr = "null";
-                    else if (val is string || val is bool || val is int || val is float || val is System.Enum)
-                        valStr = val.ToString();
-                    else if (val is UnityEngine.Events.UnityEventBase eventBase)
-                        valStr = $"<UnityEvent, listeners={eventBase.GetPersistentEventCount()}>";
-                    else
-                        valStr = $"<{val.GetType().Name}>";
-
-                    // Only log interesting fields
-                    if (field.Name.Contains("click") || field.Name.Contains("Click") ||
-                        field.Name.Contains("event") || field.Name.Contains("Event") ||
-                        field.Name.Contains("action") || field.Name.Contains("Action") ||
-                        field.Name.Contains("interactable") || field.Name.Contains("Interactable"))
-                    {
-                        Log($"        {field.Name}: {valStr}");
-                    }
+                    string valStr = val == null ? "null"
+                        : val is UnityEngine.Events.UnityEventBase ue ? $"<UnityEvent, listeners={ue.GetPersistentEventCount()}>"
+                        : val is string || val is bool || val is int || val is float || val is System.Enum ? val.ToString()
+                        : $"<{val.GetType().Name}>";
+                    Log($"    CustomButton.{field.Name}: {valStr}");
                 }
                 catch { /* Some fields may throw when read via reflection */ }
             }
