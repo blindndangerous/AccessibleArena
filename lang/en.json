@@ -852,6 +852,7 @@
   "GameLogClosed": "Game log closed",
   "GameLogEmpty": "No announcements yet",
   "GameLogInstructions": "Navigate with Up and Down. Close with O or Backspace.",
+  "ViewGameLog": "View game log",
   "Bo3Toggle": "Best of 3",
   "FriendActionChat": "Chat",
   "FriendActionChallenge": "Challenge",

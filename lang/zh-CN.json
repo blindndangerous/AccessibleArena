@@ -839,6 +839,7 @@
   "GameLogClosed": "Game log closed",
   "GameLogEmpty": "No announcements yet",
   "GameLogInstructions": "Navigate with Up and Down. Close with O or Backspace.",
+  "ViewGameLog": "查看游戏日志",
   "Bo3Toggle": "三局两胜",
   "FriendActionChat": "聊天",
   "FriendActionChallenge": "挑战",

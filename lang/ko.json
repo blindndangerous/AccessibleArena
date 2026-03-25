@@ -839,6 +839,7 @@
   "GameLogClosed": "Game log closed",
   "GameLogEmpty": "No announcements yet",
   "GameLogInstructions": "Navigate with Up and Down. Close with O or Backspace.",
+  "ViewGameLog": "게임 로그 보기",
   "Bo3Toggle": "3전 2선승",
   "FriendActionChat": "채팅",
   "FriendActionChallenge": "도전",

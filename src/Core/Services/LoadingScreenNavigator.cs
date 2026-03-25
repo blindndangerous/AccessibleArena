@@ -62,6 +62,9 @@ namespace AccessibleArena.Core.Services
         private float _surveyPollTimer;
         private bool _surveyElementsDiscovered;
 
+        // Virtual "View Game Log" element for MatchEnd screen
+        private GameObject _viewLogElement;
+
         // Diagnostic: dump hierarchy once per activation
         private bool _dumpedHierarchy;
 
@@ -260,6 +263,7 @@ namespace AccessibleArena.Core.Services
                     var go = et.gameObject;
                     if (!go.activeInHierarchy) continue;
                     if (go == _continueButton) continue; // Already added
+                    if (go.name == "ViewBattlefieldButton") continue; // Useless for blind players
 
                     string label = UITextExtractor.GetButtonText(go, null);
                     if (string.IsNullOrEmpty(label))
@@ -319,26 +323,14 @@ namespace AccessibleArena.Core.Services
                         Log($"  ADDED (info): Rank -> '{rankLabel}'");
                     }
                 }
-
-                // Find "View Battlefield" text/button if present
-                var viewBattlefieldText = FindTextByName(root, "Text");
-                if (!string.IsNullOrEmpty(viewBattlefieldText) &&
-                    viewBattlefieldText.ToLowerInvariant().Contains("betrachten") ||
-                    !string.IsNullOrEmpty(viewBattlefieldText) &&
-                    viewBattlefieldText.ToLowerInvariant().Contains("battlefield"))
-                {
-                    // This might be a clickable element - find its parent with EventTrigger
-                    var textObj = FindChildRecursive(root.transform, "Text");
-                    if (textObj != null)
-                    {
-                        // Check if parent has EventTrigger (clickable)
-                        var parentET = textObj.GetComponentInParent<EventTrigger>();
-                        var targetObj = parentET != null ? parentET.gameObject : textObj;
-                        AddElement(targetObj, BuildLabel(viewBattlefieldText, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
-                        Log($"  ADDED (view): {targetObj.name} -> '{viewBattlefieldText}'");
-                    }
-                }
             }
+
+            // 4. Virtual "View Game Log" element to review duel announcements.
+            //    Replaces the visual-only "View Battlefield" button (useless for blind players).
+            if (_viewLogElement == null)
+                _viewLogElement = new GameObject("ViewLog_Virtual");
+            AddElement(_viewLogElement, BuildLabel(Models.Strings.ViewGameLog, Models.Strings.RoleButton, UIElementClassifier.ElementRole.Button), default, null, null, UIElementClassifier.ElementRole.Button);
+            Log($"  ADDED (virtual): ViewLog_Virtual -> '{Models.Strings.ViewGameLog}'");
 
             // Settings button not added - accessible via Escape shortcut
 
@@ -643,6 +635,15 @@ namespace AccessibleArena.Core.Services
 
         protected override bool HandleCustomInput()
         {
+            // O key: open game log on match end screen
+            if (_currentMode == ScreenMode.MatchEnd && Input.GetKeyDown(KeyCode.O))
+            {
+                var logNav = AccessibleArenaMod.Instance?.GameLogNavigator;
+                if (logNav != null)
+                    logNav.Open();
+                return true;
+            }
+
             // Backspace: quick action per mode
             if (Input.GetKeyDown(KeyCode.Backspace))
             {
@@ -683,6 +684,16 @@ namespace AccessibleArena.Core.Services
         protected override bool OnElementActivated(int index, GameObject element)
         {
             if (element == null) return false;
+
+            // Virtual "View Game Log" element — open log navigator instead of clicking
+            if (element == _viewLogElement)
+            {
+                Log("Activating View Game Log");
+                var logNav = AccessibleArenaMod.Instance?.GameLogNavigator;
+                if (logNav != null)
+                    logNav.Open();
+                return true;
+            }
 
             // Use SimulatePointerClick for MatchEnd buttons (StyledButton/PromptButton)
             if (_currentMode == ScreenMode.MatchEnd)
@@ -1119,6 +1130,18 @@ namespace AccessibleArena.Core.Services
                     return;
                 }
 
+                // Leaving MatchEnd: clear duel log history so it doesn't go stale
+                if (_currentMode == ScreenMode.MatchEnd)
+                {
+                    Log("Leaving MatchEnd — clearing duel log history");
+                    _announcer.ClearHistory();
+
+                    // Close game log navigator if still open
+                    var logNav = AccessibleArenaMod.Instance?.GameLogNavigator;
+                    if (logNav != null && logNav.IsActive)
+                        logNav.Close();
+                }
+
                 Deactivate();
             }
 
@@ -1135,6 +1158,13 @@ namespace AccessibleArena.Core.Services
             _surveyUIContainer = null;
             _surveyElementsDiscovered = false;
             _dumpedHierarchy = false;
+
+            // Clean up virtual View Log element
+            if (_viewLogElement != null)
+            {
+                Object.Destroy(_viewLogElement);
+                _viewLogElement = null;
+            }
         }
 
         #endregion

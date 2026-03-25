@@ -839,6 +839,7 @@
   "GameLogClosed": "Game log closed",
   "GameLogEmpty": "No announcements yet",
   "GameLogInstructions": "Navigate with Up and Down. Close with O or Backspace.",
+  "ViewGameLog": "Visualizza registro partita",
   "Bo3Toggle": "Migliore di 3",
   "FriendActionChat": "Chat",
   "FriendActionChallenge": "Sfida",

@@ -541,6 +541,7 @@ namespace AccessibleArena.Core.Models
         public static string GameLogTitle => L.Get("GameLogTitle");
         public static string GameLogClosed => L.Get("GameLogClosed");
         public static string GameLogEmpty => L.Get("GameLogEmpty");
+        public static string ViewGameLog => L.Get("ViewGameLog");
 
         // Card info block labels
         public static string CardInfoName => L.Get("CardInfoName");
