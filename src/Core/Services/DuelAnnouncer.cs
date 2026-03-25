@@ -1213,8 +1213,13 @@ namespace AccessibleArena.Core.Services
                         var cid = GetFieldValue<uint>(model, "InstanceId");
                         if (cid != instanceId) continue;
 
-                        int power = GetFieldValue<int>(model, "Power");
-                        int toughness = GetFieldValue<int>(model, "Toughness");
+                        // Power/Toughness are StringBackedInt properties, not plain int
+                        var powerObj = GetFieldValue<object>(model, "Power");
+                        var toughnessObj = GetFieldValue<object>(model, "Toughness");
+                        string powerStr = CardModelProvider.GetStringBackedIntValue(powerObj);
+                        string toughStr = CardModelProvider.GetStringBackedIntValue(toughnessObj);
+                        int power = powerStr != null && int.TryParse(powerStr, out int p) ? p : -1;
+                        int toughness = toughStr != null && int.TryParse(toughStr, out int t) ? t : -1;
 
                         var controller = GetFieldValue<object>(model, "ControllerNum");
                         bool isOpponent = controller?.ToString() == "Opponent";

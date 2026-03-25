@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.8.8
 
+### Combat
+- Fixed attacker declaration announcing 0/0 power/toughness instead of correct values (e.g. 1/1) — model properties are StringBackedInt, not plain int
+
 ## v0.8.7
 
 ### Popup Detection
