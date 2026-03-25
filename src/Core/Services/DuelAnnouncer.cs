@@ -83,6 +83,9 @@ namespace AccessibleArena.Core.Services
         private float _phaseDebounceTimer;
         private const float PHASE_DEBOUNCE_SECONDS = 0.1f;
 
+        // Suppress duplicate NPE BlockingReminder in same blockers phase
+        private bool _shownBlockingReminderThisStep;
+
         // Track time of last phase change for external consumers
         private float _lastPhaseChangeTime;
         public float TimeSinceLastPhaseChange => UnityEngine.Time.time - _lastPhaseChangeTime;
@@ -993,6 +996,8 @@ namespace AccessibleArena.Core.Services
                 _currentPhase = phase;
                 _currentStep = step;
                 _lastPhaseChangeTime = UnityEngine.Time.time;
+                if (step == "DeclareBlock")
+                    _shownBlockingReminderThisStep = false;
                 DebugConfig.LogIf(DebugConfig.LogAnnouncements, "DuelAnnouncer", $"Phase change: {phase}/{step}");
 
                 string phaseAnnouncement = null;
@@ -2463,6 +2468,17 @@ namespace AccessibleArena.Core.Services
                 }
 
                 MelonLogger.Msg($"[DuelAnnouncer] NPE Reminder: {text} (key: {locKey})" + (cardHint != null ? $" (cards: {cardHint})" : ""));
+
+                // Suppress duplicate BlockingReminder in same blockers phase
+                if (locKey != null && locKey.Contains("/BlockingReminder"))
+                {
+                    if (_shownBlockingReminderThisStep)
+                    {
+                        MelonLogger.Msg("[DuelAnnouncer] Suppressing duplicate BlockingReminder");
+                        return null;
+                    }
+                    _shownBlockingReminderThisStep = true;
+                }
 
                 // Replace mouse/drag instructions with keyboard-focused text
                 string replacement = NPETutorialTextProvider.GetReplacementText(locKey);

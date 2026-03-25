@@ -39,6 +39,10 @@ namespace AccessibleArena.Core.Services
         private const float BlockerScanIntervalSeconds = 0.15f;
         private float _lastBlockerScanTime;
 
+        // Delayed confirm hint for NPE blocker assignment
+        private float _confirmHintTime;
+        private bool _confirmHintPending;
+
         public bool IsInCombatPhase => _duelAnnouncer.IsInDeclareAttackersPhase || _duelAnnouncer.IsInDeclareBlockersPhase;
 
         public CombatNavigator(IAnnouncementService announcer, DuelAnnouncer duelAnnouncer)
@@ -254,9 +258,22 @@ namespace AccessibleArena.Core.Services
                 _previousSelectedBlockerObjects.Clear();
                 _previousAssignedBlockerIds.Clear();
                 _previousAssignedBlockerObjects.Clear();
+                _confirmHintPending = false;
                 MelonLogger.Msg("[CombatNavigator] Entering blockers phase, tracking reset");
             }
             _wasInBlockersPhase = isInBlockersPhase;
+
+            // Fire delayed confirm hint after blocker assignment (NPE only)
+            if (_confirmHintPending && isInBlockersPhase && Time.time >= _confirmHintTime)
+            {
+                _confirmHintPending = false;
+                string confirmText = LocaleManager.Instance.Get("NPE_Hint_ConfirmBlocks");
+                if (!string.IsNullOrEmpty(confirmText))
+                {
+                    MelonLogger.Msg("[CombatNavigator] Announcing blocker confirm hint");
+                    _announcer.Announce(confirmText, AnnouncementPriority.High);
+                }
+            }
 
             // Only track during blockers phase
             if (!isInBlockersPhase)
@@ -295,6 +312,13 @@ namespace AccessibleArena.Core.Services
                     MelonLogger.Msg($"[CombatNavigator] Blockers assigned: {newlyAssigned.Count}");
                     _previousSelectedBlockerIds.Clear();
                     _previousSelectedBlockerObjects.Clear();
+
+                    // In NPE, schedule a delayed confirm hint so the user knows how to submit
+                    if (_duelAnnouncer.IsNPETutorial)
+                    {
+                        _confirmHintPending = true;
+                        _confirmHintTime = Time.time + 1.0f;
+                    }
                 }
 
                 // Find removed assigned blockers and announce
