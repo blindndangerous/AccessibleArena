@@ -108,8 +108,14 @@ namespace AccessibleArena.Core.Services
             {
                 if (child.name.Contains("NPERewardPrefab_IndividualCard"))
                     cardCount++;
-                else if (child.gameObject.activeInHierarchy && FindChildByName(child, "Hitbox_LidOpen") != null)
-                    deckCount++;
+                else if (child.gameObject.activeInHierarchy)
+                {
+                    var hitbox = FindChildByName(child, "Hitbox_LidOpen");
+                    // Only count opened deck boxes (Hitbox_LidOpen inactive = lid opened, content visible)
+                    // Closed boxes (Hitbox_LidOpen active) are the preview phase with placeholder text
+                    if (hitbox != null && !hitbox.activeInHierarchy)
+                        deckCount++;
+                }
             }
 
             if (cardCount == 0 && deckCount == 0)
@@ -346,6 +352,13 @@ namespace AccessibleArena.Core.Services
                     Log($"    MATCHED as deck prefab (Hitbox_LidOpen found)");
                     foreach (Transform deckChild in child)
                         Log($"      - {deckChild.name} (active={deckChild.gameObject.activeInHierarchy})");
+                }
+
+                // Skip closed deck boxes (Hitbox_LidOpen active = lid still clickable, box not opened yet)
+                if (hitboxObj.activeInHierarchy)
+                {
+                    Log($"    SKIPPED: Hitbox_LidOpen still active (box closed, preview phase)");
+                    continue;
                 }
 
                 if (addedObjects.Contains(hitboxObj))
