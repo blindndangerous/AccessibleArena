@@ -18,6 +18,12 @@ After successfully sending the account confirmation email during registration, t
 
 ---
 
+### Crashing Wave Has Unsupported Browser
+
+Crashing Wave triggers a browser type that the mod does not currently support. Exact browser type and symptoms unknown.
+
+---
+
 ## Game Behavior (Not Fixable by Mod)
 
 ### Resolution Dropdown Shows Native Display Resolution Until Changed
@@ -91,6 +97,18 @@ Steam's default overlay hotkey (Shift+Tab) conflicts with the mod's backward nav
 ---
 
 ## Monitoring
+
+### NPE Tutorial Combat Cancel Lock
+
+During the first NPE tutorial fight (Game01, Turn 4), pressing Backspace to cancel attacks after the NPE prompted "attack with your creatures" caused a locked state. The NPE script doesn't handle attack cancellation at this stage — no highlights reappear, the primary button has empty text, and the game becomes unresponsive until a system message popup (timeout/disconnect) appears.
+
+**Root cause:** The CombatNavigator clicked buttons with empty text (Space on an empty primary button) which sent spurious pointer events and desynced the game state. The subsequent Backspace cancel then put the NPE into an unrecoverable state.
+
+**Fix applied:** `HandleInput()` now checks `HasPrimaryButtonText()` before processing any Space/Backspace during Declare Attackers and Declare Blockers. If the primary button has no text (UI in transition), the key is consumed but no button is clicked. This prevents both the spurious clicks and the cancel-in-broken-state scenario. When the NPE later expects cancellation, buttons will have proper text and Backspace will work normally.
+
+**Files:** `CombatNavigator.cs` (HandleInput, HasPrimaryButtonText)
+
+---
 
 ### Browser Hint Accuracy
 
@@ -209,6 +227,12 @@ Adding cards to a deck reportedly moves the user out of the Collection group to 
 ### Challenge Friends Sometimes Not Working
 
 Challenging friends sometimes fails: deck selection not available and screen elements auto-change unexpectedly. Exact reproduction steps unknown.
+
+---
+
+### Check Payment Method Browser Not Loading
+
+For some users, the "Check Payment Method" browser does not load or display correctly. Exact symptoms and reproduction steps unknown.
 
 ---
 

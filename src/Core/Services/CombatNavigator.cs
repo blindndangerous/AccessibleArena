@@ -565,15 +565,19 @@ namespace AccessibleArena.Core.Services
             // Handle Declare Attackers phase
             if (_duelAnnouncer.IsInDeclareAttackersPhase)
             {
-                // Backspace - press the secondary button (No Attacks / cancel)
-                if (Input.GetKeyDown(KeyCode.Backspace))
+                if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Space))
                 {
-                    return TryClickSecondaryButton();
-                }
+                    // Guard: if primary button has no text, the UI is in a transitional state
+                    // (e.g. NPE tutorial animation in progress). Clicking buttons now can
+                    // desync game state and lock the tutorial. Consume the key and wait.
+                    if (!HasPrimaryButtonText())
+                    {
+                        MelonLogger.Msg("[CombatNavigator] Ignoring combat input - primary button has no text (UI transitioning)");
+                        return true;
+                    }
 
-                // Space - press the primary button (All Attack / X Attack)
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
+                    if (Input.GetKeyDown(KeyCode.Backspace))
+                        return TryClickSecondaryButton();
                     return TryClickPrimaryButton();
                 }
             }
@@ -581,15 +585,16 @@ namespace AccessibleArena.Core.Services
             // Handle Declare Blockers phase
             if (_duelAnnouncer.IsInDeclareBlockersPhase)
             {
-                // Backspace - press the secondary button (No Blocks / Cancel Blocks)
-                if (Input.GetKeyDown(KeyCode.Backspace))
+                if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Space))
                 {
-                    return TryClickSecondaryButton();
-                }
+                    if (!HasPrimaryButtonText())
+                    {
+                        MelonLogger.Msg("[CombatNavigator] Ignoring combat input - primary button has no text (UI transitioning)");
+                        return true;
+                    }
 
-                // Space - press the primary button (X Blocker / Next / Confirm)
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
+                    if (Input.GetKeyDown(KeyCode.Backspace))
+                        return TryClickSecondaryButton();
                     return TryClickPrimaryButton();
                 }
             }
@@ -603,6 +608,14 @@ namespace AccessibleArena.Core.Services
 
         private bool TryClickPrimaryButton() => TryClickPromptButton(isPrimary: true);
         private bool TryClickSecondaryButton() => TryClickPromptButton(isPrimary: false);
+
+        private bool HasPrimaryButtonText()
+        {
+            var button = FindPromptButton(isPrimary: true);
+            if (button == null) return false;
+            string text = UITextExtractor.GetButtonText(button);
+            return !string.IsNullOrWhiteSpace(text);
+        }
 
         /// <summary>
         /// Finds and clicks a prompt button (primary or secondary).
