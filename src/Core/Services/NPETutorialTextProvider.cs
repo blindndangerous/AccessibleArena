@@ -8,12 +8,25 @@ namespace AccessibleArena.Core.Services
     /// Game reminders reference mouse/drag actions; this provider substitutes them with
     /// keyboard navigation instructions appropriate for screen reader users.
     ///
-    /// Two mapping modes:
-    /// 1. Reminder prefix matching: NPE/Game##/Turn##/ReminderType_Number → matches on ReminderType
-    /// 2. Dialog exact key matching: specific dialog loc keys → additional hints triggered by NPC lines
+    /// Four mapping modes (checked in order):
+    /// 1. Exact reminder key matching: specific reminder loc keys → override for individual reminders
+    /// 2. Reminder prefix matching: NPE/Game##/Turn##/ReminderType_Number → matches on ReminderType
+    /// 3. Dialog exact key matching: specific dialog loc keys → additional hints triggered by NPC lines
+    /// 4. Read-aloud dialog detection: AlwaysReminder keys (error interceptions) read with game's own text
     /// </summary>
     public static class NPETutorialTextProvider
     {
+        // Maps exact NPE reminder localization keys to mod localization keys.
+        // Checked BEFORE prefix matching, allowing specific reminders to override the default for their type.
+        private static readonly Dictionary<string, string> ExactKeyToModKey = new Dictionary<string, string>
+        {
+            // Game 3 (aura deck) - enchanting targets: "click on your creature to enchant it"
+            { "NPE/Game03/Turn02/TargetReminder_45", "NPE_Hint_EnchantTarget" },
+            { "NPE/Game03/Turn04/TargetReminder_49", "NPE_Hint_EnchantTarget" },
+            { "NPE/Game03/Turn06/TargetReminder_50", "NPE_Hint_EnchantTarget" },
+            { "NPE/Extra/Extra09", "NPE_Hint_EnchantTarget" },
+        };
+
         // Maps NPE reminder type prefixes to mod localization keys
         private static readonly Dictionary<string, string> PrefixToModKey = new Dictionary<string, string>
         {
@@ -24,6 +37,7 @@ namespace AccessibleArena.Core.Services
             { "AttackingSubmitReminder", "NPE_Hint_ConfirmAttackers" },
             { "DontAttackReminder", "NPE_Hint_SkipAttack" },
             { "PickReminder", "NPE_Hint_SelectCard" },
+            { "TargetReminder", "NPE_Hint_Target" },
         };
 
         // Maps exact NPE dialog localization keys to mod localization keys.
@@ -44,6 +58,18 @@ namespace AccessibleArena.Core.Services
         {
             if (string.IsNullOrEmpty(npeLocKey)) return null;
 
+            // Check exact key overrides first (specific reminders that need different text than their prefix group)
+            if (ExactKeyToModKey.TryGetValue(npeLocKey, out string exactModKey))
+            {
+                string exactReplacement = LocaleManager.Instance.Get(exactModKey);
+                if (!string.IsNullOrEmpty(exactReplacement))
+                {
+                    MelonLogger.Msg($"[NPETutorialText] Replaced exact key '{npeLocKey}' with mod text");
+                    return exactReplacement;
+                }
+            }
+
+            // Fall back to prefix matching
             string prefix = ExtractReminderType(npeLocKey);
             if (prefix == null) return null;
 
@@ -82,6 +108,21 @@ namespace AccessibleArena.Core.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Checks if an NPE dialog line should be read aloud as-is (not suppressed as voice-acted NPC chatter).
+        /// AlwaysReminder interceptions are error messages (wrong target, can't afford, etc.) that are
+        /// essential for blind players to understand why their action was rejected.
+        /// </summary>
+        /// <param name="dialogLocKey">The dialog's localization key</param>
+        /// <returns>True if the dialog text should be announced via screen reader</returns>
+        public static bool ShouldReadAloud(string dialogLocKey)
+        {
+            if (string.IsNullOrEmpty(dialogLocKey)) return false;
+
+            // AlwaysReminder keys are error interceptions (BadTargetting, CantAffordSpell, etc.)
+            return dialogLocKey.Contains("/AlwaysReminder_");
         }
 
         /// <summary>

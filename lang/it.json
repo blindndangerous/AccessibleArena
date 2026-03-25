@@ -989,6 +989,8 @@
   "NPE_Hint_ConfirmAttackers": "Premi Spazio per confermare gli attaccanti.",
   "NPE_Hint_SkipAttack": "Premi Backspace per saltare l'attacco questo turno.",
   "NPE_Hint_SelectCard": "Usa Sinistra e Destra per navigare tra le carte, o Tab per saltare alla carta suggerita. Premi Invio per selezionarla.",
+  "NPE_Hint_Target": "Navigate to a target with Tab or zone navigation and press Enter to select it as target.",
+  "NPE_Hint_EnchantTarget": "Use B to navigate to your creatures, select one with Enter for enchanting.",
   "NPE_UnknownCard": "Carta sconosciuta",
   "NPE_UnlockedCardNumber_Format": "Carta sbloccata {0}: {1}",
   "NPE_TakeReward": "Prendi ricompensa",

@@ -2414,9 +2414,20 @@ namespace AccessibleArena.Core.Services
 
                 MelonLogger.Msg($"[DuelAnnouncer] NPE Dialog: {text} (key: {locKey})");
 
-                // Dialog lines are voice-acted NPC subtitles - don't read aloud,
-                // but check if we have a supplementary keyboard hint for this line
-                return NPETutorialTextProvider.GetDialogHint(locKey);
+                // Check if we have a supplementary keyboard hint for this dialog line
+                string hint = NPETutorialTextProvider.GetDialogHint(locKey);
+                if (hint != null) return hint;
+
+                // AlwaysReminder interceptions are error messages (wrong target, can't afford spell, etc.)
+                // These must be read aloud so blind players understand why their action was rejected
+                if (NPETutorialTextProvider.ShouldReadAloud(locKey))
+                {
+                    MelonLogger.Msg($"[DuelAnnouncer] Reading AlwaysReminder aloud: {text}");
+                    return text;
+                }
+
+                // Other dialog lines are voice-acted NPC subtitles - don't read aloud
+                return null;
             }
             catch (Exception ex)
             {
