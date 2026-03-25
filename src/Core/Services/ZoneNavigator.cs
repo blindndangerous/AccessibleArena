@@ -46,6 +46,7 @@ namespace AccessibleArena.Core.Services
         private int _cardIndexInZone = 0;
         private bool _isActive;
         private bool _dirty;
+        private bool _browserReturnHintPending;
 
         // Known zone holder names from game code (discovered via log analysis)
         private static readonly Dictionary<string, ZoneType> ZoneHolderPatterns = new Dictionary<string, ZoneType>
@@ -160,8 +161,27 @@ namespace AccessibleArena.Core.Services
                 MelonLogger.Msg($"[ZoneNavigator] Zone change: {_currentZone} -> {zone}{ownerChange}{(caller != null ? $" (by {caller})" : "")}");
             }
 
+            // Hint when navigating away from browser while it's still active
+            if (_currentZone == ZoneType.Browser && zone != ZoneType.Browser && BrowserNavigator.IsActive)
+            {
+                _browserReturnHintPending = true;
+            }
+
             _currentZone = zone;
             _zoneOwner = newOwner;
+        }
+
+        /// <summary>
+        /// Announces "Tab to return to cards" hint if the user just navigated away from an active browser.
+        /// Call this after zone/row announcements so the hint queues after the zone info.
+        /// </summary>
+        public void AnnounceBrowserReturnHintIfNeeded()
+        {
+            if (_browserReturnHintPending)
+            {
+                _browserReturnHintPending = false;
+                _announcer.Announce(LocaleManager.Instance.Get("BrowserReturnHint"));
+            }
         }
 
         /// <summary>
@@ -605,6 +625,8 @@ namespace AccessibleArena.Core.Services
                 // High priority: user explicitly pressed a zone shortcut — always re-announce
                 AnnounceCurrentCard(includeZoneName: true, priority: AnnouncementPriority.High);
             }
+
+            AnnounceBrowserReturnHintIfNeeded();
         }
 
         /// <summary>

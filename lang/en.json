@@ -498,6 +498,7 @@
   "BrowserHint_Informational": "Space to dismiss",
   "BrowserHint_SelectNCounters": "Tab to navigate. Enter to select or deselect. Space to confirm",
   "BrowserHint_OrderCards": "Left Right to navigate. Enter to pick up, navigate, Enter to place. Space to confirm",
+  "BrowserReturnHint": "Tab to return to cards options",
   "OrderCards_PickedUp": "picked up",
   "OrderCards_Placed_Format": "placed at {0} of {1}",
   "OrderCards_Cancelled": "cancelled",

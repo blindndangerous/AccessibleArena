@@ -485,6 +485,7 @@
   "BrowserHint_Informational": "Espaço para fechar",
   "BrowserHint_SelectNCounters": "Tab para navegar. Enter para selecionar ou desselecionar. Espaço para confirmar",
   "BrowserHint_OrderCards": "Left Right to navigate. Enter to pick up, navigate, Enter to place. Space to confirm",
+  "BrowserReturnHint": "Tab para voltar às opções de cartas",
   "OrderCards_PickedUp": "picked up",
   "OrderCards_Placed_Format": "placed at {0} of {1}",
   "OrderCards_Cancelled": "cancelled",

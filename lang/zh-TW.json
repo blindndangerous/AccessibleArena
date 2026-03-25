@@ -485,6 +485,7 @@
   "BrowserHint_Informational": "空白鍵 關閉",
   "BrowserHint_SelectNCounters": "Tab 導航。Enter 選擇或取消。空白鍵 確認",
   "BrowserHint_OrderCards": "Left Right to navigate. Enter to pick up, navigate, Enter to place. Space to confirm",
+  "BrowserReturnHint": "Tab 返回卡牌選項",
   "OrderCards_PickedUp": "picked up",
   "OrderCards_Placed_Format": "placed at {0} of {1}",
   "OrderCards_Cancelled": "cancelled",

@@ -157,6 +157,7 @@ namespace AccessibleArena.Core.Services
                     }
                     NavigateToRow(BattlefieldRow.PlayerLands);
                 }
+                _zoneNavigator.AnnounceBrowserReturnHintIfNeeded();
                 return true;
             }
 
@@ -168,6 +169,7 @@ namespace AccessibleArena.Core.Services
                     NavigateToRow(BattlefieldRow.EnemyNonCreatures);
                 else
                     NavigateToRow(BattlefieldRow.PlayerNonCreatures);
+                _zoneNavigator.AnnounceBrowserReturnHintIfNeeded();
                 return true;
             }
 
@@ -179,6 +181,7 @@ namespace AccessibleArena.Core.Services
                     NavigateToRow(BattlefieldRow.EnemyCreatures);
                 else
                     NavigateToRow(BattlefieldRow.PlayerCreatures);
+                _zoneNavigator.AnnounceBrowserReturnHintIfNeeded();
                 return true;
             }
 
