@@ -87,6 +87,9 @@ namespace AccessibleArena.Core.Services
         private static MethodInfo _kf_onFilterSubmitted;
         private static bool _keywordReflectionInit;
 
+        // Highlight-filtered Tab: skip non-selectable cards in selection browsers
+        private bool _isHighlightFilteredBrowser;
+
         // OrderCards browser state (card reordering for library/triggers)
         private bool _isOrderCards;
         private int _orderGrabbedIndex = -1; // Index of card being moved (-1 = none grabbed)
@@ -268,6 +271,10 @@ namespace AccessibleArena.Core.Services
             // Detect multi-zone browser
             _isMultiZone = browserInfo.BrowserType == "SelectCardsMultiZone";
 
+            // Selection browsers: Tab skips non-selectable cards (highlight filtering)
+            _isHighlightFilteredBrowser = browserInfo.BrowserType == "SelectCards"
+                || browserInfo.BrowserType == "SelectCardsMultiZone";
+
             // Detect AssignDamage browser
             if (browserInfo.BrowserType == "AssignDamage")
             {
@@ -351,6 +358,9 @@ namespace AccessibleArena.Core.Services
             _isKeywordSelection = false;
             _keywordFilterRef = null;
             _currentKeywordIndex = -1;
+
+            // Clear highlight filter state
+            _isHighlightFilteredBrowser = false;
 
             // Clear OrderCards state
             _isOrderCards = false;
@@ -471,7 +481,8 @@ namespace AccessibleArena.Core.Services
                         _onZoneSelector = false;
                         if (_browserCards.Count > 0)
                         {
-                            _currentCardIndex = 0;
+                            int firstIdx = FindFirstSelectableCard();
+                            _currentCardIndex = firstIdx >= 0 ? firstIdx : 0;
                             _currentButtonIndex = -1;
                             AnnounceCurrentCard();
                         }
@@ -493,7 +504,8 @@ namespace AccessibleArena.Core.Services
                         }
                         else if (_browserCards.Count > 0)
                         {
-                            _currentCardIndex = _browserCards.Count - 1;
+                            int lastIdx = FindLastSelectableCard();
+                            _currentCardIndex = lastIdx >= 0 ? lastIdx : _browserCards.Count - 1;
                             AnnounceCurrentCard();
                         }
                     }
@@ -563,50 +575,85 @@ namespace AccessibleArena.Core.Services
                 {
                     if (shift)
                     {
-                        // Shift+Tab: if on first card → go to zone selector
-                        if (_currentCardIndex == 0 && _currentButtonIndex < 0)
-                        {
-                            EnterZoneSelector();
-                            _currentCardIndex = -1;
-                            AnnounceMultiZoneSelector();
-                            return true;
-                        }
-                        // Shift+Tab: if on first button and no cards → zone selector
-                        if (_currentButtonIndex == 0 && _browserCards.Count == 0)
-                        {
-                            EnterZoneSelector();
-                            _currentButtonIndex = -1;
-                            AnnounceMultiZoneSelector();
-                            return true;
-                        }
-                        // Otherwise, navigate backwards through cards/buttons
+                        // Shift+Tab backwards: cards/buttons → zone selector
                         if (_currentButtonIndex > 0)
                         {
                             NavigateToPreviousButton();
                         }
                         else if (_currentButtonIndex == 0 && _browserCards.Count > 0)
                         {
+                            // From first button → last selectable card
                             _currentButtonIndex = -1;
-                            _currentCardIndex = _browserCards.Count - 1;
-                            AnnounceCurrentCard();
+                            int lastIdx = FindLastSelectableCard();
+                            if (lastIdx >= 0)
+                            {
+                                _currentCardIndex = lastIdx;
+                                AnnounceCurrentCard();
+                            }
+                            else
+                            {
+                                EnterZoneSelector();
+                                _currentCardIndex = -1;
+                                AnnounceMultiZoneSelector();
+                            }
                         }
-                        else if (_currentCardIndex > 0)
+                        else if (_currentButtonIndex == 0)
                         {
-                            NavigateToPreviousCard();
+                            // No cards → zone selector
+                            EnterZoneSelector();
+                            _currentButtonIndex = -1;
+                            AnnounceMultiZoneSelector();
                         }
+                        else if (_currentCardIndex >= 0)
+                        {
+                            // On a card → try previous selectable
+                            int prevIdx = FindPreviousSelectableCard(_currentCardIndex);
+                            if (prevIdx >= 0)
+                            {
+                                _currentCardIndex = prevIdx;
+                                AnnounceCurrentCard();
+                            }
+                            else
+                            {
+                                // At first selectable card → zone selector
+                                EnterZoneSelector();
+                                _currentCardIndex = -1;
+                                AnnounceMultiZoneSelector();
+                            }
+                        }
+                        else
+                        {
+                            EnterZoneSelector();
+                            _currentCardIndex = -1;
+                            _currentButtonIndex = -1;
+                            AnnounceMultiZoneSelector();
+                        }
+                        return true;
                     }
                     else
                     {
-                        // Tab forward: cards → buttons → zone selector
-                        if (_currentCardIndex >= 0 && _currentCardIndex < _browserCards.Count - 1)
+                        // Tab forward: selectable cards → buttons → zone selector
+                        if (_currentCardIndex >= 0)
                         {
-                            NavigateToNextCard();
-                        }
-                        else if (_currentCardIndex == _browserCards.Count - 1 && _browserButtons.Count > 0)
-                        {
-                            _currentCardIndex = -1;
-                            _currentButtonIndex = 0;
-                            AnnounceCurrentButton();
+                            int nextIdx = FindNextSelectableCard(_currentCardIndex);
+                            if (nextIdx >= 0)
+                            {
+                                _currentCardIndex = nextIdx;
+                                AnnounceCurrentCard();
+                            }
+                            else if (_browserButtons.Count > 0)
+                            {
+                                _currentCardIndex = -1;
+                                _currentButtonIndex = 0;
+                                AnnounceCurrentButton();
+                            }
+                            else
+                            {
+                                EnterZoneSelector();
+                                _currentCardIndex = -1;
+                                _currentButtonIndex = -1;
+                                AnnounceMultiZoneSelector();
+                            }
                         }
                         else if (_currentButtonIndex >= 0 && _currentButtonIndex < _browserButtons.Count - 1)
                         {
@@ -638,8 +685,8 @@ namespace AccessibleArena.Core.Services
                 }
                 else if (_browserCards.Count > 0)
                 {
-                    if (shift) NavigateToPreviousCard();
-                    else NavigateToNextCard();
+                    if (shift) TabToPreviousCard();
+                    else TabToNextCard();
                 }
                 else if (_browserButtons.Count > 0)
                 {
@@ -1330,7 +1377,9 @@ namespace AccessibleArena.Core.Services
             }
             else if (cardCount > 0)
             {
-                _currentCardIndex = 0;
+                // Start on first selectable card (skips non-selectable in filtered browsers)
+                int firstIdx = FindFirstSelectableCard();
+                _currentCardIndex = firstIdx >= 0 ? firstIdx : 0;
                 AnnounceCurrentCard();
             }
             else if (buttonCount > 0)
@@ -1450,23 +1499,21 @@ namespace AccessibleArena.Core.Services
             AccessibleArenaMod.Instance?.CardNavigator?.PrepareForCard(card, zone);
         }
 
-        // CDC HighlightType.Selected enum value (set by game when card is toggled in browsers)
-        private const int HighlightTypeSelected = 5;
+        // CDC HighlightType enum values
+        private const int HighlightTypeHot = 3;      // selectable target
+        private const int HighlightTypeSelected = 5;  // already toggled/selected
         private static MethodInfo _currentHighlightMethod;
         private static bool _currentHighlightSearched;
 
         /// <summary>
-        /// Gets card selection state from the CDC's CurrentHighlight() method.
-        /// Returns "selected" when HighlightType == Selected (5), null otherwise.
-        /// Used for non-zone browsers (SelectCards, etc.) where the game indicates
-        /// selection via highlight state rather than moving cards between holders.
+        /// Returns the CDC HighlightType int for a card, or -1 if unavailable.
         /// </summary>
-        private string GetCardCDCSelectionState(GameObject card)
+        private int GetCardHighlightValue(GameObject card)
         {
-            if (card == null) return null;
+            if (card == null) return -1;
 
             var cdc = CardDetector.GetDuelSceneCDC(card);
-            if (cdc == null) return null;
+            if (cdc == null) return -1;
 
             if (!_currentHighlightSearched)
             {
@@ -1474,20 +1521,82 @@ namespace AccessibleArena.Core.Services
                 _currentHighlightMethod = cdc.GetType().GetMethod("CurrentHighlight", PublicInstance);
             }
 
-            if (_currentHighlightMethod == null) return null;
+            if (_currentHighlightMethod == null) return -1;
 
             try
             {
                 var highlight = _currentHighlightMethod.Invoke(cdc, null);
-                if (highlight != null && (int)highlight == HighlightTypeSelected)
-                    return Strings.Selected;
+                return highlight != null ? (int)highlight : -1;
             }
             catch (Exception ex)
             {
                 MelonLogger.Warning($"[BrowserNavigator] Error reading CurrentHighlight: {ex.Message}");
+                return -1;
             }
+        }
 
-            return null;
+        /// <summary>
+        /// Gets card selection state from the CDC's CurrentHighlight() method.
+        /// Returns "selected" when HighlightType == Selected (5), null otherwise.
+        /// </summary>
+        private string GetCardCDCSelectionState(GameObject card)
+        {
+            return GetCardHighlightValue(card) == HighlightTypeSelected ? Strings.Selected : null;
+        }
+
+        /// <summary>
+        /// Returns true if a card is selectable (Hot or Selected highlight),
+        /// or if we're not in a highlight-filtered browser.
+        /// </summary>
+        private bool IsCardSelectable(GameObject card)
+        {
+            if (!_isHighlightFilteredBrowser) return true;
+            int hl = GetCardHighlightValue(card);
+            return hl == HighlightTypeHot || hl == HighlightTypeSelected;
+        }
+
+        /// <summary>
+        /// Finds the next selectable card index after fromIndex (no wrapping).
+        /// Returns -1 if none found.
+        /// </summary>
+        private int FindNextSelectableCard(int fromIndex)
+        {
+            for (int i = fromIndex + 1; i < _browserCards.Count; i++)
+            {
+                if (IsCardSelectable(_browserCards[i]))
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Finds the previous selectable card index before fromIndex (no wrapping).
+        /// Returns -1 if none found.
+        /// </summary>
+        private int FindPreviousSelectableCard(int fromIndex)
+        {
+            for (int i = fromIndex - 1; i >= 0; i--)
+            {
+                if (IsCardSelectable(_browserCards[i]))
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Finds the first selectable card index, or -1 if none.
+        /// </summary>
+        private int FindFirstSelectableCard()
+        {
+            return FindNextSelectableCard(-1);
+        }
+
+        /// <summary>
+        /// Finds the last selectable card index, or -1 if none.
+        /// </summary>
+        private int FindLastSelectableCard()
+        {
+            return FindPreviousSelectableCard(_browserCards.Count);
         }
 
         // RepeatSelection holder name for selected copies
@@ -1876,6 +1985,60 @@ namespace AccessibleArena.Core.Services
             _currentCardIndex--;
             if (_currentCardIndex < 0) _currentCardIndex = _browserCards.Count - 1;
             AnnounceCurrentCard();
+        }
+
+        /// <summary>
+        /// Tab-navigates to the next selectable card (wrapping).
+        /// In highlight-filtered browsers, skips non-selectable cards.
+        /// </summary>
+        private void TabToNextCard()
+        {
+            if (_browserCards.Count == 0)
+            {
+                _announcer.Announce(Strings.NoCards, AnnouncementPriority.Normal);
+                return;
+            }
+
+            if (!_isHighlightFilteredBrowser)
+            {
+                NavigateToNextCard();
+                return;
+            }
+
+            int nextIdx = FindNextSelectableCard(_currentCardIndex);
+            if (nextIdx < 0) nextIdx = FindFirstSelectableCard(); // wrap
+            if (nextIdx >= 0 && nextIdx != _currentCardIndex)
+            {
+                _currentCardIndex = nextIdx;
+                AnnounceCurrentCard();
+            }
+        }
+
+        /// <summary>
+        /// Tab-navigates to the previous selectable card (wrapping).
+        /// In highlight-filtered browsers, skips non-selectable cards.
+        /// </summary>
+        private void TabToPreviousCard()
+        {
+            if (_browserCards.Count == 0)
+            {
+                _announcer.Announce(Strings.NoCards, AnnouncementPriority.Normal);
+                return;
+            }
+
+            if (!_isHighlightFilteredBrowser)
+            {
+                NavigateToPreviousCard();
+                return;
+            }
+
+            int prevIdx = FindPreviousSelectableCard(_currentCardIndex);
+            if (prevIdx < 0) prevIdx = FindLastSelectableCard(); // wrap
+            if (prevIdx >= 0 && prevIdx != _currentCardIndex)
+            {
+                _currentCardIndex = prevIdx;
+                AnnounceCurrentCard();
+            }
         }
 
         private void NavigateToNextButton()
