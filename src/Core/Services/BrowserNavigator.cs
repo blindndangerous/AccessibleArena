@@ -1367,10 +1367,14 @@ namespace AccessibleArena.Core.Services
             bool isSelectionBrowser = _browserInfo?.BrowserType == "SelectCards" || _browserInfo?.BrowserType == "SelectCardsMultiZone";
             bool isRepeatSelection = _browserInfo?.BrowserType == "RepeatSelection";
 
+            // Virtual option cards (InstanceId == 0) are modal choices (Warp, Adventure, MDFC, etc.)
+            // Real cards (InstanceId > 0) are actual game cards from library/graveyard/etc.
+            bool isVirtualOption = (isSelectionBrowser || isRepeatSelection) && GetCardInstanceId(card) == 0;
+
             string cardName;
-            if ((isRepeatSelection || isSelectionBrowser) && !string.IsNullOrEmpty(info.RulesText))
+            if (isVirtualOption && !string.IsNullOrEmpty(info.RulesText))
             {
-                // For modal mode cards and selection browsers, show rules text as the primary text
+                // For virtual option cards, show rules text as the primary text
                 cardName = info.RulesText;
             }
             else
@@ -1438,8 +1442,8 @@ namespace AccessibleArena.Core.Services
 
             _announcer.Announce(announcement, AnnouncementPriority.High);
 
-            // Selection/mode browsers show options, not cards - use Browser zone for rules-first ordering
-            var zone = (isSelectionBrowser || isRepeatSelection)
+            // Virtual option cards: rules-first ordering; real cards: name-first ordering
+            var zone = isVirtualOption
                 ? ZoneType.Browser
                 : ZoneType.Library;
             AccessibleArenaMod.Instance?.CardNavigator?.PrepareForCard(card, zone);
