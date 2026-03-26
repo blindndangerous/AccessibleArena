@@ -110,17 +110,6 @@ During the first NPE tutorial fight (Game01, Turn 4), pressing Backspace to canc
 
 ---
 
-### Browser Hint Accuracy
-
-Per-browser-type tutorial hints were added for 16 browser types (Scry, Surveil, London Mulligan, SelectCards, AssignDamage, etc.). Some hints may be missing, wrong, or incomplete for edge cases:
-- New browser types added by game updates won't have specific hints (fall back to generic "BrowserHint")
-- Some browsers may behave differently depending on context (e.g. SelectCards with optional vs required selection)
-- Hint text may not match actual keybindings if shortcuts are changed in the future
-
-**Action:** When testing browsers in-game, verify Ctrl+F1 returns the correct hint and entry announcements include appropriate instructions. Report any mismatches.
-
-**Files:** `BrowserNavigator.cs` (GetBrowserHintKey), `lang/*.json` (BrowserHint_* keys)
-
 ### SelectCards Browser Confirm with 2-Button Layout
 
 SelectCards browsers that require explicit confirmation (e.g. choosing which counterspell to cast from 4 options) may use a `2Button_Left`/`2Button_Right` scaffold layout instead of `SubmitButton`/`SingleButton`. The 2-button names don't match `ConfirmPatterns`. A workflow reflection fallback was added to handle this by submitting via `WorkflowController.CurrentInteraction` — monitor whether this reliably confirms in all SelectCards scenarios or causes issues in other scaffold types.
@@ -323,7 +312,6 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 ### Polish
 
 1. Add mana cost explanation to the tutorial (how mana payment works, color picker for any-color sources)
-2. Improve roule reading for choose-options browsers - better announce the player's role/task when entering choose-options browsers (e.g., "choose cards to discard", "choose a mode")
 
 ### Low Priority / v1.1
 

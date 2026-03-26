@@ -4,6 +4,10 @@ All notable changes to Accessible Arena.
 
 ## v0.9
 
+### Browser Card Selection
+- When selecting cards from your library, graveyard, or other zones, the card name is now read first for faster scanning. Only modal choices (Warp, Adventure, MDFC faces) read rules text first, since those are options on the same card where the ability text matters most.
+- Tab now jumps only to highlighted (valid target) cards when searching through a large number of cards, e.g. picking a card from your library. Arrow keys still navigate all cards, matching the rest of the duel navigation. This could be changed to fully skip non-highlighted cards based on user feedback.
+
 ### Localization Fix
 - Fixed hardcoded German strings "Kommandeurmodus aktiviert" and "Deaktiviert" — now properly localized in all 12 languages (reported by patricus3, #50)
 
