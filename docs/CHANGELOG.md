@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.9
 
+### Localization Fix
+- Fixed hardcoded German strings "Kommandeurmodus aktiviert" and "Deaktiviert" — now properly localized in all 12 languages (reported by patricus3, #50)
+
 ### Duel Tutorial Hint
 - Added Ctrl+Tab hint (cycles opponent's highlighted cards only) to the duel start tutorial text across all 12 languages
 

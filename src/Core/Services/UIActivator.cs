@@ -238,7 +238,7 @@ namespace AccessibleArena.Core.Services
                             Log($"CustomButton '{element.name}' is NOT interactable - click blocked");
                             // Diagnostic: check registration form validation state
                             DiagnoseRegistrationState(element);
-                            return new ActivationResult(false, "Deaktiviert");
+                            return new ActivationResult(false, Models.Strings.ItemDisabled);
                         }
                     }
                 }
@@ -257,12 +257,12 @@ namespace AccessibleArena.Core.Services
                     if (filterState == true)
                     {
                         Log($"Empty slot: Commanders filter already active, skipping click to avoid toggle-off");
-                        return new ActivationResult(true, "Kommandeurmodus aktiv", ActivationType.Button);
+                        return new ActivationResult(true, Models.Strings.Activated(Models.Strings.DeckBuilderCommander), ActivationType.Button);
                     }
                     // Filter is OFF or unknown — click to toggle ON
                     Log($"Empty slot: Commanders filter is {(filterState == false ? "OFF" : "unknown")}, clicking to activate");
                     SimulatePointerClick(element);
-                    return new ActivationResult(true, "Kommandeurmodus aktiviert", ActivationType.Button);
+                    return new ActivationResult(true, Models.Strings.Activated(Models.Strings.DeckBuilderCommander), ActivationType.Button);
                 }
 
                 var pointerResult2 = SimulatePointerClick(element);
