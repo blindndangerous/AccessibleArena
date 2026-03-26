@@ -1867,7 +1867,9 @@ namespace AccessibleArena.Core.Services
                     {
                         var printExpVal = printExpProp.GetValue(printing)?.ToString();
                         if (!string.IsNullOrEmpty(printExpVal))
+                        {
                             info.SetName = UITextExtractor.MapSetCodeToName(printExpVal);
+                        }
                     }
                 }
 

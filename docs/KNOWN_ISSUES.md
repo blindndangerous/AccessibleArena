@@ -59,6 +59,20 @@ When clicking a non-attacking token during declare attackers, the game always se
 
 ---
 
+### Set Filter + Text Search Combination Returns Empty Results
+
+Combining set filters (Advanced Filters) with a text search in the deck builder collection returns 0 results, even when matching cards exist. For example: searching "brand" finds Brandende Welle normally, but adding the Avatar set filter produces 0 results despite the card having the correct Avatar set code (TLA). Clearing the search shows Avatar cards; clearing the filter shows search results. The combination fails.
+
+**Root cause:** The game's internal card pool filtering logic does not correctly intersect set filter and text search criteria. Debug logging confirmed Brandende Welle has `ExpansionCode='TLA'` — identical to other Avatar cards that appear when only the set filter is active.
+
+**Why it can't be fixed by the mod:** The game returns an empty card pool to `CardPoolHolder` before the mod reads it. The mod accurately reports what the game provides (`Search rescan pool: 0 -> 0`).
+
+**Workaround:** Use set filters or text search individually, not both at the same time.
+
+**Investigation:** [docs/investigations/card-filter-search-bug.md](investigations/card-filter-search-bug.md)
+
+---
+
 ## Under Investigation
 
 ### Challenge Invite Popup — Dropdown Only Shows 1 Friend
@@ -234,12 +248,6 @@ Challenging friends sometimes fails: deck selection not available and screen ele
 ### Check Payment Method Browser Not Loading
 
 For some users, the "Check Payment Method" browser does not load or display correctly. Exact symptoms and reproduction steps unknown.
-
----
-
-### Avatar Set Filter Not Selectable
-
-Reported that users cannot select a specific set (avatar) to filter and view only that set. Exact reproduction steps unknown.
 
 ---
 

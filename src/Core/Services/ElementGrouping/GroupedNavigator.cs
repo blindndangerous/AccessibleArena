@@ -2047,11 +2047,14 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 return false;
 
             // Find indices of all allowed groups (skip standalone elements)
+            // Deck builder card groups (collection, sideboard, deck list) are always included
+            // even with a single item, so Tab can reach e.g. a single filtered collection card.
             var allowedIndices = new List<int>();
             for (int i = 0; i < _groups.Count; i++)
             {
                 if (System.Array.IndexOf(allowedGroups, _groups[i].Group) >= 0 &&
-                    !_groups[i].IsStandaloneElement && _groups[i].Count > 1)
+                    !_groups[i].IsStandaloneElement &&
+                    (_groups[i].Count > 1 || _groups[i].Group.IsDeckBuilderCardGroup()))
                     allowedIndices.Add(i);
             }
 
@@ -2085,11 +2088,14 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 return false;
 
             // Find indices of all allowed groups (skip standalone elements)
+            // Deck builder card groups (collection, sideboard, deck list) are always included
+            // even with a single item, so Tab can reach e.g. a single filtered collection card.
             var allowedIndices = new List<int>();
             for (int i = 0; i < _groups.Count; i++)
             {
                 if (System.Array.IndexOf(allowedGroups, _groups[i].Group) >= 0 &&
-                    !_groups[i].IsStandaloneElement && _groups[i].Count > 1)
+                    !_groups[i].IsStandaloneElement &&
+                    (_groups[i].Count > 1 || _groups[i].Group.IsDeckBuilderCardGroup()))
                     allowedIndices.Add(i);
             }
 
