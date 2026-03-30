@@ -790,8 +790,15 @@ namespace AccessibleArena.Core.Services
                     return false; // Already handled by zone navigator
                 }
 
+                // SelectGroup: Enter activates the focused pile button (choosing that pile)
+                // Must check before generic card activation since _currentCardIndex stays >= 0
+                // after Tab moves focus to buttons
+                if (_isSelectGroup && _currentButtonIndex >= 0 && _browserButtons.Count > 0)
+                {
+                    ActivateCurrentButton();
+                }
                 // Use generic activation for non-zone browsers or when zone has no selected card
-                if (_browserCards.Count > 0 && _currentCardIndex >= 0)
+                else if (_browserCards.Count > 0 && _currentCardIndex >= 0)
                 {
                     ActivateCurrentCard();
                 }
@@ -2625,6 +2632,15 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
+            // SelectGroup (Fact or Fiction): clicking a pile button IS the confirmation.
+            // Space activates the current pile choice (same as Enter).
+            if (_isSelectGroup && _browserButtons.Count > 0 && _currentButtonIndex >= 0)
+            {
+                ActivateCurrentButton();
+                BrowserDetector.InvalidateCache();
+                return;
+            }
+
             // Try discovered buttons by name pattern (SubmitButton, ConfirmButton, etc.)
             if (TryClickButtonByPatterns(BrowserDetector.ConfirmPatterns, out clickedLabel))
             {
@@ -2661,9 +2677,9 @@ namespace AccessibleArena.Core.Services
             }
 
             // Fallback: PromptButton_Primary (scene search)
-            // Skip for OptionalAction and choice-list browsers — their buttons are choices,
+            // Skip for OptionalAction, choice-list, and SelectGroup browsers — their buttons are choices,
             // not confirm/cancel, and the global PromptButtons would click unrelated duel phase buttons
-            if (!(_browserInfo?.IsOptionalAction == true) && !_isChoiceList && TryClickPromptButton(BrowserDetector.PromptButtonPrimaryPrefix, out clickedLabel))
+            if (!(_browserInfo?.IsOptionalAction == true) && !_isChoiceList && !_isSelectGroup && TryClickPromptButton(BrowserDetector.PromptButtonPrimaryPrefix, out clickedLabel))
             {
                 // PromptButton_Primary is a duel-level button (pass/submit), not browser-internal.
                 // Clicking it advances the game, which will destroy the scaffold.

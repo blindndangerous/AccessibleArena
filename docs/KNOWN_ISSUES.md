@@ -30,12 +30,6 @@ Pressing Backspace or the Done button in the deck building screen triggers a "De
 
 ---
 
-### Split Card Stack Selection Browser Crashes
-
-When the opponent plays a split card that requires the player to pick one of two stacks of cards, the browser crashes or behaves incorrectly. See `logs/selectsplitbug.log` for a user-reported example with error details.
-
----
-
 ### Adding Duplicate Cards in Deck Builder Causes Focus Glitch
 
 Adding more of the same card to a deck causes focus to jump to the wrong card, resulting in adding an incorrect card. Most likely the first add changes the card pool indices, and the mod's focused index now points to a different card.
@@ -165,6 +159,16 @@ Steam's default overlay hotkey (Shift+Tab) conflicts with the mod's backward nav
 ---
 
 ## Monitoring
+
+### SelectGroup Browser Pile Selection (Fact or Fiction)
+
+In the SelectGroup browser (e.g. Curator of Destinies / Fact or Fiction pile selection), Enter and Space now activate the focused pile button. Previously, Enter activated a face-down card instead of the pile button, and Space fell through to PromptButton_Primary ("Opponent's Turn"), accidentally passing the turn.
+
+**Fix applied:** Added SelectGroup-specific checks: Enter activates the focused button when `_isSelectGroup && _currentButtonIndex >= 0`; Space activates the current pile button the same way; PromptButton_Primary fallback is now excluded for SelectGroup browsers.
+
+**Files:** `BrowserNavigator.cs` (Enter handler, ClickConfirmButton)
+
+---
 
 ### Wrong Group Restore After Closing Mailbox
 

@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.9
 
+### SelectGroup Browser Fix (untested)
+- Fixed Fact or Fiction / Curator of Destinies pile selection browser: Enter and Space now correctly activate the focused pile button instead of clicking a random card or falling through to "Opponent's Turn"
+
 ### Spell and Ability Resolution Announcements
 - Spells and abilities now announce their name when resolving (e.g., "Lightning Bolt resolved", "Ability Sheoldred resolved") instead of the generic "Spell resolved"
 - Counter announcements now name the source counterspell (e.g., "Creature X was countered by Counterspell") (reported by patricus3, #54)
