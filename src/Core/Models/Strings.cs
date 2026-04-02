@@ -792,11 +792,23 @@ namespace AccessibleArena.Core.Models
         // CHOOSE X (X-cost spells, choose amount, die roll)
         // ===========================================
         public static string ChooseXEntry(string currentValue) => L.Format("ChooseX_Entry_Format", currentValue);
+        public static string ChooseXEntryWithMax(string currentValue, uint max) => L.Format("ChooseX_Entry_WithMax_Format", currentValue, max);
         public static string ChooseXConfirmed(string value) => L.Format("ChooseX_Confirmed_Format", value);
         public static string ChooseXCancelled => L.Get("ChooseX_Cancelled");
         public static string ChooseXAtMax => L.Get("ChooseX_AtMax");
         public static string ChooseXAtMin => L.Get("ChooseX_AtMin");
         public static string ChooseXCannotSubmit => L.Get("ChooseX_CannotSubmit");
+
+        // ===========================================
+        // SPINNER NAVIGATOR (counter distribution)
+        // ===========================================
+        public static string SpinnerEntry(int total, string cardName, int value) => L.Format("Spinner_Entry_Format", total, cardName, value);
+        public static string SpinnerCard(string cardName, int value, int index, int total) => L.Format("Spinner_Card_Format", cardName, value, index, total);
+        public static string SpinnerAdjusted(int value, int remaining) => L.Format("Spinner_Adjusted_Format", value, remaining);
+        public static string SpinnerAtMax => L.Get("Spinner_AtMax");
+        public static string SpinnerAtMin => L.Get("Spinner_AtMin");
+        public static string SpinnerConfirmed(int distributed) => L.Format("Spinner_Confirmed_Format", distributed);
+        public static string SpinnerCannotSubmit => L.Get("Spinner_CannotSubmit");
 
         // ===========================================
         // KEYWORD SELECTION BROWSER (creature type picker)

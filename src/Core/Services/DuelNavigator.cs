@@ -36,6 +36,7 @@ namespace AccessibleArena.Core.Services
         private BrowserNavigator _browserNavigator;
         private ManaColorPickerNavigator _manaColorPicker;
         private ChooseXNavigator _chooseXNavigator;
+        private SpinnerNavigator _spinnerNavigator;
         private PlayerPortraitNavigator _portraitNavigator;
         private PriorityController _priorityController;
         private DuelAnnouncer _duelAnnouncer;
@@ -67,6 +68,7 @@ namespace AccessibleArena.Core.Services
             _browserNavigator = new BrowserNavigator(announcer, _zoneNavigator);
             _manaColorPicker = new ManaColorPickerNavigator(announcer);
             _chooseXNavigator = new ChooseXNavigator(announcer);
+            _spinnerNavigator = new SpinnerNavigator(announcer);
             _portraitNavigator = new PlayerPortraitNavigator(announcer);
             _priorityController = new PriorityController();
             _duelAnnouncer = new DuelAnnouncer(announcer);
@@ -93,7 +95,7 @@ namespace AccessibleArena.Core.Services
 
             // Connect PriorityController to PhaseSkipGuard for phase skip warning
             PhaseSkipGuard.SetPriorityController(_priorityController);
-            PhaseSkipGuard.SetModalNavigatorCheck(() => BrowserNavigator.IsActive || _chooseXNavigator.IsActive);
+            PhaseSkipGuard.SetModalNavigatorCheck(() => BrowserNavigator.IsActive || _chooseXNavigator.IsActive || _spinnerNavigator.IsActive);
 
         }
 
@@ -415,6 +417,11 @@ namespace AccessibleArena.Core.Services
             // Choose X (X-cost spells, choose amount, die roll) - high priority modal
             _chooseXNavigator.Update();
             if (_chooseXNavigator.HandleInput())
+                return true;
+
+            // Spinner (counter distribution, e.g. Crashing Wave stun counters) - high priority modal
+            _spinnerNavigator.Update();
+            if (_spinnerNavigator.HandleInput())
                 return true;
 
             // Next, check for browser UI (scry, mulligan, damage assignment, etc.)

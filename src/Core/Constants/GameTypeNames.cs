@@ -65,6 +65,10 @@ namespace AccessibleArena.Core.Constants
         public const string SideboardNavBar = "SideboardNavBar";
         public const string DeckBuilderWidget = "DeckBuilderWidget";
 
+        // --- Spinner Types (counter distribution) ---
+        public const string SpinnerAnimated = "SpinnerAnimated";
+        public const string SpinnerGroup = "SpinnerGroup";
+
         // --- Game / Duel Types ---
         public const string GameManager = "GameManager";
         public const string MatchManager = "MatchManager";

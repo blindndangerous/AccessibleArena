@@ -36,6 +36,7 @@ namespace AccessibleArena.Core.Services
         private bool _hasAnnounced;
         private MonoBehaviour _viewInstance;
         private string _lastAnnouncedValue;
+        private uint? _maxValue;
 
         // Polling interval
         private float _lastScanTime;
@@ -184,11 +185,12 @@ namespace AccessibleArena.Core.Services
             _isActive = true;
             _hasAnnounced = false;
             _lastAnnouncedValue = null;
+            _maxValue = FindMaxValue();
 
             // Deactivate card info navigator so Up/Down controls the spinner, not card blocks
             AccessibleArenaMod.Instance?.CardNavigator?.Deactivate();
 
-            MelonLogger.Msg("[ChooseXNavigator] Entered ChooseX mode");
+            MelonLogger.Msg($"[ChooseXNavigator] Entered ChooseX mode (max={_maxValue?.ToString() ?? "unknown"})");
         }
 
         private void Exit()
@@ -197,6 +199,7 @@ namespace AccessibleArena.Core.Services
             _hasAnnounced = false;
             _viewInstance = null;
             _lastAnnouncedValue = null;
+            _maxValue = null;
             MelonLogger.Msg("[ChooseXNavigator] Exited ChooseX mode");
         }
 
@@ -210,7 +213,11 @@ namespace AccessibleArena.Core.Services
             bool hasFiveButtons = IsButtonActive(_upFiveArrowField);
             string rangeInfo = hasFiveButtons ? " (PageUp/PageDown: +5/-5)" : "";
 
-            _announcer.AnnounceInterrupt(Strings.ChooseXEntry(labelText) + rangeInfo);
+            string entryText = _maxValue.HasValue
+                ? Strings.ChooseXEntryWithMax(labelText, _maxValue.Value)
+                : Strings.ChooseXEntry(labelText);
+
+            _announcer.AnnounceInterrupt(entryText + rangeInfo);
             _lastAnnouncedValue = labelText;
         }
 
@@ -233,7 +240,7 @@ namespace AccessibleArena.Core.Services
                 var button = buttonField.GetValue(_viewInstance) as Button;
                 if (button == null || !button.interactable)
                 {
-                    // Button disabled - at min/max
+                    // Button disabled - already at min/max
                     string limitMsg = direction > 0
                         ? Strings.ChooseXAtMax
                         : Strings.ChooseXAtMin;
@@ -247,7 +254,16 @@ namespace AccessibleArena.Core.Services
                 string newLabel = GetLabelText();
                 if (!string.IsNullOrEmpty(newLabel))
                 {
-                    _announcer.AnnounceInterrupt(newLabel);
+                    // Check if we just arrived at min/max (button now disabled after click)
+                    string suffix = "";
+                    if (!button.interactable)
+                    {
+                        suffix = direction > 0
+                            ? $", {Strings.ChooseXAtMax}"
+                            : $", {Strings.ChooseXAtMin}";
+                    }
+
+                    _announcer.AnnounceInterrupt(newLabel + suffix);
                     _lastAnnouncedValue = newLabel;
                 }
             }
@@ -345,6 +361,52 @@ namespace AccessibleArena.Core.Services
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Finds the maximum X value by walking the ValueModified event's invocation list
+        /// to find the workflow (ChooseXWorkflow or NumericInputWorkflow) and reading its _max field.
+        /// Returns null if the max is unreasonably large (game uses int.MaxValue for "unlimited",
+        /// where the real limit is enforced by button disabled state / mana availability).
+        /// </summary>
+        private uint? FindMaxValue()
+        {
+            if (_viewInstance == null) return null;
+
+            try
+            {
+                // The ValueModified event backing field stores the delegate
+                var eventField = _viewType.GetField("ValueModified", PrivateInstance);
+                if (eventField == null) return null;
+
+                var eventDelegate = eventField.GetValue(_viewInstance) as Delegate;
+                if (eventDelegate == null) return null;
+
+                foreach (var d in eventDelegate.GetInvocationList())
+                {
+                    var target = d.Target;
+                    if (target == null) continue;
+
+                    // Both ChooseXWorkflow and NumericInputWorkflow have _max (uint)
+                    var maxField = target.GetType().GetField("_max", PrivateInstance);
+                    if (maxField != null)
+                    {
+                        uint rawMax = (uint)maxField.GetValue(target);
+                        // Game uses huge values (int.MaxValue) for "unlimited" X spells
+                        // where mana availability enforces the real limit via button state.
+                        // Only announce max when it's a meaningful number.
+                        if (rawMax > 100)
+                            return null;
+                        return rawMax;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[ChooseXNavigator] Error finding max value: {ex.Message}");
+            }
+
+            return null;
         }
 
         private static void InitializeReflection()
