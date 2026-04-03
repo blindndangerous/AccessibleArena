@@ -232,18 +232,6 @@ Fixed `ExtractBrowserHeaderText()` to read the subheader from the `BrowserHeader
 
 ---
 
-### Match End Survey Popup Detection
-
-The "Rate this match" survey popup (`GameEndSurveyPopup`) on the match end screen was not detected because `PanelStateManager.IsSceneLoading` stayed permanently `true`. The MatchEnd scene has no non-popup panels, so the flag (which clears on the first non-popup panel open) never cleared naturally. AlphaDetector registered the popup but suppressed its visibility report.
-
-**Symptoms:** Only rank info and game log button visible (2 elements), no survey popup announced, no continue button (stays INACTIVE until survey is dismissed), user stuck on match end screen.
-
-**Fix applied:** `LoadingScreenNavigator.OnActivated()` now calls `PanelStateManager.ClearSceneLoadingGate()` when entering MatchEnd mode, unblocking AlphaDetector immediately.
-
-**Files:** `LoadingScreenNavigator.cs` (OnActivated), `PanelStateManager.cs` (ClearSceneLoadingGate)
-
----
-
 ### Season Rewards Popup (Monthly Reset)
 
 Season end rewards popup now uses content-gated detection (NPE-style): the navigator stays inactive until actual content is loaded, and activates once with a clean announcement. Season rank display phases (old rank, new rank) extract title, subtitle, and per-format rank details from `SeasonEndRankDisplay` components. ForceRescan suppresses duplicate announcements by tracking element count. Monitor whether:

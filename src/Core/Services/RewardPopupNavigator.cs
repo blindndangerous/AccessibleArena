@@ -37,6 +37,10 @@ namespace AccessibleArena.Core.Services
         private List<string> _packSetNames = new List<string>();
         private int _packSetNameIndex;
 
+        // Time.time when popup was first detected with subpages=false but no content yet.
+        // Used for 2s timeout fallback. -1 means not tracking.
+        private float _popupDetectedTime = -1f;
+
         // Cache to avoid logging spam
         private bool _lastRewardsPopupState = false;
 
@@ -71,6 +75,7 @@ namespace AccessibleArena.Core.Services
             {
                 _activePopup = null;
                 _seasonEndState = 0;
+                _popupDetectedTime = -1f;
                 return false;
             }
 
@@ -94,67 +99,55 @@ namespace AccessibleArena.Core.Services
                     return HasActiveSeasonDisplay();
                 }
 
-                // State 2 (Rewards) or 0 (None): only return true when actual reward content exists
-                // This gates the navigator during the loading delay
-                bool hasRewardPrefabs = false;
-                bool hasRewardsContainer = false;
-                bool hasButtons = false;
+                // State 2 (Rewards) or 0 (None): gate on controller's revealing flag
+                bool? stillRevealing = ReadStillRevealingFlag();
 
+                if (stillRevealing == true)
+                {
+                    // Coroutine is actively revealing rewards — wait
+                    // Extract pack names now while ToAdd queue is still populated
+                    // (queue is cleared after a 1-frame delay inside RevealRewards)
+                    ExtractPackSetNames();
+                    _popupDetectedTime = -1f;
+                    continue;
+                }
+
+                // Flag is false or unavailable — check if content actually exists
+                bool hasContent = false;
                 foreach (Transform t in child.GetComponentsInChildren<Transform>(true))
                 {
                     if (t == null || !t.gameObject.activeInHierarchy) continue;
-
-                    if (t.name.StartsWith("RewardPrefab_"))
-                        hasRewardPrefabs = true;
-                    else if (t.name == "RewardsCONTAINER")
-                        hasRewardsContainer = true;
-                }
-
-                if (hasRewardPrefabs || hasRewardsContainer)
-                    return true;
-
-                // Check for buttons (claim button may appear before rewards in some flows)
-                foreach (var mb in child.GetComponentsInChildren<MonoBehaviour>(true))
-                {
-                    if (mb != null && mb.gameObject.activeInHierarchy)
+                    if (t.name.StartsWith("RewardPrefab_") || t.name == "RewardsCONTAINER")
                     {
-                        string typeName = mb.GetType().Name;
-                        if (typeName == T.CustomButton || typeName == T.CustomButtonWithTooltip)
-                        {
-                            hasButtons = true;
-                            break;
-                        }
+                        hasContent = true;
+                        break;
                     }
                 }
 
-                if (hasButtons)
-                    return true;
-
-                // Fallback: check Visible property on controller
-                try
+                if (hasContent)
                 {
-                    foreach (var mb in child.GetComponentsInChildren<MonoBehaviour>(true))
-                    {
-                        if (mb != null && mb.GetType().Name == "ContentControllerRewards")
-                        {
-                            var visibleProp = mb.GetType().GetProperty("Visible", PublicInstance);
-                            if (visibleProp != null && (bool)visibleProp.GetValue(mb))
-                            {
-                                // Controller is visible but no content yet — still loading
-                                // Don't activate yet
-                            }
-                            break;
-                        }
-                    }
+                    _popupDetectedTime = -1f;
+                    return true;
                 }
-                catch { }
 
-                // No content ready yet — return false to keep navigator inactive
+                // No content yet — start/check timeout for fallback
+                if (_popupDetectedTime < 0f)
+                    _popupDetectedTime = Time.time;
+
+                if (Time.time - _popupDetectedTime >= 2.0f)
+                {
+                    // Timeout: activate anyway (DiscoverElements will use controller data fallback)
+                    MelonLogger.Msg($"[{NavigatorId}] Content timeout — activating with controller data fallback");
+                    return true;
+                }
+
+                // Still waiting for content or timeout
                 continue;
             }
 
             _activePopup = null;
             _seasonEndState = 0;
+            _popupDetectedTime = -1f;
             return false;
         }
 
@@ -233,6 +226,36 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Read _stillDisplayingSubpagesForRewardItem from ContentControllerRewards.
+        /// Returns true while rewards are being revealed via coroutines, false when done.
+        /// Returns null if the controller or field cannot be found.
+        /// </summary>
+        private bool? ReadStillRevealingFlag()
+        {
+            if (_activePopup == null) return null;
+
+            try
+            {
+                foreach (var mb in _activePopup.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (mb != null && mb.GetType().Name == "ContentControllerRewards")
+                    {
+                        var field = mb.GetType().GetField("_stillDisplayingSubpagesForRewardItem", PrivateInstance);
+                        if (field != null)
+                            return (bool)field.GetValue(mb);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[{NavigatorId}] ReadStillRevealingFlag failed: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Get the rewards container transform for element discovery.
         /// Copied exactly from OverlayDetector.GetRewardsContainer().
         /// </summary>
@@ -284,6 +307,10 @@ namespace AccessibleArena.Core.Services
 
                 // Discover reward elements
                 DiscoverRewardElements(addedObjects);
+
+                // Fallback: if no prefabs found (timeout case), read reward data from controller
+                if (_rewardCount == 0)
+                    DiscoverRewardsFromControllerData(addedObjects);
             }
 
             // Also discover buttons (ClaimButton, etc.)
@@ -495,6 +522,112 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Fallback: read reward data directly from the controller's _allRewards array
+        /// when no RewardPrefab_ GameObjects were found (timeout case).
+        /// Creates a summary info element listing what rewards are pending.
+        /// </summary>
+        private void DiscoverRewardsFromControllerData(HashSet<GameObject> addedObjects)
+        {
+            if (_activePopup == null) return;
+
+            try
+            {
+                MonoBehaviour rewardsController = null;
+                foreach (var mb in _activePopup.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (mb != null && mb.GetType().Name == "ContentControllerRewards")
+                    {
+                        rewardsController = mb;
+                        break;
+                    }
+                }
+                if (rewardsController == null) return;
+
+                // Read _allRewards array
+                var allRewardsField = rewardsController.GetType().GetField("_allRewards", PrivateInstance);
+                if (allRewardsField == null) return;
+                var allRewards = allRewardsField.GetValue(rewardsController) as Array;
+                if (allRewards == null) return;
+
+                var rewardParts = new List<string>();
+
+                // Use pre-extracted pack set names
+                if (_packSetNames.Count > 0)
+                {
+                    foreach (string setName in _packSetNames)
+                        rewardParts.Add($"{setName} Pack");
+                }
+
+                foreach (var reward in allRewards)
+                {
+                    if (reward == null) continue;
+
+                    // Read ToAddCount property (from IRewardBase)
+                    var toAddCountProp = reward.GetType().GetProperty("ToAddCount", PublicInstance);
+                    if (toAddCountProp == null) continue;
+                    int count = (int)toAddCountProp.GetValue(reward);
+                    if (count <= 0) continue;
+
+                    string typeName = reward.GetType().Name;
+                    string label = MapRewardTypeToLabel(typeName);
+
+                    // Skip packs if we already have names from ExtractPackSetNames
+                    if (typeName == "PackReward" && _packSetNames.Count > 0) continue;
+
+                    if (count > 1)
+                        rewardParts.Add($"{count} {label}");
+                    else
+                        rewardParts.Add(label);
+                }
+
+                if (rewardParts.Count > 0)
+                {
+                    _rewardCount = rewardParts.Count;
+                    string summary = string.Join(", ", rewardParts);
+                    MelonLogger.Msg($"[{NavigatorId}] Controller data fallback: {summary}");
+                    AddElement(_activePopup, summary);
+                    addedObjects.Add(_activePopup);
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[{NavigatorId}] DiscoverRewardsFromControllerData failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Map reward class type name to a human-readable label.
+        /// </summary>
+        private static string MapRewardTypeToLabel(string typeName)
+        {
+            switch (typeName)
+            {
+                case "GoldReward": return "Gold";
+                case "GemReward": return "Gems";
+                case "XPReward": return "XP";
+                case "PackReward": return "Booster Packs";
+                case "CardReward": return "Cards";
+                case "CardRewardWithBonus": return "Cards";
+                case "StyleReward": return "Styles";
+                case "SleeveReward": return "Sleeves";
+                case "AvatarReward": return "Avatars";
+                case "EmoteReward": return "Emotes";
+                case "TitleReward": return "Titles";
+                case "DeckBoxReward": return "Deck Box";
+                case "VoucherReward": return "Voucher";
+                case "EventTokenReward": return "Event Token";
+                case "EventTicketReward": return "Event Ticket";
+                case "MythicQualifierReward": return "Mythic Qualifier";
+                case "OrbReward": return "Orb";
+                case "BpOrbReward": return "BP Orb";
+                case "PrizeWallTokenReward": return "Prize Wall Token";
+                case "CompleteSetReward": return "Complete Set";
+                case "PetReward": return "Pet";
+                default: return typeName.Replace("Reward", "");
+            }
+        }
+
+        /// <summary>
         /// Pre-extract pack set names from ContentControllerRewards._packReward.ToAdd data.
         /// Pack rewards display in CollationId order, so we queue names in the same order.
         /// </summary>
@@ -598,19 +731,8 @@ namespace AccessibleArena.Core.Services
                 addedObjects.Add(mb.gameObject);
             }
 
-            // Find EventTriggers (like Background_ClickBlocker)
-            foreach (var trigger in _activePopup.GetComponentsInChildren<EventTrigger>(true))
-            {
-                if (trigger == null || !trigger.gameObject.activeInHierarchy) continue;
-                if (addedObjects.Contains(trigger.gameObject)) continue;
-
-                string name = trigger.gameObject.name;
-                if (name == "Background_ClickBlocker")
-                {
-                    AddElement(trigger.gameObject, "Continue, button");
-                    addedObjects.Add(trigger.gameObject);
-                }
-            }
+            // Background_ClickBlocker is NOT added as a navigable element —
+            // it's an invisible dismiss overlay. User has Backspace to dismiss instead.
         }
 
         private string GetButtonLabel(GameObject button)
@@ -1188,6 +1310,7 @@ namespace AccessibleArena.Core.Services
             _seasonEndState = 0;
             _seasonDisplayText = null;
             _lastRescanElementCount = 0;
+            _popupDetectedTime = -1f;
         }
 
         #endregion
