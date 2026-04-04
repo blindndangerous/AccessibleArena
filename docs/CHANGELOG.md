@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.9
 
+### Chat
+- Incoming chat messages are now announced via screen reader regardless of which screen you're on
+
 ### Objectives
 - Removed redundant "Fortschritt" (progress) role suffix from objective announcements — objectives already contain descriptive progress info and are inside the Progress group
 

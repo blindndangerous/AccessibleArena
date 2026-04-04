@@ -41,6 +41,7 @@ namespace AccessibleArena.Core.Services
         private PlayerPortraitNavigator _portraitNavigator;
         private PriorityController _priorityController;
         private DuelAnnouncer _duelAnnouncer;
+        private DuelChatNavigator _duelChatNavigator;
         private List<GameObject> _deactivatedSocialObjects = new List<GameObject>();
 
         public override string NavigatorId => "Duel";
@@ -82,6 +83,7 @@ namespace AccessibleArena.Core.Services
             _duelAnnouncer = new DuelAnnouncer(announcer);
             _combatNavigator = new CombatNavigator(announcer, _duelAnnouncer);
             _battlefieldNavigator = new BattlefieldNavigator(announcer, _zoneNavigator);
+            _duelChatNavigator = new DuelChatNavigator(announcer, OnDuelChatClosed);
 
             // Connect DuelAnnouncer to ZoneNavigator for stack checks and dirty marking
             _duelAnnouncer.SetZoneNavigator(_zoneNavigator);
@@ -201,6 +203,7 @@ namespace AccessibleArena.Core.Services
                 _battlefieldNavigator.Deactivate();
                 _portraitNavigator.Deactivate();
                 _duelAnnouncer.Deactivate();
+                _duelChatNavigator.OnSceneChanged();
                 _priorityController.ClearCache();
                 _deactivatedSocialObjects.Clear();
             }
@@ -427,6 +430,19 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Early input hook: DuelChatNavigator takes full input priority when active.
+        /// Runs before BaseNavigator's edit mode detection, preventing the chat input field
+        /// from being handled by BaseNavigator's HandleInputFieldNavigation.
+        /// </summary>
+        protected override bool HandleEarlyInput()
+        {
+            _duelChatNavigator.Update();
+            if (_duelChatNavigator.HandleInput())
+                return true;
+            return false;
+        }
+
+        /// <summary>
         /// Handles zone navigation, target selection, and playable card cycling input.
         /// Uses unified HotHighlightNavigator for Tab/Enter on playable cards and targets.
         /// Priority: Browser > Discard > Combat > HotHighlight > Portrait > Battlefield > Zone > base
@@ -464,6 +480,15 @@ namespace AccessibleArena.Core.Services
             _browserNavigator.Update();
             if (_browserNavigator.HandleInput())
                 return true;
+
+            // F4: Open chat (checked after modals so chat can't open during
+            // mana picking, browser, spinner, or X-cost interactions).
+            // When DuelChatNavigator is already active, HandleEarlyInput consumes F4 above.
+            if (Input.GetKeyDown(KeyCode.F4))
+            {
+                OpenDuelChat();
+                return true;
+            }
 
             // Shift+Backspace: Pass until opponent action, Ctrl+Backspace: Skip turn
             // Must be checked before CombatNavigator which also consumes Backspace
@@ -660,6 +685,53 @@ namespace AccessibleArena.Core.Services
 
             return base.HandleCustomInput();
         }
+
+        #region Chat
+
+        /// <summary>
+        /// Open the chat window via DuelChatNavigator (sub-navigator approach).
+        /// Restores SocialUI selectables, finds SocialUI component, and initiates chat.
+        /// </summary>
+        private void OpenDuelChat()
+        {
+            var socialPanel = GameObject.Find("SocialUI_V2_Desktop_16x9(Clone)");
+            if (socialPanel == null)
+            {
+                _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                return;
+            }
+
+            MonoBehaviour socialUI = null;
+            foreach (var comp in socialPanel.GetComponents<MonoBehaviour>())
+            {
+                if (comp != null && comp.GetType().Name == T.SocialUI)
+                {
+                    socialUI = comp;
+                    break;
+                }
+            }
+            if (socialUI == null)
+            {
+                _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                return;
+            }
+
+            // Restore SocialUI selectables so the chat window elements are active
+            RestoreSocialUISelectables();
+
+            _duelChatNavigator.Open(socialUI);
+        }
+
+        /// <summary>
+        /// Called when DuelChatNavigator closes (for any reason: user close, timeout, external).
+        /// Re-disables SocialUI selectables to prevent EventSystem focus stealing.
+        /// </summary>
+        private void OnDuelChatClosed()
+        {
+            DisableSocialUISelectables();
+        }
+
+        #endregion
 
         #region Helper Methods
 

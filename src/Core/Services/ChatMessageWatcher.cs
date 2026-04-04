@@ -58,8 +58,10 @@ namespace AccessibleArena.Core.Services
             if (_pollTimer > 0f) return;
             _pollTimer = PollInterval;
 
-            // Skip when ChatNavigator is active (it does its own polling)
+            // Skip when ChatNavigator or DuelChatNavigator is active (they do their own polling)
             if (NavigatorManager.Instance?.IsNavigatorActive("Chat") == true)
+                return;
+            if (DuelChatNavigator.IsActive)
                 return;
 
             var chatManager = GetChatManager();
