@@ -2888,6 +2888,13 @@ namespace AccessibleArena.Core.Services
                             sourceName = CardModelProvider.GetNameFromGrpId(gid);
                         }
                     }
+
+                    // Fallback: Instigator is null for the non-caster — use the currently
+                    // resolving card name from ResolutionStarted (which is the counterspell)
+                    if (string.IsNullOrEmpty(sourceName) && !string.IsNullOrEmpty(_lastResolvingCardName))
+                    {
+                        sourceName = _lastResolvingCardName;
+                    }
                 }
             }
             catch (Exception ex)

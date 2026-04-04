@@ -70,6 +70,12 @@ Some menus announce position indices (e.g., "2 of 7") and some do not. Index ann
 
 ---
 
+### Event-Specific Quests Show English Text
+
+Event-specific quests (e.g. special event objectives) display English text instead of the user's localized language. Standard daily/weekly quests are localized correctly.
+
+---
+
 ### Pack Opening Reads Flipped-Down Cards
 
 During pack opening, cards that are still flipped face-down can be read with Up/Down arrow keys, revealing their content before the player flips them.

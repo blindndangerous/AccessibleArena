@@ -33,6 +33,9 @@ All notable changes to Accessible Arena.
 - Fixed Enter and Space on virtual elements (match state, opponent status) now correctly activating the challenge button (ready/unready/start match)
 - Fixed Space activating random screen elements instead of the intended action
 
+### Duel Announcements
+- Fixed counter announcements missing the counterspell name for the non-caster (e.g. opponent only heard "creature countered" instead of "creature countered by Essence Scatter") — the Instigator field on the zone transfer is null for the non-caster, now falls back to the resolving spell name from ResolutionStarted
+
 ### Phase-Skip Guard Fix (Browser Space Lockup in 2nd+ Duels)
 - Fixed a bug where pressing Space inside a browser (scry, surveil, SelectCards, etc.) during main phase with untapped lands would trigger the phase-skip warning instead of confirming the browser selection — this affected all duels after the first, making friend matches appear completely broken
 - Root cause: `PhaseSkipGuard.Reset()` was clearing the modal-navigator callback that tells the guard to bypass browsers. That callback is wired once at startup and must persist across duel resets.
