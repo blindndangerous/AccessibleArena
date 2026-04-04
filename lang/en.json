@@ -1000,6 +1000,8 @@
   "ChatSendButton": "Send",
   "ChatClosed": "Chat closed",
   "ChatNoConversation": "No conversation",
+  "ChatUnavailable": "Chat not available",
+  "ReturnedToDuel": "Returned to duel",
   "GroupChatWindow": "Chat",
   "ScreenSideboard": "Sideboard",
   "Sideboard_Activated_Format": "Sideboard. {0} {1} wins, {2} {3} wins. {4} pool cards, {5} deck cards",

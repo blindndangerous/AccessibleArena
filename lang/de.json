@@ -998,6 +998,8 @@
   "ChatSendButton": "Senden",
   "ChatClosed": "Chat geschlossen",
   "ChatNoConversation": "Keine Unterhaltung",
+  "ChatUnavailable": "Chat nicht verfügbar",
+  "ReturnedToDuel": "Zurück zum Duell",
   "GroupChatWindow": "Chat",
   "ScreenSideboard": "Sideboard",
   "Sideboard_Activated_Format": "Sideboard. {0} {1} Siege, {2} {3} Siege. {4} Poolkarten, {5} Deckkarten",

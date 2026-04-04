@@ -28,6 +28,7 @@ namespace AccessibleArena.Core.Services
 
         private bool _isWatching;
         private bool _hasCenteredMouse;
+        private bool _wasPreemptedForChat;
         private float _playerNameAnnounceDelay = -1f; // One-shot: announces matchup after HUD settles
         private ZoneNavigator _zoneNavigator;
         private HotHighlightNavigator _hotHighlightNavigator;  // Unified navigator for Tab, cards, targets, selection mode
@@ -40,6 +41,7 @@ namespace AccessibleArena.Core.Services
         private PlayerPortraitNavigator _portraitNavigator;
         private PriorityController _priorityController;
         private DuelAnnouncer _duelAnnouncer;
+        private List<GameObject> _deactivatedSocialObjects = new List<GameObject>();
 
         public override string NavigatorId => "Duel";
         public override string ScreenName => Strings.ScreenDuel;
@@ -50,6 +52,12 @@ namespace AccessibleArena.Core.Services
 
         // Duel uses letters as zone shortcuts (C, G, X, S, W, etc.) - disable letter navigation
         protected override bool SupportsLetterNavigation => false;
+
+        /// <summary>Mark that this navigator was preempted for chat (F4). Next activation will say "Returned to duel".</summary>
+        public void MarkPreemptedForChat() => _wasPreemptedForChat = true;
+
+        /// <summary>Restore deactivated SocialUI GOs before opening chat via F4.</summary>
+        public void RestoreSocialUIBeforeChat() => RestoreSocialUISelectables();
 
         public ZoneNavigator ZoneNavigator => _zoneNavigator;
         public HotHighlightNavigator HotHighlightNavigator => _hotHighlightNavigator;
@@ -129,6 +137,11 @@ namespace AccessibleArena.Core.Services
         {
             base.OnActivated();
 
+            // Disable SocialUI selectables so Unity's EventSystem doesn't auto-navigate to them.
+            // During friend challenge duels, the SocialUI (DontDestroyOnLoad) persists with an
+            // InputField and Button that constantly steal EventSystem focus, eating Space/key input.
+            DisableSocialUISelectables();
+
             // Center mouse cursor once when duel starts
             // This ensures card play clicks hit screen center correctly
             if (!_hasCenteredMouse)
@@ -142,6 +155,12 @@ namespace AccessibleArena.Core.Services
                 // Schedule a matchup announcement once the HUD has fully settled
                 _playerNameAnnounceDelay = 1.5f;
             }
+        }
+
+        protected override void OnDeactivating()
+        {
+            RestoreSocialUISelectables();
+            base.OnDeactivating();
         }
 
         public override void Update()
@@ -183,6 +202,7 @@ namespace AccessibleArena.Core.Services
                 _portraitNavigator.Deactivate();
                 _duelAnnouncer.Deactivate();
                 _priorityController.ClearCache();
+                _deactivatedSocialObjects.Clear();
             }
 
             base.OnSceneChanged(sceneName);
@@ -270,6 +290,9 @@ namespace AccessibleArena.Core.Services
                 if (selectable == null || !selectable.gameObject.activeInHierarchy || !selectable.interactable)
                     continue;
 
+                if (IsSocialUIElement(selectable.gameObject))
+                    continue;
+
                 if (addedObjects.Contains(selectable.gameObject))
                     continue;
 
@@ -297,6 +320,9 @@ namespace AccessibleArena.Core.Services
                 if (mb.GetType().Name != T.CustomButton)
                     continue;
 
+                if (IsSocialUIElement(mb.gameObject))
+                    continue;
+
                 if (addedObjects.Contains(mb.gameObject))
                     continue;
 
@@ -317,6 +343,9 @@ namespace AccessibleArena.Core.Services
             foreach (var trigger in GameObject.FindObjectsOfType<EventTrigger>())
             {
                 if (trigger == null || !trigger.gameObject.activeInHierarchy)
+                    continue;
+
+                if (IsSocialUIElement(trigger.gameObject))
                     continue;
 
                 if (addedObjects.Contains(trigger.gameObject))
@@ -372,6 +401,12 @@ namespace AccessibleArena.Core.Services
 
         protected override string GetActivationAnnouncement()
         {
+            if (_wasPreemptedForChat)
+            {
+                _wasPreemptedForChat = false;
+                return Strings.ReturnedToDuel;
+            }
+
             string core = Models.Strings.Duel_Started;
             return Strings.WithHint(core, "DuelKeybindingsHint");
         }
@@ -629,6 +664,53 @@ namespace AccessibleArena.Core.Services
         #region Helper Methods
 
         /// <summary>
+        /// Deactivate SocialUI Selectable GameObjects so Unity's EventSystem cannot
+        /// auto-navigate to them during duel. The game can re-enable interactable flags
+        /// on Selectables, but won't reactivate deactivated GameObjects.
+        /// Only targets active Selectable GOs (InputField, Button_Send, etc.).
+        /// </summary>
+        private void DisableSocialUISelectables()
+        {
+            _deactivatedSocialObjects.Clear();
+            var socialPanel = GameObject.Find("SocialUI_V2_Desktop_16x9(Clone)");
+            if (socialPanel == null) return;
+
+            foreach (var selectable in socialPanel.GetComponentsInChildren<Selectable>(false))
+            {
+                if (selectable != null && selectable.gameObject.activeInHierarchy)
+                {
+                    selectable.gameObject.SetActive(false);
+                    _deactivatedSocialObjects.Add(selectable.gameObject);
+                }
+            }
+
+            if (_deactivatedSocialObjects.Count > 0)
+                MelonLogger.Msg($"[{NavigatorId}] Deactivated {_deactivatedSocialObjects.Count} SocialUI selectable GOs");
+        }
+
+        /// <summary>
+        /// Reactivate SocialUI GameObjects that were deactivated during duel.
+        /// </summary>
+        private void RestoreSocialUISelectables()
+        {
+            if (_deactivatedSocialObjects.Count == 0) return;
+
+            int restored = 0;
+            foreach (var go in _deactivatedSocialObjects)
+            {
+                if (go != null)
+                {
+                    go.SetActive(true);
+                    restored++;
+                }
+            }
+            _deactivatedSocialObjects.Clear();
+
+            if (restored > 0)
+                MelonLogger.Msg($"[{NavigatorId}] Reactivated {restored} SocialUI selectable GOs");
+        }
+
+        /// <summary>
         /// Handle number keys 1-0 for toggling phase stops.
         /// Maps: 1=Upkeep, 2=Draw, 3=First Main, 4=Begin Combat, 5=Declare Attackers,
         /// 6=Declare Blockers, 7=Combat Damage, 8=End Combat, 9=Second Main, 0=End Step.
@@ -711,6 +793,24 @@ namespace AccessibleArena.Core.Services
             if (typeName.Contains("toggle")) return (Models.Strings.RoleCheckbox, UIElementClassifier.ElementRole.Toggle);
 
             return (Models.Strings.RoleControl, UIElementClassifier.ElementRole.Unknown);
+        }
+
+        /// <summary>
+        /// Check if a GameObject is inside the SocialUI hierarchy (DontDestroyOnLoad).
+        /// During friend challenge duels, SocialUI elements (chat input, send button, etc.)
+        /// leak into element discovery. Filter them out.
+        /// </summary>
+        private static bool IsSocialUIElement(GameObject obj)
+        {
+            if (obj == null) return false;
+            Transform current = obj.transform;
+            for (int i = 0; i < 15 && current != null; i++)
+            {
+                if (current.name.Contains("SocialUI"))
+                    return true;
+                current = current.parent;
+            }
+            return false;
         }
 
         private bool HasComponent(GameObject obj, string componentName)

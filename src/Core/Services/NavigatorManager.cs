@@ -78,11 +78,14 @@ namespace AccessibleArena.Core.Services
                 // No preemption - let active navigator handle updates
                 _activeNavigator.Update();
 
-                // Check if it deactivated itself
-                if (!_activeNavigator.IsActive)
+                // Check if it deactivated itself (or was deactivated by RequestActivation during Update)
+                if (_activeNavigator == null || !_activeNavigator.IsActive)
                 {
-                    MelonLogger.Msg($"[NavigatorManager] {_activeNavigator.NavigatorId} deactivated");
-                    _activeNavigator = null;
+                    if (_activeNavigator != null)
+                    {
+                        MelonLogger.Msg($"[NavigatorManager] {_activeNavigator.NavigatorId} deactivated");
+                        _activeNavigator = null;
+                    }
                 }
                 return;
             }
@@ -148,6 +151,56 @@ namespace AccessibleArena.Core.Services
         public bool IsNavigatorActive(string navigatorId)
         {
             return _activeNavigator?.NavigatorId == navigatorId;
+        }
+
+        /// <summary>
+        /// Force-activate a navigator by ID, regardless of priority.
+        /// Deactivates the current navigator, then polls the target so it can activate.
+        /// Used for explicit user actions like F4 opening chat during a duel.
+        /// </summary>
+        public bool RequestActivation(string navigatorId)
+        {
+            var target = GetNavigator(navigatorId);
+            if (target == null)
+            {
+                MelonLogger.Warning($"[NavigatorManager] RequestActivation: navigator '{navigatorId}' not found");
+                return false;
+            }
+
+            var previous = _activeNavigator;
+
+            // Deactivate current navigator
+            if (_activeNavigator != null && _activeNavigator != target)
+            {
+                MelonLogger.Msg($"[NavigatorManager] RequestActivation: deactivating {_activeNavigator.NavigatorId} for {navigatorId}");
+                _activeNavigator.Deactivate();
+                _activeNavigator = null;
+            }
+
+            // Poll the target so it can detect its screen and activate
+            target.Update();
+
+            if (target.IsActive)
+            {
+                _activeNavigator = target;
+                MelonLogger.Msg($"[NavigatorManager] RequestActivation: {navigatorId} activated successfully");
+                return true;
+            }
+
+            // Target didn't activate - restore previous navigator so we don't leave a gap
+            if (previous != null && previous != target)
+            {
+                MelonLogger.Msg($"[NavigatorManager] RequestActivation: {navigatorId} did not activate, restoring {previous.NavigatorId}");
+                previous.Update(); // Re-poll so it can reactivate
+                if (previous.IsActive)
+                    _activeNavigator = previous;
+            }
+            else
+            {
+                MelonLogger.Msg($"[NavigatorManager] RequestActivation: {navigatorId} did not activate");
+            }
+
+            return false;
         }
 
         /// <summary>Check if any navigator is active</summary>

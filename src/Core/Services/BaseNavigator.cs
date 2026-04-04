@@ -1292,6 +1292,15 @@ namespace AccessibleArena.Core.Services
             // Custom input first (subclass-specific keys)
             if (HandleCustomInput()) return;
 
+            // F4: Open chat window (universal - works from any navigator)
+            // Subclasses that handle F4 themselves (GeneralMenuNavigator → friends panel)
+            // consume it in HandleCustomInput above, so it never reaches here.
+            if (Input.GetKeyDown(KeyCode.F4))
+            {
+                OpenChat();
+                return;
+            }
+
             // I key: Extended card info (keyword descriptions + linked face)
             // Works in any context where a card is focused (deck builder, collection, store, draft, etc.)
             // DuelNavigator handles its own "I" key in HandleCustomInput() with browser fallback.
@@ -3679,6 +3688,82 @@ namespace AccessibleArena.Core.Services
                 return text.Substring(0, maxLength - 3) + "...";
 
             return text;
+        }
+
+        #endregion
+
+        #region Chat (F4)
+
+        private static MethodInfo _showChatWindowMethod;
+        private static bool _showChatWindowLookupDone;
+
+        /// <summary>
+        /// Open the chat window and switch to ChatNavigator.
+        /// Called by F4 from any navigator (except GeneralMenuNavigator which uses F4 for friends panel).
+        /// </summary>
+        protected void OpenChat()
+        {
+            try
+            {
+                var socialPanel = GameObject.Find("SocialUI_V2_Desktop_16x9(Clone)");
+                if (socialPanel == null)
+                {
+                    _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                    return;
+                }
+
+                MonoBehaviour socialUI = null;
+                foreach (var comp in socialPanel.GetComponents<MonoBehaviour>())
+                {
+                    if (comp != null && comp.GetType().Name == T.SocialUI)
+                    {
+                        socialUI = comp;
+                        break;
+                    }
+                }
+                if (socialUI == null)
+                {
+                    _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                    return;
+                }
+
+                // Cache ShowChatWindow method
+                if (!_showChatWindowLookupDone)
+                {
+                    _showChatWindowLookupDone = true;
+                    _showChatWindowMethod = socialUI.GetType().GetMethod("ShowChatWindow", PublicInstance);
+                }
+
+                if (_showChatWindowMethod == null)
+                {
+                    _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                    return;
+                }
+
+                // Restore SocialUI elements before opening chat (DuelNavigator deactivates them)
+                var duelNavForRestore = NavigatorManager.Instance?.GetNavigator<DuelNavigator>();
+                duelNavForRestore?.RestoreSocialUIBeforeChat();
+
+                // ShowChatWindow(SocialEntity chatFriend = null) - pass null to open last conversation
+                _showChatWindowMethod.Invoke(socialUI, new object[] { null });
+
+                // Request ChatNavigator activation
+                bool activated = NavigatorManager.Instance?.RequestActivation("Chat") == true;
+                if (activated)
+                {
+                    // Mark DuelNavigator so it shows "Returned to duel" instead of full announcement
+                    duelNavForRestore?.MarkPreemptedForChat();
+                }
+                else
+                {
+                    _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[BaseNavigator] OpenChat failed: {ex.Message}");
+                _announcer.AnnounceInterrupt(Strings.ChatUnavailable);
+            }
         }
 
         #endregion

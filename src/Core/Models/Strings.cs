@@ -1515,5 +1515,7 @@ namespace AccessibleArena.Core.Models
         public static string ChatSendButton => L.Get("ChatSendButton");
         public static string ChatClosed => L.Get("ChatClosed");
         public static string ChatNoConversation => L.Get("ChatNoConversation");
+        public static string ChatUnavailable => L.Get("ChatUnavailable");
+        public static string ReturnedToDuel => L.Get("ReturnedToDuel");
     }
 }

@@ -29,6 +29,7 @@ namespace AccessibleArena
         private GameLogNavigator _gameLogNavigator;
         private ModSettings _settings;
         private PanelStateManager _panelStateManager;
+        private ChatMessageWatcher _chatMessageWatcher;
 
         private bool _initialized;
         private string _lastActiveNavigatorId;
@@ -134,6 +135,9 @@ namespace AccessibleArena
                 new GeneralMenuNavigator(_announcer),
                 new AssetPrepNavigator(_announcer)  // Download screen - low priority, fails gracefully
             );
+
+            // Global chat message watcher (announces incoming messages from any screen)
+            _chatMessageWatcher = new ChatMessageWatcher(_announcer);
 
             // Subscribe to focus changes for automatic card navigation
             _focusTracker.OnFocusChanged += HandleFocusChanged;
@@ -288,6 +292,9 @@ namespace AccessibleArena
             // Notify navigator manager of scene change
             _navigatorManager?.OnSceneChanged(sceneName);
 
+            // Clear chat watcher cached references on scene change
+            _chatMessageWatcher?.OnSceneChanged();
+
             // DuelNavigator and SideboardNavigator activate on DuelScene
             if (sceneName == DuelScene)
             {
@@ -388,6 +395,9 @@ namespace AccessibleArena
 
             // NavigatorManager handles all screen navigators
             _navigatorManager?.Update();
+
+            // Poll for incoming chat messages (global, works from any screen)
+            _chatMessageWatcher?.Update();
         }
 
         public override void OnApplicationQuit()
