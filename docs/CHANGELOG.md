@@ -6,6 +6,10 @@ All notable changes to Accessible Arena.
 
 ### Chat
 - Incoming chat messages are now announced via screen reader regardless of which screen you're on
+- Fixed Tab key accidentally opening the game's chat window via the action system, which could preempt navigation and leave the user stuck in orphaned UI elements
+
+### Navigation
+- Leaving a popup now correctly restores the previous group and element position, including when inside a subgroup (e.g., returning to the exact objective after dismissing a quest exchange confirmation)
 
 ### Objectives
 - Removed redundant "Fortschritt" (progress) role suffix from objective announcements — objectives already contain descriptive progress info and are inside the Progress group

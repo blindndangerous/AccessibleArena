@@ -954,6 +954,17 @@ namespace AccessibleArena.Core.Services
             EnablePopupDetection();
         }
 
+        protected override void OnPopupDetected(PanelInfo panel)
+        {
+            // Save grouped navigation state before entering popup mode so we can
+            // restore the user's group and element position when the popup closes.
+            // Base EnterPopupMode only saves the flat element list, not group state.
+            if (_groupedNavigationEnabled && _groupedNavigator.IsActive)
+                _groupedNavigator.SaveCurrentGroupForRestore();
+
+            base.OnPopupDetected(panel);
+        }
+
         protected override void OnDeactivating()
         {
             base.OnDeactivating();

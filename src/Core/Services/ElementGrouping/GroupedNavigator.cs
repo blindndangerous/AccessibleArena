@@ -197,6 +197,16 @@ namespace AccessibleArena.Core.Services.ElementGrouping
         private int _pendingElementIndexRestore = -1;
 
         /// <summary>
+        /// Subgroup type to restore after rescan (null if not inside a subgroup).
+        /// </summary>
+        private ElementGroup? _pendingSubgroupRestore = null;
+
+        /// <summary>
+        /// Element index within subgroup to restore after rescan.
+        /// </summary>
+        private int _pendingSubgroupElementIndexRestore = -1;
+
+        /// <summary>
         /// Stores subgroup elements (e.g., Objectives) that are nested within another group.
         /// Key is the subgroup type, value is the list of elements in that subgroup.
         /// </summary>
@@ -527,8 +537,26 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 _pendingGroupRestore = _groups[_currentGroupIndex].Group;
                 _pendingGroupRestoreDisplayName = _groups[_currentGroupIndex].DisplayName;
                 _pendingLevelRestore = _navigationLevel;
-                _pendingElementIndexRestore = _currentElementIndex;
-                MelonLogger.Msg($"[GroupedNavigator] Saved group for restore: {_pendingGroupRestore} ('{_pendingGroupRestoreDisplayName}'), level: {_pendingLevelRestore}, elementIndex: {_pendingElementIndexRestore}");
+
+                // Save subgroup state if inside one
+                _pendingSubgroupRestore = _currentSubgroup;
+                if (_currentSubgroup.HasValue)
+                {
+                    // Inside a subgroup: _currentElementIndex is the subgroup element index.
+                    // For the parent group, store -1 (restore will find the subgroup entry).
+                    _pendingSubgroupElementIndexRestore = _currentElementIndex;
+                    _pendingElementIndexRestore = -1;
+                }
+                else
+                {
+                    _pendingElementIndexRestore = _currentElementIndex;
+                    _pendingSubgroupElementIndexRestore = -1;
+                }
+
+                string subgroupInfo = _currentSubgroup.HasValue
+                    ? $", subgroup: {_currentSubgroup.Value}, subgroupIndex: {_pendingSubgroupElementIndexRestore}"
+                    : "";
+                MelonLogger.Msg($"[GroupedNavigator] Saved group for restore: {_pendingGroupRestore} ('{_pendingGroupRestoreDisplayName}'), level: {_pendingLevelRestore}, elementIndex: {_pendingElementIndexRestore}{subgroupInfo}");
             }
             else
             {
@@ -536,6 +564,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                 _pendingGroupRestoreDisplayName = null;
                 _pendingLevelRestore = NavigationLevel.GroupList;
                 _pendingElementIndexRestore = -1;
+                _pendingSubgroupRestore = null;
+                _pendingSubgroupElementIndexRestore = -1;
             }
         }
 
@@ -568,6 +598,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
             _pendingGroupRestoreDisplayName = null;
             _pendingLevelRestore = NavigationLevel.GroupList;
             _pendingElementIndexRestore = -1;
+            _pendingSubgroupRestore = null;
+            _pendingSubgroupElementIndexRestore = -1;
         }
 
         /// <summary>
@@ -1118,6 +1150,8 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     _pendingGroupRestoreDisplayName = null;
                     _pendingLevelRestore = NavigationLevel.GroupList;
                     _pendingElementIndexRestore = -1;
+                    _pendingSubgroupRestore = null;
+                    _pendingSubgroupElementIndexRestore = -1;
                 }
                 else
                 {
@@ -1125,10 +1159,14 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                     var displayNameToRestore = _pendingGroupRestoreDisplayName;
                     var levelToRestore = _pendingLevelRestore;
                     var elementIndexToRestore = _pendingElementIndexRestore;
+                    var subgroupToRestore = _pendingSubgroupRestore;
+                    var subgroupElementIndexToRestore = _pendingSubgroupElementIndexRestore;
                     _pendingGroupRestore = null;
                     _pendingGroupRestoreDisplayName = null;
                     _pendingLevelRestore = NavigationLevel.GroupList;
                     _pendingElementIndexRestore = -1;
+                    _pendingSubgroupRestore = null;
+                    _pendingSubgroupElementIndexRestore = -1;
 
                     // Find the group to restore by exact type + display name match.
                     // Display name must match to avoid landing on a same-typed group from a
@@ -1154,17 +1192,35 @@ namespace AccessibleArena.Core.Services.ElementGrouping
                         if (levelToRestore == NavigationLevel.InsideGroup)
                         {
                             _navigationLevel = NavigationLevel.InsideGroup;
-                            // Restore element index, clamped to valid range (in case group shrunk)
-                            int maxIndex = _groups[i].Count - 1;
-                            if (elementIndexToRestore >= 0 && maxIndex >= 0)
+
+                            // Check if we need to restore into a subgroup
+                            if (subgroupToRestore.HasValue &&
+                                _subgroupElements.TryGetValue(subgroupToRestore.Value, out var subElements) &&
+                                subElements.Count > 0)
                             {
-                                _currentElementIndex = Math.Min(elementIndexToRestore, maxIndex);
+                                // Enter the subgroup directly
+                                _subgroupParentIndex = _currentGroupIndex;
+                                _currentSubgroup = subgroupToRestore.Value;
+                                int subMax = subElements.Count - 1;
+                                _currentElementIndex = subgroupElementIndexToRestore >= 0
+                                    ? Math.Min(subgroupElementIndexToRestore, subMax)
+                                    : 0;
+                                MelonLogger.Msg($"[GroupedNavigator] Restored into subgroup '{subgroupToRestore.Value}' at index {_currentElementIndex} (requested {subgroupElementIndexToRestore}, max {subMax})");
                             }
                             else
                             {
-                                _currentElementIndex = 0;
+                                // Restore element index, clamped to valid range (in case group shrunk)
+                                int maxIndex = _groups[i].Count - 1;
+                                if (elementIndexToRestore >= 0 && maxIndex >= 0)
+                                {
+                                    _currentElementIndex = Math.Min(elementIndexToRestore, maxIndex);
+                                }
+                                else
+                                {
+                                    _currentElementIndex = 0;
+                                }
+                                MelonLogger.Msg($"[GroupedNavigator] Restored into group '{_groups[i].DisplayName}' at index {_currentElementIndex} (requested {elementIndexToRestore}, max {maxIndex})");
                             }
-                            MelonLogger.Msg($"[GroupedNavigator] Restored into group '{_groups[i].DisplayName}' at index {_currentElementIndex} (requested {elementIndexToRestore}, max {maxIndex})");
                         }
                         else
                         {

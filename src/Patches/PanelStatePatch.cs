@@ -766,6 +766,41 @@ namespace AccessibleArena.Patches
                     MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.HandleKeyDown: {ex.Message}");
                 }
             }
+
+            // Patch OnNext/OnPrevious - block Tab from opening chat via the action system.
+            // SocialUI implements INextActionHandler; the game's action system maps Tab→OnNext()
+            // independently of KeyboardManager, so blocking PublishKeyDown alone is not enough.
+            var onNextMethod = socialUIType.GetMethod("OnNext", AllInstanceFlags);
+            if (onNextMethod != null)
+            {
+                try
+                {
+                    var prefix = typeof(PanelStatePatch).GetMethod(nameof(SocialUIActionPrefix),
+                        BindingFlags.Static | BindingFlags.Public);
+                    harmony.Patch(onNextMethod, prefix: new HarmonyMethod(prefix));
+                    DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Patched SocialUI.OnNext()");
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.OnNext: {ex.Message}");
+                }
+            }
+
+            var onPreviousMethod = socialUIType.GetMethod("OnPrevious", AllInstanceFlags);
+            if (onPreviousMethod != null)
+            {
+                try
+                {
+                    var prefix = typeof(PanelStatePatch).GetMethod(nameof(SocialUIActionPrefix),
+                        BindingFlags.Static | BindingFlags.Public);
+                    harmony.Patch(onPreviousMethod, prefix: new HarmonyMethod(prefix));
+                    DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Patched SocialUI.OnPrevious()");
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.OnPrevious: {ex.Message}");
+                }
+            }
         }
 
         private static void PatchMailboxController(HarmonyLib.Harmony harmony)
@@ -1406,6 +1441,22 @@ namespace AccessibleArena.Patches
                 return false; // Skip the original method
             }
             return true; // Let other keys through
+        }
+
+        /// <summary>
+        /// Prefix for SocialUI.OnNext() and OnPrevious() — blocks action system Tab/Shift+Tab.
+        /// The game's action system maps Tab→OnNext() independently of KeyboardManager,
+        /// so without this patch, Tab opens the chat window (ShowChatWindow → ChatVisible=true)
+        /// even when our KeyboardManagerPatch already blocked Tab from PublishKeyDown.
+        /// </summary>
+        public static bool SocialUIActionPrefix()
+        {
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.Tab))
+            {
+                DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Blocked Tab from SocialUI action handler");
+                return false;
+            }
+            return true;
         }
     }
 }
