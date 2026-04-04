@@ -767,38 +767,22 @@ namespace AccessibleArena.Patches
                 }
             }
 
-            // Patch OnNext/OnPrevious - block Tab from opening chat via the action system.
-            // SocialUI implements INextActionHandler; the game's action system maps Tab→OnNext()
-            // independently of KeyboardManager, so blocking PublishKeyDown alone is not enough.
-            var onNextMethod = socialUIType.GetMethod("OnNext", AllInstanceFlags);
-            if (onNextMethod != null)
+            // Patch ShowChatWindow - block Tab from opening chat via ANY code path.
+            // Multiple callers invoke ShowChatWindow: OnNext() (action system), Show() (focus gain),
+            // and potentially others. Patching the chokepoint catches them all.
+            var showChatMethod = socialUIType.GetMethod("ShowChatWindow", AllInstanceFlags);
+            if (showChatMethod != null)
             {
                 try
                 {
-                    var prefix = typeof(PanelStatePatch).GetMethod(nameof(SocialUIActionPrefix),
+                    var prefix = typeof(PanelStatePatch).GetMethod(nameof(SocialUIShowChatWindowPrefix),
                         BindingFlags.Static | BindingFlags.Public);
-                    harmony.Patch(onNextMethod, prefix: new HarmonyMethod(prefix));
-                    DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Patched SocialUI.OnNext()");
+                    harmony.Patch(showChatMethod, prefix: new HarmonyMethod(prefix));
+                    DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Patched SocialUI.ShowChatWindow()");
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.OnNext: {ex.Message}");
-                }
-            }
-
-            var onPreviousMethod = socialUIType.GetMethod("OnPrevious", AllInstanceFlags);
-            if (onPreviousMethod != null)
-            {
-                try
-                {
-                    var prefix = typeof(PanelStatePatch).GetMethod(nameof(SocialUIActionPrefix),
-                        BindingFlags.Static | BindingFlags.Public);
-                    harmony.Patch(onPreviousMethod, prefix: new HarmonyMethod(prefix));
-                    DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Patched SocialUI.OnPrevious()");
-                }
-                catch (Exception ex)
-                {
-                    MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.OnPrevious: {ex.Message}");
+                    MelonLogger.Warning($"[PanelStatePatch] Failed to patch SocialUI.ShowChatWindow: {ex.Message}");
                 }
             }
         }
@@ -1444,16 +1428,15 @@ namespace AccessibleArena.Patches
         }
 
         /// <summary>
-        /// Prefix for SocialUI.OnNext() and OnPrevious() — blocks action system Tab/Shift+Tab.
-        /// The game's action system maps Tab→OnNext() independently of KeyboardManager,
-        /// so without this patch, Tab opens the chat window (ShowChatWindow → ChatVisible=true)
-        /// even when our KeyboardManagerPatch already blocked Tab from PublishKeyDown.
+        /// Prefix for SocialUI.ShowChatWindow() — blocks chat from opening when Tab is held.
+        /// Multiple code paths call ShowChatWindow (OnNext via action system, Show via focus gain,
+        /// etc.). Patching the chokepoint catches all Tab-triggered chat opens.
         /// </summary>
-        public static bool SocialUIActionPrefix()
+        public static bool SocialUIShowChatWindowPrefix()
         {
             if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.Tab))
             {
-                DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Blocked Tab from SocialUI action handler");
+                DebugConfig.LogIf(DebugConfig.LogPatches, "PanelStatePatch", $"Blocked ShowChatWindow (Tab pressed)");
                 return false;
             }
             return true;

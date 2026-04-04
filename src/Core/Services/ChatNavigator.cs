@@ -444,6 +444,11 @@ namespace AccessibleArena.Core.Services
 
         protected override void OnDeactivating()
         {
+            // Close chat to reset ChatVisible — without this, DetectScreen() sees
+            // ChatVisible=true on the next frame and immediately reactivates.
+            // Silent close (no announcement) since this is cleanup, not user action.
+            CloseChatSilent();
+
             UnsubscribeFromMessageAdded();
             _chatWindow = null;
             _chatWindowGameObject = null;
@@ -485,6 +490,7 @@ namespace AccessibleArena.Core.Services
             if (Input.GetKeyDown(KeyCode.Backspace))
             {
                 CloseChat();
+                Deactivate();
                 return true;
             }
 
@@ -571,6 +577,17 @@ namespace AccessibleArena.Core.Services
             {
                 MelonLogger.Warning($"[Chat] Failed to close chat: {ex.Message}");
             }
+        }
+
+        private void CloseChatSilent()
+        {
+            if (_socialUI == null || _closeChatMethod == null) return;
+
+            try
+            {
+                _closeChatMethod.Invoke(_socialUI, null);
+            }
+            catch { }
         }
 
         private void SendMessage()
