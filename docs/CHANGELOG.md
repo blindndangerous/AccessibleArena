@@ -9,6 +9,9 @@ All notable changes to Accessible Arena.
 - Fixed the "Select N cards to put on bottom" instruction disappearing after a failed submit, leaving the user with no context about what to do
 - The required bottom count is now read from the game's internal data instead of the mod's own mulligan counter, fixing incorrect counts when the first mulligan was free (e.g., in best-of-three or Color Challenge)
 
+### Booster Opening
+- Fixed face-down cards leaking their details when pressing Arrow Down — now shows "Hidden card, Enter to reveal" instead of the actual card info
+
 ### Combat
 - Attacking creatures now announce their target when attacking a planeswalker or battle (e.g., "attacking Jace, the Mind Sculptor") — previously only showed "attacking" without indicating the target
 - Fixed attacker count being wrong during attack animations (e.g., 10 token attackers reported as 4) — now uses model-based IsAttacking check instead of relying on the UI animation state

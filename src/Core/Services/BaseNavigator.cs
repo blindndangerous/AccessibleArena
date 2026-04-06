@@ -2190,13 +2190,20 @@ namespace AccessibleArena.Core.Services
             MelonLogger.Msg($"[{NavigatorId}] UpdateCardNavigation: element={element.name}, IsCard={isCard}");
             if (isCard)
             {
-                cardNavigator.PrepareForCard(element);
+                bool hidden = IsCurrentCardHidden(element);
+                cardNavigator.PrepareForCard(element, isHidden: hidden);
             }
             else if (cardNavigator.IsActive)
             {
                 cardNavigator.Deactivate();
             }
         }
+
+        /// <summary>
+        /// Whether the current card element should be treated as face-down/hidden.
+        /// Override in navigators that support face-down cards (e.g., booster opening).
+        /// </summary>
+        protected virtual bool IsCurrentCardHidden(GameObject cardElement) => false;
 
         #endregion
 

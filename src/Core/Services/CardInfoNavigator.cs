@@ -22,6 +22,7 @@ namespace AccessibleArena.Core.Services
         private int _currentBlockIndex = -1;
         private bool _isActive;
         private bool _blocksLoaded;
+        private bool _isHidden;
         private ZoneType _currentZone = ZoneType.Hand;
 
         public bool IsActive => _isActive;
@@ -36,7 +37,7 @@ namespace AccessibleArena.Core.Services
         /// Prepares card navigation for the given card without extracting info yet.
         /// Call this when focus changes to a card. Info is loaded lazily on first arrow press.
         /// </summary>
-        public void PrepareForCard(GameObject cardElement, ZoneType zone = ZoneType.Hand)
+        public void PrepareForCard(GameObject cardElement, ZoneType zone = ZoneType.Hand, bool isHidden = false)
         {
             if (cardElement == null)
             {
@@ -44,20 +45,21 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
-            // If same card and same zone, keep current state
-            if (_currentCard == cardElement && _currentZone == zone)
+            // If same card, same zone, and same hidden state, keep current state
+            if (_currentCard == cardElement && _currentZone == zone && _isHidden == isHidden)
                 return;
 
             // New card - prepare but don't load blocks yet
             _currentCard = cardElement;
             _currentZone = zone;
+            _isHidden = isHidden;
             _isActive = true;
             _blocksLoaded = false;
             _blocks.Clear();
             _currentBlockIndex = -1;
 
             // Log card name for correlation with announcements
-            string cardName = CardDetector.GetCardName(cardElement);
+            string cardName = isHidden ? "hidden" : CardDetector.GetCardName(cardElement);
             MelonLogger.Msg($"[CardInfo] Prepared for '{cardName}' ({cardElement.name}) in zone: {zone}");
         }
 
@@ -130,6 +132,7 @@ namespace AccessibleArena.Core.Services
         {
             _isActive = false;
             _currentCard = null;
+            _isHidden = false;
             _blocks.Clear();
             _currentBlockIndex = -1;
             _blocksLoaded = false;
@@ -210,6 +213,18 @@ namespace AccessibleArena.Core.Services
         {
             if (_currentCard == null) return false;
 
+            if (_isHidden)
+            {
+                _blocks = new List<CardInfoBlock>
+                {
+                    new CardInfoBlock("", Strings.HiddenCard, isVerbose: false)
+                };
+                _blocksLoaded = true;
+                _currentBlockIndex = 0;
+                MelonLogger.Msg("[CardInfo] Card is face-down, showing hidden block");
+                return true;
+            }
+
             _blocks = CardDetector.GetInfoBlocks(_currentCard, _currentZone);
             _blocksLoaded = true;
 
@@ -264,7 +279,9 @@ namespace AccessibleArena.Core.Services
         {
             bool showLabel = !block.IsVerbose ||
                              (AccessibleArenaMod.Instance?.Settings?.VerboseAnnouncements != false);
-            return showLabel ? $"{block.Label}: {block.Content}" : block.Content;
+            if (showLabel && !string.IsNullOrEmpty(block.Label))
+                return $"{block.Label}: {block.Content}";
+            return block.Content;
         }
     }
 }

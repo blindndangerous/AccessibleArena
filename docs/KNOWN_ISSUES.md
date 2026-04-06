@@ -118,18 +118,6 @@ The "Invite Friend to Challenge" popup contains a `cTMP_Dropdown` (DropdownHitbo
 
 ---
 
-### Mailbox Close Restores to Wrong Group
-
-After closing the mailbox with Backspace, the GroupedNavigator restores to "Decks" on the home screen instead of the group the user was in before opening the mailbox (e.g., "Social"). The user can then navigate with Up/Down to find their position.
-
-**Root cause:** When navigating inside the mailbox, the GroupedNavigator saves the current mail item position as `ElementGroup.Content`. On the home screen, the first `ElementGroup.Content`-typed group happens to be "Decks", so the restore succeeds but in the wrong place. The pre-mailbox position (Social, InsideGroup) is overwritten by the mailbox's internal navigation saves.
-
-**Fix needed:** Save the home screen GroupedNavigator state when the mailbox opens, then restore to it explicitly in `CloseMailbox()` rather than relying on the auto-restore mechanism.
-
-**Files:** `GeneralMenuNavigator.cs` (CloseMailbox, OverlayChanged handler)
-
----
-
 ### Steam Overlay Hijacks Shift+Tab
 
 Steam's default overlay hotkey (Shift+Tab) conflicts with the mod's backward navigation (Shift+Tab for previous item, previous color in mana picker, etc.). When pressed, the Steam overlay opens instead of navigating. The overlay is not accessible to screen readers, so blind users must dismiss it and lose their navigation context.
@@ -159,18 +147,6 @@ In the SelectGroup browser (e.g. Curator of Destinies / Fact or Fiction pile sel
 **Fix applied:** Added SelectGroup-specific checks: Enter activates the focused button when `_isSelectGroup && _currentButtonIndex >= 0`; Space activates the current pile button the same way; PromptButton_Primary fallback is now excluded for SelectGroup browsers.
 
 **Files:** `BrowserNavigator.cs` (Enter handler, ClickConfirmButton)
-
----
-
-### Wrong Group Restore After Closing Mailbox
-
-After closing the mailbox, the navigator landed on "Decks" instead of the pre-mailbox group (e.g., "Social"), and no screen announcement fired so the user didn't know they had returned to the home screen.
-
-**Root cause:** The group restore logic saved `ElementGroup.Content` + a mailbox display name. After closing, it rescanned the home screen, found no Content group with that display name, then fell back to the first Content group by type — which was "Decks". Setting `PositionWasRestored = true` on that fallback match suppressed the home-screen announcement.
-
-**Fix applied:** Removed the type-only fallback. Restore now requires an exact type + display name match. If no match is found, `PositionWasRestored` stays false and the screen announcement fires normally.
-
-**Files:** `GroupedNavigator.cs` (OrganizeIntoGroups restore block)
 
 ---
 

@@ -457,6 +457,8 @@ namespace AccessibleArena.Core.Services
             return false;
         }
 
+        protected override bool IsCurrentCardHidden(GameObject cardElement) => IsCardHidden(cardElement);
+
         /// <summary>
         /// Find the parent BoosterCardHolder GameObject for a card view.
         /// The holder has the CustomButton that triggers OnClick -> reveal.
