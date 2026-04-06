@@ -797,6 +797,96 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Gets linked token information for cards that create tokens (e.g., Roles, complex tokens).
+        /// Reads AbilityIdToLinkedTokenPrinting from the card's Printing sub-object,
+        /// deduplicates by GrpId, and extracts CardInfo for each unique token.
+        /// </summary>
+        public static List<CardInfo> GetLinkedTokenInfos(GameObject card)
+        {
+            var result = new List<CardInfo>();
+            if (card == null) return result;
+
+            try
+            {
+                // Get model (same approach as GetLinkedFaceInfo)
+                object model = null;
+                var cdc = CardModelProvider.GetDuelSceneCDC(card);
+                if (cdc != null)
+                    model = CardModelProvider.GetCardModel(cdc);
+                if (model == null)
+                {
+                    var metaView = CardModelProvider.GetMetaCardView(card);
+                    if (metaView != null)
+                        model = CardModelProvider.GetMetaCardModel(metaView);
+                }
+                if (model == null) return result;
+
+                var modelType = model.GetType();
+
+                // Get Printing sub-object from model
+                var printing = CardModelProvider.GetModelPropertyValue(model, modelType, "Printing");
+                if (printing == null) return result;
+
+                var printingType = printing.GetType();
+
+                // Get AbilityIdToLinkedTokenPrinting property
+                var tokenPrintingProp = printingType.GetProperty("AbilityIdToLinkedTokenPrinting", PublicInstance);
+                if (tokenPrintingProp == null) return result;
+
+                var tokenPrintingDict = tokenPrintingProp.GetValue(printing);
+                if (tokenPrintingDict == null) return result;
+
+                // It's IReadOnlyDictionary<uint, IReadOnlyList<CardPrintingData>>
+                // Iterate all values, flatten, deduplicate by GrpId
+                var seenGrpIds = new HashSet<uint>();
+                var valuesProperty = tokenPrintingDict.GetType().GetProperty("Values");
+                if (valuesProperty == null) return result;
+
+                var values = valuesProperty.GetValue(tokenPrintingDict) as IEnumerable;
+                if (values == null) return result;
+
+                foreach (var tokenList in values)
+                {
+                    if (tokenList == null) continue;
+                    var tokenListEnum = tokenList as IEnumerable;
+                    if (tokenListEnum == null) continue;
+
+                    foreach (var tokenData in tokenListEnum)
+                    {
+                        if (tokenData == null) continue;
+
+                        // Get GrpId to deduplicate
+                        var tokenType = tokenData.GetType();
+                        var grpIdProp = tokenType.GetProperty("GrpId");
+                        uint grpId = 0;
+                        if (grpIdProp != null)
+                        {
+                            var grpIdVal = grpIdProp.GetValue(tokenData);
+                            if (grpIdVal is uint gid) grpId = gid;
+                            else if (grpIdVal is int gidInt && gidInt > 0) grpId = (uint)gidInt;
+                        }
+
+                        if (grpId > 0 && !seenGrpIds.Add(grpId))
+                            continue; // Already processed this token
+
+                        var tokenInfo = CardModelProvider.ExtractCardInfoFromCardData(tokenData, grpId);
+                        if (tokenInfo.IsValid)
+                        {
+                            result.Add(tokenInfo);
+                            MelonLogger.Msg($"[ExtendedCardInfoProvider] Token: {tokenInfo.Name} (GrpId {grpId})");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[ExtendedCardInfoProvider] Error getting linked token infos: {ex.Message}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Maps LinkedFace enum int to a user-facing label.
         /// Values based on decompiled LinkedFace enum.
         /// </summary>

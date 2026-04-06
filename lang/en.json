@@ -862,6 +862,7 @@
   "LinkedFace_OtherHalf": "Other half",
   "LinkedFace_Adventure": "Adventure",
   "LinkedFace_OtherRoom": "Other room",
+  "LinkedToken": "Token",
   "HelpIExtendedInfo": "I: Extended card info (keywords and other faces)",
   "HelpOGameLog": "O: Game log (review all duel announcements)",
   "ExtendedInfoTitle": "Extended card info",

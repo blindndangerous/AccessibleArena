@@ -541,6 +541,7 @@ namespace AccessibleArena.Core.Models
         public static string LinkedFaceOtherHalf => L.Get("LinkedFace_OtherHalf");
         public static string LinkedFaceAdventure => L.Get("LinkedFace_Adventure");
         public static string LinkedFaceOtherRoom => L.Get("LinkedFace_OtherRoom");
+        public static string LinkedToken => L.Get("LinkedToken");
         public static string HelpIExtendedInfo => L.Get("HelpIExtendedInfo");
         public static string HelpOGameLog => L.Get("HelpOGameLog");
 

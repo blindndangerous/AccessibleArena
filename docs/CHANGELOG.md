@@ -11,7 +11,8 @@ All notable changes to Accessible Arena.
 - Planeswalker loyalty costs are now screen-reader-friendly: "+1:" is read as "Plus 1:", "-3:" as "Minus 3:" (localized for all languages)
 - Multi-ability cards (planeswalkers, sagas, classes) now show each ability as a separate navigable entry in the I menu, making it easy to review individual abilities with Up/Down arrows
 - Class enchantment level-up costs are merged with their effect text (e.g., "2 White: Level 2. Effect text") instead of appearing as separate entries
-- Item order changed to: ability lines, linked card face, keyword descriptions
+- Cards that create tokens now show full token details (name, type, rules text, power/toughness) — useful for complex tokens like Roles that aren't self-descriptive from rules text alone
+- Item order changed to: ability lines, linked card face, token info, keyword descriptions
 
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission

@@ -34,12 +34,30 @@ namespace AccessibleArena.Core.Services
         {
             _items.Clear();
 
+            // Keywords: get first so we can filter keyword-only rules lines
+            var keywords = ExtendedCardInfoProvider.GetKeywordDescriptions(card);
+
+            // Build set of keyword names (text before ": ") to skip from rules lines.
+            // Both keyword headers and rules line text come from the same game localization,
+            // so exact match is robust across all languages.
+            var keywordNames = new HashSet<string>();
+            foreach (var kw in keywords)
+            {
+                int colonIdx = kw.IndexOf(": ");
+                if (colonIdx > 0)
+                    keywordNames.Add(kw.Substring(0, colonIdx));
+            }
+
             // Rules lines: individual ability entries for multi-ability cards (planeswalkers, sagas, classes)
+            // Skip keyword-only lines (e.g., "Flying") since they appear in keyword descriptions below
             var cardInfo = CardModelProvider.ExtractCardInfoFromModel(card);
             if (cardInfo.HasValue && cardInfo.Value.RulesLines != null && cardInfo.Value.RulesLines.Count > 1)
             {
-                for (int i = 0; i < cardInfo.Value.RulesLines.Count; i++)
-                    _items.Add(cardInfo.Value.RulesLines[i]);
+                foreach (var line in cardInfo.Value.RulesLines)
+                {
+                    if (!keywordNames.Contains(line))
+                        _items.Add(line);
+                }
             }
 
             // Linked face: split into individual field entries
@@ -59,8 +77,22 @@ namespace AccessibleArena.Core.Services
                     _items.Add($"{Strings.CardInfoRules}: {faceInfo.RulesText}");
             }
 
+            // Token info: name, type, rules, P/T per linked token
+            var tokenInfos = ExtendedCardInfoProvider.GetLinkedTokenInfos(card);
+            foreach (var tokenInfo in tokenInfos)
+            {
+                if (!string.IsNullOrEmpty(tokenInfo.Name))
+                    _items.Add($"{Strings.LinkedToken}: {tokenInfo.Name}");
+                if (!string.IsNullOrEmpty(tokenInfo.TypeLine))
+                    _items.Add($"{Strings.CardInfoType}: {tokenInfo.TypeLine}");
+                if (!string.IsNullOrEmpty(tokenInfo.RulesText))
+                    _items.Add($"{Strings.CardInfoRules}: {tokenInfo.RulesText}");
+                if (!string.IsNullOrEmpty(tokenInfo.PowerToughness))
+                    _items.Add($"{Strings.CardInfoPowerToughness}: {tokenInfo.PowerToughness}");
+            }
+
             // Keywords: each "Header: Details" from GetKeywordDescriptions is one entry
-            _items.AddRange(ExtendedCardInfoProvider.GetKeywordDescriptions(card));
+            _items.AddRange(keywords);
 
             if (_items.Count == 0)
             {
