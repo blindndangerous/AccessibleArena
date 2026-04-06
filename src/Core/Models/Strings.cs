@@ -859,6 +859,8 @@ namespace AccessibleArena.Core.Models
         public static string SettingVerboseAnnouncementsDesc => L.Get("SettingVerboseAnnouncementsDesc");
         public static string SettingBriefCastAnnouncements => L.Get("SettingBriefCastAnnouncements");
         public static string SettingBriefCastAnnouncementsDesc => L.Get("SettingBriefCastAnnouncementsDesc");
+        public static string SettingBriefOpponentAnnouncements => L.Get("SettingBriefOpponentAnnouncements");
+        public static string SettingBriefOpponentAnnouncementsDesc => L.Get("SettingBriefOpponentAnnouncementsDesc");
         public static string SettingPhaseSkipWarning => L.Get("SettingPhaseSkipWarning");
         public static string SettingPositionCounts => L.Get("SettingPositionCounts");
         public static string SettingPositionCountsDesc => L.Get("SettingPositionCountsDesc");

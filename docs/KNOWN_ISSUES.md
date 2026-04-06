@@ -370,8 +370,6 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 1. ~~Manual trigger ordering~~ — Implemented in v0.8.7 (OrderCards/TriggerOrderCards browser support)
 
 2. Display counters on players - announce counters like poison, energy, experience, etc. on players
-3. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
-4. Improve mod settings - reorganize settings into useful categories with category splitting for better navigation
 ### Polish
 
 1. Improve Challenge Friend screen workflow communication — currently unclear for blind users. Consider adding a dedicated Ready button, more contextual hints, or custom strings to guide through the challenge setup flow.

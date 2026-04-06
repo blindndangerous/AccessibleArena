@@ -2971,9 +2971,11 @@ namespace AccessibleArena.Core.Services
                     parts.Add(info.PowerToughness);
             }
 
-            // Brief mode: for own cards, just announce the name/header (skip rules text)
-            bool briefMode = AccessibleArenaMod.Instance?.Settings?.BriefCastAnnouncements == true;
-            if (briefMode && !CardStateProvider.IsOpponentCard(cardObj))
+            // Brief mode: skip rules text for own and/or opponent cards based on settings
+            bool isOpponent = CardStateProvider.IsOpponentCard(cardObj);
+            bool briefOwn = AccessibleArenaMod.Instance?.Settings?.BriefCastAnnouncements == true;
+            bool briefOpp = AccessibleArenaMod.Instance?.Settings?.BriefOpponentAnnouncements == true;
+            if ((!isOpponent && briefOwn) || (isOpponent && briefOpp))
                 return string.Join(", ", parts);
 
             // Rules text is relevant for both spells and abilities

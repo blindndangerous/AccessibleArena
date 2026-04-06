@@ -91,6 +91,13 @@ namespace AccessibleArena.Core.Services
                 },
                 new SettingItem
                 {
+                    Name = Strings.SettingBriefOpponentAnnouncements,
+                    GetValue = () => _settings.BriefOpponentAnnouncements ? Strings.SettingOn : Strings.SettingOff,
+                    Toggle = () => _settings.BriefOpponentAnnouncements = !_settings.BriefOpponentAnnouncements,
+                    Description = Strings.SettingBriefOpponentAnnouncementsDesc
+                },
+                new SettingItem
+                {
                     Name = Strings.SettingPhaseSkipWarning,
                     GetValue = () => _settings.PhaseSkipWarning ? Strings.SettingOn : Strings.SettingOff,
                     Toggle = () => _settings.PhaseSkipWarning = !_settings.PhaseSkipWarning

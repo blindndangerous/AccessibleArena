@@ -25,6 +25,11 @@ All notable changes to Accessible Arena.
 - Position counts are now consistently suppressed when there is only one item (no more "1 of 1")
 - Fixed ProfileNavigator using "/" format ("2/5") instead of "of" — now uses the same localized format as all other navigators
 
+### Settings Menu
+- Settings now show a short description explaining what they control (e.g., "Adds button roles and keyboard hints to announcements") — descriptions are read when navigating to each setting
+- Added "Brief opponent spell announcements" setting — independently shorten opponent spell announcements to name and type only, mirroring the existing setting for own spells
+- All setting descriptions are translated into all 12 supported languages
+
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission
 

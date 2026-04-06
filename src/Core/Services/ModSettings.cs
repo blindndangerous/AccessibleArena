@@ -24,6 +24,7 @@ namespace AccessibleArena.Core.Services
         public bool TutorialMessages { get; set; } = true;
         public bool VerboseAnnouncements { get; set; } = true;
         public bool BriefCastAnnouncements { get; set; } = true;
+        public bool BriefOpponentAnnouncements { get; set; } = false;
         public bool PhaseSkipWarning { get; set; } = true;
         public bool PositionCounts { get; set; } = true;
 
@@ -44,7 +45,7 @@ namespace AccessibleArena.Core.Services
 
                 string json = File.ReadAllText(SettingsPath);
                 settings.ParseJson(json);
-                MelonLogger.Msg($"[ModSettings] Loaded settings: Language={settings.Language}, Tutorial={settings.TutorialMessages}, Verbose={settings.VerboseAnnouncements}, BriefCast={settings.BriefCastAnnouncements}, PhaseSkipWarning={settings.PhaseSkipWarning}, PositionCounts={settings.PositionCounts}");
+                MelonLogger.Msg($"[ModSettings] Loaded settings: Language={settings.Language}, Tutorial={settings.TutorialMessages}, Verbose={settings.VerboseAnnouncements}, BriefCast={settings.BriefCastAnnouncements}, BriefOpponent={settings.BriefOpponentAnnouncements}, PhaseSkipWarning={settings.PhaseSkipWarning}, PositionCounts={settings.PositionCounts}");
             }
             catch (Exception ex)
             {
@@ -138,6 +139,7 @@ namespace AccessibleArena.Core.Services
                    $"  \"TutorialMessages\": {(TutorialMessages ? "true" : "false")},\n" +
                    $"  \"VerboseAnnouncements\": {(VerboseAnnouncements ? "true" : "false")},\n" +
                    $"  \"BriefCastAnnouncements\": {(BriefCastAnnouncements ? "true" : "false")},\n" +
+                   $"  \"BriefOpponentAnnouncements\": {(BriefOpponentAnnouncements ? "true" : "false")},\n" +
                    $"  \"PhaseSkipWarning\": {(PhaseSkipWarning ? "true" : "false")},\n" +
                    $"  \"PositionCounts\": {(PositionCounts ? "true" : "false")}\n" +
                    "}";
@@ -150,6 +152,7 @@ namespace AccessibleArena.Core.Services
             TutorialMessages = ReadJsonBool(json, "TutorialMessages") ?? TutorialMessages;
             VerboseAnnouncements = ReadJsonBool(json, "VerboseAnnouncements") ?? VerboseAnnouncements;
             BriefCastAnnouncements = ReadJsonBool(json, "BriefCastAnnouncements") ?? BriefCastAnnouncements;
+            BriefOpponentAnnouncements = ReadJsonBool(json, "BriefOpponentAnnouncements") ?? BriefOpponentAnnouncements;
             PhaseSkipWarning = ReadJsonBool(json, "PhaseSkipWarning") ?? PhaseSkipWarning;
             PositionCounts = ReadJsonBool(json, "PositionCounts") ?? PositionCounts;
         }
