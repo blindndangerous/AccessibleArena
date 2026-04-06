@@ -5,6 +5,7 @@ using AccessibleArena.Core.Interfaces;
 using AccessibleArena.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
+using ZenFulcrum.EmbeddedBrowser;
 
 namespace AccessibleArena.Core.Services
 {
@@ -17,6 +18,8 @@ namespace AccessibleArena.Core.Services
     {
         private GameObject _overlayBlocker;
         private string _overlayType;
+        private readonly WebBrowserAccessibility _webBrowser = new WebBrowserAccessibility();
+        private GameObject _browserCanvas;
 
         public override string NavigatorId => "Overlay";
         public override string ScreenName => GetOverlayScreenName();
@@ -28,6 +31,7 @@ namespace AccessibleArena.Core.Services
         {
             return _overlayType switch
             {
+                "WebBrowser" => "Web content",
                 "WhatsNew" => Strings.ScreenWhatsNew,
                 "Announcement" => Strings.ScreenAnnouncement,
                 "Reward" => Strings.ScreenRewardPopup,
@@ -54,6 +58,23 @@ namespace AccessibleArena.Core.Services
 
         private void DetermineOverlayType()
         {
+            // Check for embedded browser overlay (e.g. mailbox reward promo pages)
+            var canvas = GameObject.Find("FullscreenZFBrowserCanvas(Clone)");
+            if (canvas != null && canvas.activeInHierarchy)
+            {
+                // Verify it's visible (CanvasGroup alpha > 0) and contains a Browser
+                var canvasGroup = canvas.GetComponent<CanvasGroup>();
+                bool isVisible = canvasGroup == null || canvasGroup.alpha > 0;
+                var browser = canvas.GetComponentInChildren<Browser>(true);
+
+                if (isVisible && browser != null)
+                {
+                    _overlayType = "WebBrowser";
+                    _browserCanvas = canvas;
+                    return;
+                }
+            }
+
             // Check for What's New carousel (has NavPip pagination dots)
             var navPips = GameObject.FindObjectsOfType<Button>()
                 .Where(b => b.gameObject.activeInHierarchy && b.gameObject.name.Contains("NavPip"))
@@ -87,6 +108,9 @@ namespace AccessibleArena.Core.Services
 
             switch (_overlayType)
             {
+                case "WebBrowser":
+                    DiscoverWebBrowserElements();
+                    return; // WBA manages its own elements
                 case "WhatsNew":
                     DiscoverWhatsNewElements(addedObjects);
                     break;
@@ -97,6 +121,41 @@ namespace AccessibleArena.Core.Services
                     DiscoverGenericOverlayElements(addedObjects);
                     break;
             }
+        }
+
+        private void DiscoverWebBrowserElements()
+        {
+            _webBrowser.Activate(_browserCanvas, _announcer, "Web content");
+            // Add placeholder element so TryActivate passes the Count > 0 check
+            AddElement(_browserCanvas, "Web browser");
+        }
+
+        protected override bool HandleEarlyInput()
+        {
+            if (_overlayType == "WebBrowser" && _webBrowser.IsActive)
+            {
+                _webBrowser.HandleInput();
+                return true;
+            }
+            return false;
+        }
+
+        public override void Update()
+        {
+            if (_isActive && _overlayType == "WebBrowser")
+            {
+                _webBrowser.Update();
+            }
+            base.Update();
+        }
+
+        protected override void OnDeactivating()
+        {
+            if (_webBrowser.IsActive)
+            {
+                _webBrowser.Deactivate();
+            }
+            _browserCanvas = null;
         }
 
         private void DiscoverWhatsNewElements(HashSet<GameObject> addedObjects)
@@ -378,6 +437,10 @@ namespace AccessibleArena.Core.Services
 
         protected override string GetActivationAnnouncement()
         {
+            // WBA provides its own announcement immediately
+            if (_overlayType == "WebBrowser")
+                return "";
+
             string countInfo = _elements.Count > 1 ? $" {_elements.Count} items." : "";
 
             // Try to include content summary for What's New
@@ -412,6 +475,17 @@ namespace AccessibleArena.Core.Services
             {
                 MelonLogger.Msg($"[{NavigatorId}] Overlay dismissed");
                 return false;
+            }
+
+            // WebBrowser: check canvas + WBA validity instead of base element validation
+            if (_overlayType == "WebBrowser")
+            {
+                if (_browserCanvas == null || !_browserCanvas.activeInHierarchy || !_webBrowser.IsActive)
+                {
+                    MelonLogger.Msg($"[{NavigatorId}] Web browser dismissed");
+                    return false;
+                }
+                return true;
             }
 
             return base.ValidateElements();

@@ -206,6 +206,22 @@ Fixed `ExtractBrowserHeaderText()` to read the subheader from the `BrowserHeader
 
 ---
 
+### ZFBrowser Overlay Detection (Mailbox Reward Promos)
+
+Claiming certain mailbox rewards (e.g. TMNT promo) opens a `FullscreenZFBrowserCanvas` (embedded Chromium web page) instead of the standard rewards popup. Previously, OverlayNavigator misclassified this as "WhatsNew" (found unrelated home page NavPips), presenting non-functional page dots and a broken Back button.
+
+**Fix applied:** `DetermineOverlayType()` now checks for `FullscreenZFBrowserCanvas(Clone)` before the NavPip check. When detected (active, visible via CanvasGroup alpha, contains Browser component), delegates to `WebBrowserAccessibility` which extracts page elements via JavaScript and provides full keyboard navigation. Backspace clicks the "Back to Arena" Unity button outside the browser.
+
+**Untested:** The fix compiles and follows the same WBA pattern used successfully by StoreNavigator for payment popups, but has not been tested with an actual mailbox reward browser overlay. Monitor whether:
+- WBA correctly extracts headings, text, and buttons from the promo web page
+- Navigation with Up/Down works through extracted elements
+- Backspace correctly dismisses the overlay and returns to the mailbox
+- Normal overlays (What's New, announcements, reward popups) still detect and work unchanged
+
+**Files:** `OverlayNavigator.cs` (DetermineOverlayType, DiscoverWebBrowserElements, HandleEarlyInput, ValidateElements, Update, OnDeactivating), `WebBrowserAccessibility.cs` (Activate contextLabel parameter)
+
+---
+
 ### Season Rewards Popup (Monthly Reset)
 
 Season end rewards popup now uses content-gated detection (NPE-style): the navigator stays inactive until actual content is loaded, and activates once with a clean announcement. Season rank display phases (old rank, new rank) extract title, subtitle, and per-format rank details from `SeasonEndRankDisplay` components. ForceRescan suppresses duplicate announcements by tracking element count. Monitor whether:

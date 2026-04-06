@@ -38,6 +38,9 @@ All notable changes to Accessible Arena.
 - Added "Brief opponent spell announcements" setting — independently shorten opponent spell announcements to name and type only, mirroring the existing setting for own spells
 - All setting descriptions are translated into all 12 supported languages
 
+### Overlay / Web Browser
+- Claiming mailbox rewards that open an embedded web page (e.g. TMNT promo) no longer misdetects as "What's New" with broken navigation — the overlay now delegates to the web browser accessibility system for full keyboard navigation of the page content (untested, may not work fully)
+
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission
 

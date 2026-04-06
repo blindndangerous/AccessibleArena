@@ -35,6 +35,7 @@ namespace AccessibleArena.Core.Services
         private GameObject _browserPanel;
         private IAnnouncementService _announcer;
         private bool _isActive;
+        private string _contextLabel;
 
         private List<WebElement> _elements = new List<WebElement>();
         private int _currentIndex;
@@ -453,10 +454,11 @@ namespace AccessibleArena.Core.Services
         /// Activate browser accessibility for the given panel.
         /// Finds the Browser component and starts element extraction.
         /// </summary>
-        public void Activate(GameObject panel, IAnnouncementService announcer)
+        public void Activate(GameObject panel, IAnnouncementService announcer, string contextLabel = null)
         {
             _browserPanel = panel;
             _announcer = announcer;
+            _contextLabel = contextLabel ?? "Payment page";
             _currentIndex = 0;
             _isEditingField = false;
             _isLoading = true;
@@ -491,12 +493,12 @@ namespace AccessibleArena.Core.Services
 
             if (_browser.IsLoaded)
             {
-                _announcer.AnnounceInterrupt("Payment page. Loading elements...");
+                _announcer.AnnounceInterrupt($"{_contextLabel}. Loading elements...");
                 ExtractElements();
             }
             else
             {
-                _announcer.AnnounceInterrupt("Payment page loading...");
+                _announcer.AnnounceInterrupt($"{_contextLabel} loading...");
             }
         }
 
@@ -966,7 +968,7 @@ namespace AccessibleArena.Core.Services
 
                 MelonLogger.Msg("[WebBrowser] No web elements found, scheduling rescan for iframe content");
                 ScheduleRescan(1.5f);
-                _announcer.AnnounceInterrupt("Payment page loading...");
+                _announcer.AnnounceInterrupt($"{_contextLabel} loading...");
                 return;
             }
 
@@ -984,7 +986,7 @@ namespace AccessibleArena.Core.Services
 
             // Reset to first element
             _currentIndex = 0;
-            _announcer.AnnounceInterrupt(Strings.PaymentPage(_elements.Count));
+            _announcer.AnnounceInterrupt($"{_contextLabel}. {_elements.Count} elements.");
 
             if (_elements.Count > 0)
             {
@@ -1327,7 +1329,7 @@ namespace AccessibleArena.Core.Services
                         // Not a CAPTCHA — keep retrying a few more times
                         MelonLogger.Msg("[WebBrowser] No CAPTCHA indicators found, continuing rescans");
                         ScheduleRescan(1.5f);
-                        _announcer.AnnounceInterrupt("Payment page loading...");
+                        _announcer.AnnounceInterrupt($"{_contextLabel} loading...");
                     }
                 })
                 .Catch(ex =>
@@ -1346,7 +1348,7 @@ namespace AccessibleArena.Core.Services
                     else
                     {
                         ScheduleRescan(1.5f);
-                        _announcer.AnnounceInterrupt("Payment page loading...");
+                        _announcer.AnnounceInterrupt($"{_contextLabel} loading...");
                     }
                 });
         }
