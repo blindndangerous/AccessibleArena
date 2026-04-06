@@ -11,6 +11,7 @@ All notable changes to Accessible Arena.
 
 ### Combat
 - Attacking creatures now announce their target when attacking a planeswalker or battle (e.g., "attacking Jace, the Mind Sculptor") — previously only showed "attacking" without indicating the target
+- Fixed attacker count being wrong during attack animations (e.g., 10 token attackers reported as 4) — now uses model-based IsAttacking check instead of relying on the UI animation state
 
 ### Extended Card Info Menu (I key)
 - Planeswalker loyalty costs are now screen-reader-friendly: "+1:" is read as "Plus 1:", "-3:" as "Minus 3:" (localized for all languages)
@@ -22,6 +23,7 @@ All notable changes to Accessible Arena.
 ### Position Counts
 - All "X of Y" position announcements are now localized instead of hardcoded English — they use the correct format for each language (e.g., "3 von 7" in German, "3 sur 7" in French)
 - Added a "Position counts" toggle in the F2 settings menu to show or hide position announcements globally
+- Position counts in duels and browsers are now always spoken regardless of the setting — zone card counts, browser options, battlefield positions, and targeting info are too critical for navigation to hide
 - Position counts are now consistently suppressed when there is only one item (no more "1 of 1")
 - Fixed ProfileNavigator using "/" format ("2/5") instead of "of" — now uses the same localized format as all other navigators
 

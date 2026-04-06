@@ -585,15 +585,15 @@ namespace AccessibleArena.Core.Models
         // ===========================================
         // POSITION / COUNTS
         // ===========================================
-        public static string PositionOf(int index, int total)
+        public static string PositionOf(int index, int total, bool force = false)
         {
-            if (!ShowPositionCounts || total <= 1) return "";
+            if (!(force || ShowPositionCounts) || total <= 1) return "";
             return L.Format("PositionOf_Format", index, total);
         }
 
-        public static string CardPosition(string cardName, string state, int position, int total)
+        public static string CardPosition(string cardName, string state, int position, int total, bool force = false)
         {
-            if (!ShowPositionCounts || total <= 1) return $"{cardName}{state ?? ""}";
+            if (!(force || ShowPositionCounts) || total <= 1) return $"{cardName}{state ?? ""}";
             return L.Format("CardPosition_Format", cardName, state ?? "", position, total);
         }
 
@@ -842,7 +842,7 @@ namespace AccessibleArena.Core.Models
         public static string SelectGroupEntry(int pile1Count, int pile2Count) => L.Format("SelectGroup_Entry_Format", pile1Count, pile2Count);
         public static string SelectGroupCardInPile(string cardName, string pileName, int index, int total)
         {
-            if (!ShowPositionCounts || total <= 1) return $"{cardName}, {pileName}";
+            if (total <= 1) return $"{cardName}, {pileName}";
             return L.Format("SelectGroup_CardInPile_Format", cardName, pileName, index, total);
         }
 
@@ -878,9 +878,9 @@ namespace AccessibleArena.Core.Models
         // ===========================================
         public static string HelpMenuTitle => L.Get("HelpMenuTitle");
         public static string HelpMenuInstructions => L.Get("HelpMenuInstructions");
-        public static string HelpItemPosition(int index, int total, string text)
+        public static string HelpItemPosition(int index, int total, string text, bool force = false)
         {
-            if (!ShowPositionCounts || total <= 1) return text;
+            if (!(force || ShowPositionCounts) || total <= 1) return text;
             return L.Format("HelpItemPosition_Format", index, total, text);
         }
         public static string HelpMenuClosed => L.Get("HelpMenuClosed");
@@ -1362,9 +1362,9 @@ namespace AccessibleArena.Core.Models
         public static string GroupCount(int count) => L.Format("GroupCount_Format", count);
         public static string GroupItemCount(string groupName, string itemCount) =>
             L.Format("GroupItemCount_Format", groupName, itemCount);
-        public static string ItemPositionOf(int index, int total, string label)
+        public static string ItemPositionOf(int index, int total, string label, bool force = false)
         {
-            if (!ShowPositionCounts || total <= 1) return label;
+            if (!(force || ShowPositionCounts) || total <= 1) return label;
             return L.Format("ItemPositionOf_Format", index, total, label);
         }
         public static string ScreenGroupsSummary(string screenName, string groupCount, string currentAnnouncement) =>

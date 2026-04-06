@@ -915,7 +915,7 @@ namespace AccessibleArena.Core.Services
             }
 
             string prefix = includeZoneName ? $"{GetZoneName(_currentZone)}, " : "";
-            string pos = Strings.PositionOf(position, total);
+            string pos = Strings.PositionOf(position, total, force: true);
             _announcer.Announce($"{prefix}{cardName}{originZoneText}{selectionState}{combatState}{attachmentText}{targetingText}" + (pos != "" ? $", {pos}" : ""), priority);
 
             // Set EventSystem focus to the card - this ensures other navigators
@@ -1017,7 +1017,7 @@ namespace AccessibleArena.Core.Services
             var zoneInfo = _zones[libraryZone];
             var card = zoneInfo.Cards[0];
             string cardName = CardDetector.GetCardName(card);
-            string pos = Strings.PositionOf(1, zoneInfo.Cards.Count);
+            string pos = Strings.PositionOf(1, zoneInfo.Cards.Count, force: true);
             _announcer.Announce($"{countText}. {cardName}" + (pos != "" ? $", {pos}" : ""), AnnouncementPriority.High);
 
             SetFocusedGameObject(card, "ZoneNavigator");

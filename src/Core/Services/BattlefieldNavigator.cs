@@ -731,7 +731,7 @@ namespace AccessibleArena.Core.Services
                 bool verbose = AccessibleArenaMod.Instance?.Settings?.VerboseAnnouncements != false;
                 prefix = (!isRowSwitch || verbose) ? $"{rowName}, " : "";
             }
-            string pos = Strings.PositionOf(position, total);
+            string pos = Strings.PositionOf(position, total, force: true);
             _announcer.Announce($"{prefix}{cardName}{typeLabel}{combatState}{attachmentText}{targetingText}" + (pos != "" ? $", {pos}" : ""), priority);
 
             // Set EventSystem focus to the card - this ensures other navigators

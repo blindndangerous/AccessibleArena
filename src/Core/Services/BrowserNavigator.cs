@@ -1474,18 +1474,18 @@ namespace AccessibleArena.Core.Services
             string position = null;
             if (_browserInfo.IsZoneBased && _zoneNavigator.TryGetCardZonePosition(card, out int zoneIdx, out int zoneTotal) && zoneTotal > 0)
             {
-                position = Strings.PositionOf(zoneIdx, zoneTotal); if (position == "") position = null;
+                position = Strings.PositionOf(zoneIdx, zoneTotal, force: true); if (position == "") position = null;
             }
             else if (isRepeatSelection)
             {
                 // For RepeatSelection: show position among options only (exclude selected copies)
                 int optionIndex, optionTotal;
                 GetRepeatSelectionPosition(card, out optionIndex, out optionTotal);
-                position = Strings.PositionOf(optionIndex, optionTotal); if (position == "") position = null;
+                position = Strings.PositionOf(optionIndex, optionTotal, force: true); if (position == "") position = null;
             }
             else
             {
-                position = Strings.PositionOf(_currentCardIndex + 1, _browserCards.Count); if (position == "") position = null;
+                position = Strings.PositionOf(_currentCardIndex + 1, _browserCards.Count, force: true); if (position == "") position = null;
             }
 
             string announcement;
@@ -1830,7 +1830,7 @@ namespace AccessibleArena.Core.Services
         private void AnnounceMultiZoneSelector()
         {
             string zoneName = GetCurrentZoneButtonLabel();
-            string zonePos = Strings.PositionOf(_currentZoneButtonIndex + 1, _zoneButtons.Count);
+            string zonePos = Strings.PositionOf(_currentZoneButtonIndex + 1, _zoneButtons.Count, force: true);
             string hint = zonePos != "" ? $", {zonePos}" : "";
             string cardInfo = _browserCards.Count > 0 ? $", {_browserCards.Count} cards" : "";
             string announcement = $"{Strings.ZoneChange}: {zoneName}{hint}{cardInfo}";
@@ -1964,7 +1964,7 @@ namespace AccessibleArena.Core.Services
             {
                 label = UITextExtractor.GetButtonText(button, button.name);
             }
-            string pos = Strings.PositionOf(_currentButtonIndex + 1, _browserButtons.Count);
+            string pos = Strings.PositionOf(_currentButtonIndex + 1, _browserButtons.Count, force: true);
             string position = pos != "" ? $", {pos}" : "";
 
             _announcer.Announce($"{label}{position}", AnnouncementPriority.High);
@@ -3583,7 +3583,7 @@ namespace AccessibleArena.Core.Services
             }
 
             // Add position
-            string pos = Strings.PositionOf(_currentCardIndex + 1, _browserCards.Count);
+            string pos = Strings.PositionOf(_currentCardIndex + 1, _browserCards.Count, force: true);
             if (pos != "") parts.Add(pos);
 
             _announcer.Announce(string.Join(", ", parts), AnnouncementPriority.High);
@@ -3645,7 +3645,7 @@ namespace AccessibleArena.Core.Services
                 }
 
                 string entry = Strings.DamageAssignEntry(attackerName, power, cardCount);
-                string pos = Strings.PositionOf(_assignerIndex, _assignerTotal);
+                string pos = Strings.PositionOf(_assignerIndex, _assignerTotal, force: true);
                 if (pos != "") entry += $". {pos}";
                 return entry;
             }
@@ -3903,7 +3903,7 @@ namespace AccessibleArena.Core.Services
             if (string.IsNullOrEmpty(displayText)) return;
 
             bool isSelected = IsKeywordSelected(_currentKeywordIndex);
-            string pos = Strings.PositionOf(_currentKeywordIndex + 1, count);
+            string pos = Strings.PositionOf(_currentKeywordIndex + 1, count, force: true);
             string position = pos != "" ? $", {pos}" : "";
             string selState = isSelected ? $", {Strings.KeywordSelectionSelected}" : "";
 

@@ -459,7 +459,7 @@ namespace AccessibleArena.Core.Services
                 if (_poolIndex < 0 || _poolIndex >= _poolCards.Count) return "";
                 var go = _poolCards[_poolIndex];
                 string name = CardModelProvider.ExtractCardInfoFromModel(go)?.Name ?? UITextExtractor.GetText(go);
-                return Strings.CardPosition(name, null, _poolIndex + 1, _poolCards.Count);
+                return Strings.CardPosition(name, null, _poolIndex + 1, _poolCards.Count, force: true);
             }
             else
             {
@@ -467,7 +467,7 @@ namespace AccessibleArena.Core.Services
                 var deckCard = _deckCards[_deckIndex];
                 string name = CardModelProvider.GetNameFromGrpId(deckCard.GrpId) ?? $"Card #{deckCard.GrpId}";
                 string qty = deckCard.Quantity > 1 ? $" x{deckCard.Quantity}" : "";
-                string pos = Strings.PositionOf(_deckIndex + 1, _deckCards.Count);
+                string pos = Strings.PositionOf(_deckIndex + 1, _deckCards.Count, force: true);
                 return $"{name}{qty}" + (pos != "" ? $", {pos}" : "");
             }
         }

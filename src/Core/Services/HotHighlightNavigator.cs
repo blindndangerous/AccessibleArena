@@ -630,7 +630,7 @@ namespace AccessibleArena.Core.Services
             {
                 int position = _currentIndex + 1;
                 int total = _items.Count;
-                string announcement = Strings.ItemPositionOf(position, total, item.Name);
+                string announcement = Strings.ItemPositionOf(position, total, item.Name, force: true);
                 _announcer.Announce(announcement, AnnouncementPriority.High);
                 _zoneNavigator.SetCurrentZone(ZoneType.Hand, "HotHighlightNavigator");
                 _lastItemZone = "Button";
@@ -642,7 +642,7 @@ namespace AccessibleArena.Core.Services
                 int position = _currentIndex + 1;
                 int total = _items.Count;
                 string name = item.IsOpponent ? Strings.Opponent : Strings.You;
-                string pos = Strings.PositionOf(position, total);
+                string pos = Strings.PositionOf(position, total, force: true);
                 _announcer.Announce($"{name}, player" + (pos != "" ? $", {pos}" : ""), AnnouncementPriority.High);
                 _zoneNavigator.SetCurrentZone(ZoneType.Hand, "HotHighlightNavigator");
                 _lastItemZone = "Player";
