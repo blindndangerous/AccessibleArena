@@ -1050,22 +1050,23 @@ namespace AccessibleArena.Core.Services
             var attackers = new List<string>();
             foreach (var go in EnumerateCDCsInHolder("BattlefieldCardHolder"))
             {
-                // Check if this card has an "IsAttacking" indicator
-                // Note: The indicator may be inactive (activeInHierarchy=false) but still present,
-                // which means the creature IS attacking. We count if the child EXISTS, not just if active.
-                bool isAttacking = false;
-                foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
+                // Model-based check (authoritative), with UI child fallback
+                // Matches CombatNavigator.GetCombatStateText approach
+                bool isAttacking = CardStateProvider.GetIsAttackingFromCard(go);
+                if (!isAttacking)
                 {
-                    if (child.name == "IsAttacking")
+                    foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
                     {
-                        isAttacking = true;
-                        break;
+                        if (child.name == "IsAttacking" && child.gameObject.activeInHierarchy)
+                        {
+                            isAttacking = true;
+                            break;
+                        }
                     }
                 }
 
                 if (isAttacking)
                 {
-                    // Get card name and P/T
                     var info = CardDetector.ExtractCardInfo(go);
                     string attackerInfo = info.Name ?? "Unknown";
                     if (!string.IsNullOrEmpty(info.PowerToughness))
