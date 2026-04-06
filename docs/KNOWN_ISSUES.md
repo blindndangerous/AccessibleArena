@@ -6,12 +6,6 @@ For resolved issues and investigation history, see docs/old/RESOLVED_ISSUES.md.
 
 ## Active Bugs
 
-### Blocking Sometimes Announces "0 0"
-
-During Declare Blockers, the mod sometimes announces "0 0" instead of meaningful blocker information. Theory: this may happen when a single creature tries to block an attacker with menace (which requires at least two blockers), and the game rejects the illegal block assignment.
-
----
-
 ### Escape in Input Fields Wipes Text Content
 
 Pressing Escape while editing an input field (e.g. registration form) clears the text the user just typed. The user must press Enter or Tab to "save" the text before pressing Escape, which is unintuitive. Tab works correctly because the mod explicitly fires `onEndEdit` on the old field with the correct text before deactivating.
@@ -382,9 +376,8 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 1. ~~Manual trigger ordering~~ — Implemented in v0.8.7 (OrderCards/TriggerOrderCards browser support)
 
 2. Display counters on players - announce counters like poison, energy, experience, etc. on players
-3. Saga support - announce current chapter, total chapters, and chapter abilities for Saga enchantments
-4. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
-5. Improve mod settings - reorganize settings into useful categories with category splitting for better navigation
+3. Verbose "Big Card" announcements (inspired by Hearthstone Access) - option to include card details inline with action announcements, with user preference toggle for brief vs verbose
+4. Improve mod settings - reorganize settings into useful categories with category splitting for better navigation
 ### Polish
 
 1. Improve Challenge Friend screen workflow communication — currently unclear for blind users. Consider adding a dedicated Ready button, more contextual hints, or custom strings to guide through the challenge setup flow.
@@ -393,9 +386,8 @@ We run a parallel navigation system alongside Unity's EventSystem, selectively m
 #### Tutorial Improvements
 - Add mana cost explanation (how mana payment works, color picker for any-color sources)
 - Explain that creatures heal at the end of each turn — damage doesn't persist across turns, which is non-obvious for new players and important for combat decisions
-3. Multi-target attack announcements — when multiple attack targets exist (e.g. opponent has planeswalkers alongside their life total), the mod needs to announce available targets and which target each attacker is assigned to. Consider adding a safeguard to prevent accidentally sending all attackers to one target when the player intended to split them.
-4. Auto-advancing browsers can silently decline options — in browsers where selecting a card immediately advances (e.g. Rebound triggers), pressing Space without first selecting a card clicks the confirm/decline button, silently skipping the option. Needs either a safeguard (e.g. "no card selected, press Space again to decline" warning, similar to the phase skip confirmation) or a structural redesign so these browsers follow the standard Enter-to-select, Space-to-confirm pattern more safely.
-5. Battlefield row categorization for land creatures — effects that turn lands into creatures (e.g. Nissa animating lands) cause them to appear in the Lands row (A/Shift+A) instead of the Creatures row (B/Shift+B). Conversely, effects that turn non-land permanents into lands (e.g. certain commander abilities) may miscategorize them. The categorization logic needs to handle cards with multiple types (Creature Land) more intelligently, potentially prioritizing the creature type for combat relevance.
+3. Auto-advancing browsers can silently decline options — in browsers where selecting a card immediately advances (e.g. Rebound triggers), pressing Space without first selecting a card clicks the confirm/decline button, silently skipping the option. Needs either a safeguard (e.g. "no card selected, press Space again to decline" warning, similar to the phase skip confirmation) or a structural redesign so these browsers follow the standard Enter-to-select, Space-to-confirm pattern more safely.
+4. Battlefield row categorization for land creatures — effects that turn lands into creatures (e.g. Nissa animating lands) cause them to appear in the Lands row (A/Shift+A) instead of the Creatures row (B/Shift+B). Conversely, effects that turn non-land permanents into lands (e.g. certain commander abilities) may miscategorize them. The categorization logic needs to handle cards with multiple types (Creature Land) more intelligently, potentially prioritizing the creature type for combat relevance.
 
 ### Low Priority / v1.1
 
