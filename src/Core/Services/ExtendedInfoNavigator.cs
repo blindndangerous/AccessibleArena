@@ -27,15 +27,20 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Opens the extended info menu for the given card.
-        /// Builds items from keyword descriptions and linked face info.
+        /// Builds items from rules lines, linked face info, and keyword descriptions.
         /// If no info is available, announces that and does not open.
         /// </summary>
         public void Open(GameObject card)
         {
             _items.Clear();
 
-            // Keywords: each "Header: Details" from GetKeywordDescriptions is one entry
-            _items.AddRange(ExtendedCardInfoProvider.GetKeywordDescriptions(card));
+            // Rules lines: individual ability entries for multi-ability cards (planeswalkers, sagas, classes)
+            var cardInfo = CardModelProvider.ExtractCardInfoFromModel(card);
+            if (cardInfo.HasValue && cardInfo.Value.RulesLines != null && cardInfo.Value.RulesLines.Count > 1)
+            {
+                for (int i = 0; i < cardInfo.Value.RulesLines.Count; i++)
+                    _items.Add(cardInfo.Value.RulesLines[i]);
+            }
 
             // Linked face: split into individual field entries
             var linkedFace = ExtendedCardInfoProvider.GetLinkedFaceInfo(card);
@@ -53,6 +58,9 @@ namespace AccessibleArena.Core.Services
                 if (!string.IsNullOrEmpty(faceInfo.RulesText))
                     _items.Add($"{Strings.CardInfoRules}: {faceInfo.RulesText}");
             }
+
+            // Keywords: each "Header: Details" from GetKeywordDescriptions is one entry
+            _items.AddRange(ExtendedCardInfoProvider.GetKeywordDescriptions(card));
 
             if (_items.Count == 0)
             {

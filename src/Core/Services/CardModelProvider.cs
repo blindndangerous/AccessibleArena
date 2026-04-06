@@ -1235,6 +1235,29 @@ namespace AccessibleArena.Core.Services
 
         /// <summary>
         /// Extracts the actual value from a StringBackedInt object.
+        /// <summary>
+        /// Merges class level-up cost lines with their following effect lines.
+        /// Class enchantments produce abilities like: "{o2oW}: Stufe 2" followed by the effect text.
+        /// This merges them into a single line: "{o2oW}: Stufe 2. Effect text here."
+        /// Detection: line contains mana symbols ({o), has "}: " separator, text after colon is short and ends with digit.
+        /// </summary>
+        private static void MergeClassLevelLines(List<string> lines)
+        {
+            for (int i = lines.Count - 2; i >= 0; i--)
+            {
+                var line = lines[i];
+                int colonIdx = line.LastIndexOf("}: ");
+                if (colonIdx < 0 || !line.Contains("{o")) continue;
+
+                string afterColon = line.Substring(colonIdx + 3).Trim();
+                if (afterColon.Length > 0 && afterColon.Length < 15 && char.IsDigit(afterColon[afterColon.Length - 1]))
+                {
+                    lines[i] = line + ". " + lines[i + 1];
+                    lines.RemoveAt(i + 1);
+                }
+            }
+        }
+
         /// StringBackedInt has: RawText (for "*" etc), Value (int), DefinedValue (nullable int)
         /// </summary>
         private static string FormatRarityName(string rawRarity)
@@ -1739,8 +1762,10 @@ namespace AccessibleArena.Core.Services
 
                     if (rulesLines.Count > 0)
                     {
-                        string rawRulesText = string.Join(" ", rulesLines);
-                        info.RulesText = ParseManaSymbolsInText(rawRulesText);
+                        MergeClassLevelLines(rulesLines);
+                        var parsedLines = rulesLines.Select(line => ParseManaSymbolsInText(line)).ToList();
+                        info.RulesLines = parsedLines;
+                        info.RulesText = string.Join(" ", parsedLines);
                     }
 
                     // Cache ability â†’ parent card mapping for ability CDC lookups
@@ -2226,8 +2251,10 @@ namespace AccessibleArena.Core.Services
 
                         if (rulesTexts.Count > 0)
                         {
-                            string rawRulesText = string.Join(" ", rulesTexts);
-                            info.RulesText = ParseManaSymbolsInText(rawRulesText);
+                            MergeClassLevelLines(rulesTexts);
+                            var parsedLines = rulesTexts.Select(line => ParseManaSymbolsInText(line)).ToList();
+                            info.RulesLines = parsedLines;
+                            info.RulesText = string.Join(" ", parsedLines);
                         }
                     }
                 }

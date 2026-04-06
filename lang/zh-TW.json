@@ -115,6 +115,8 @@
   "CardInfoPowerToughness": "力量與防禦",
   "CardInfoType": "類型",
   "CardInfoRules": "規則",
+  "LoyaltyPlus": "加",
+  "LoyaltyMinus": "減",
   "CardInfoFlavor": "背景描述",
   "CardInfoRarity": "稀有度",
   "CardInfoArtist": "畫家",

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using AccessibleArena.Core.Models;
 using static AccessibleArena.Core.Utils.ReflectionUtils;
 using T = AccessibleArena.Core.Constants.GameTypeNames;
 
@@ -65,11 +66,16 @@ namespace AccessibleArena.Core.Services
                 string costStr = CardModelProvider.GetStringBackedIntValue(loyaltyCostObj);
                 if (string.IsNullOrEmpty(costStr) || costStr == "0") return null;
 
-                // Ensure positive values get "+" prefix
-                if (costStr[0] != '+' && costStr[0] != '-' && costStr[0] != '0')
-                    costStr = "+" + costStr;
+                // Build screen-reader-friendly prefix: "+1" → "Plus 1", "-3" → "Minus 3"
+                string prefix;
+                if (costStr[0] == '-')
+                    prefix = Strings.LoyaltyMinus + " " + costStr.Substring(1);
+                else if (costStr[0] == '+')
+                    prefix = Strings.LoyaltyPlus + " " + costStr.Substring(1);
+                else
+                    prefix = Strings.LoyaltyPlus + " " + costStr;
 
-                return costStr + ": ";
+                return prefix + ": ";
             }
             catch
             {

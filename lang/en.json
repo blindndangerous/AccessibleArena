@@ -125,6 +125,8 @@
   "CardInfoPowerToughness": "Power and Toughness",
   "CardInfoType": "Type",
   "CardInfoRules": "Rules",
+  "LoyaltyPlus": "Plus",
+  "LoyaltyMinus": "Minus",
   "CardInfoFlavor": "Flavor",
   "CardInfoRarity": "Rarity",
   "CardInfoArtist": "Artist",

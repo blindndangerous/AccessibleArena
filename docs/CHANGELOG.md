@@ -7,6 +7,12 @@ All notable changes to Accessible Arena.
 ### Combat
 - Attacking creatures now announce their target when attacking a planeswalker or battle (e.g., "attacking Jace, the Mind Sculptor") — previously only showed "attacking" without indicating the target
 
+### Extended Card Info Menu (I key)
+- Planeswalker loyalty costs are now screen-reader-friendly: "+1:" is read as "Plus 1:", "-3:" as "Minus 3:" (localized for all languages)
+- Multi-ability cards (planeswalkers, sagas, classes) now show each ability as a separate navigable entry in the I menu, making it easy to review individual abilities with Up/Down arrows
+- Class enchantment level-up costs are merged with their effect text (e.g., "2 White: Level 2. Effect text") instead of appearing as separate entries
+- Item order changed to: ability lines, linked card face, keyword descriptions
+
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission
 

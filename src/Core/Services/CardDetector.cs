@@ -762,6 +762,11 @@ namespace AccessibleArena.Core.Services
         public string TypeLine;
         public string PowerToughness;
         public string RulesText;
+        /// <summary>
+        /// Individual parsed ability lines (for multi-ability cards like planeswalkers, sagas, classes).
+        /// Null or empty for single-ability cards.
+        /// </summary>
+        public List<string> RulesLines;
         public string FlavorText;
         public string Rarity;
         public string SetName;
