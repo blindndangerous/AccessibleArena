@@ -854,10 +854,14 @@ namespace AccessibleArena.Core.Models
         public static string SettingsMenuClosed => L.Get("SettingsMenuClosed");
         public static string SettingLanguage => L.Get("SettingLanguage");
         public static string SettingTutorialMessages => L.Get("SettingTutorialMessages");
+        public static string SettingTutorialMessagesDesc => L.Get("SettingTutorialMessagesDesc");
         public static string SettingVerboseAnnouncements => L.Get("SettingVerboseAnnouncements");
+        public static string SettingVerboseAnnouncementsDesc => L.Get("SettingVerboseAnnouncementsDesc");
         public static string SettingBriefCastAnnouncements => L.Get("SettingBriefCastAnnouncements");
+        public static string SettingBriefCastAnnouncementsDesc => L.Get("SettingBriefCastAnnouncementsDesc");
         public static string SettingPhaseSkipWarning => L.Get("SettingPhaseSkipWarning");
         public static string SettingPositionCounts => L.Get("SettingPositionCounts");
+        public static string SettingPositionCountsDesc => L.Get("SettingPositionCountsDesc");
         public static string SettingOn => L.Get("SettingOn");
         public static string SettingOff => L.Get("SettingOff");
         public static string SettingChanged(string name, string value) => L.Format("SettingChanged_Format", name, value);

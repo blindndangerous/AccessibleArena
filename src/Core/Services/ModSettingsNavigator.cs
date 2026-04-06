@@ -53,6 +53,8 @@ namespace AccessibleArena.Core.Services
             public Action Toggle { get; set; }
             /// <summary>True if this item uses dropdown mode instead of simple toggle.</summary>
             public bool IsDropdown { get; set; }
+            /// <summary>Optional short description of what this setting controls.</summary>
+            public string Description { get; set; }
         }
 
         private List<SettingItem> BuildSettingItems()
@@ -70,19 +72,22 @@ namespace AccessibleArena.Core.Services
                 {
                     Name = Strings.SettingTutorialMessages,
                     GetValue = () => _settings.TutorialMessages ? Strings.SettingOn : Strings.SettingOff,
-                    Toggle = () => _settings.TutorialMessages = !_settings.TutorialMessages
+                    Toggle = () => _settings.TutorialMessages = !_settings.TutorialMessages,
+                    Description = Strings.SettingTutorialMessagesDesc
                 },
                 new SettingItem
                 {
                     Name = Strings.SettingVerboseAnnouncements,
                     GetValue = () => _settings.VerboseAnnouncements ? Strings.SettingOn : Strings.SettingOff,
-                    Toggle = () => _settings.VerboseAnnouncements = !_settings.VerboseAnnouncements
+                    Toggle = () => _settings.VerboseAnnouncements = !_settings.VerboseAnnouncements,
+                    Description = Strings.SettingVerboseAnnouncementsDesc
                 },
                 new SettingItem
                 {
                     Name = Strings.SettingBriefCastAnnouncements,
                     GetValue = () => _settings.BriefCastAnnouncements ? Strings.SettingOn : Strings.SettingOff,
-                    Toggle = () => _settings.BriefCastAnnouncements = !_settings.BriefCastAnnouncements
+                    Toggle = () => _settings.BriefCastAnnouncements = !_settings.BriefCastAnnouncements,
+                    Description = Strings.SettingBriefCastAnnouncementsDesc
                 },
                 new SettingItem
                 {
@@ -94,7 +99,8 @@ namespace AccessibleArena.Core.Services
                 {
                     Name = Strings.SettingPositionCounts,
                     GetValue = () => _settings.PositionCounts ? Strings.SettingOn : Strings.SettingOff,
-                    Toggle = () => _settings.PositionCounts = !_settings.PositionCounts
+                    Toggle = () => _settings.PositionCounts = !_settings.PositionCounts,
+                    Description = Strings.SettingPositionCountsDesc
                 }
             };
         }
@@ -413,6 +419,8 @@ namespace AccessibleArena.Core.Services
 
             var item = _items[_currentIndex];
             string valueText = $"{item.Name}: {item.GetValue()}";
+            if (!string.IsNullOrEmpty(item.Description))
+                valueText = $"{valueText}. {item.Description}";
             string announcement = Strings.SettingItemPosition(_currentIndex + 1, _items.Count, valueText);
             _announcer.AnnounceInterrupt(announcement);
         }
