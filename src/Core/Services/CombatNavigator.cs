@@ -441,12 +441,15 @@ namespace AccessibleArena.Core.Services
             // Attacking states (priority: is attacking > selected to attack > can attack)
             if (isAttacking)
             {
+                // Determine attacking text: "attacking" or "attacking {target}" for non-player targets
+                string attackText = GetAttackTargetText(card) ?? Models.Strings.Combat_Attacking;
+
                 // Try to resolve who is blocking this attacker
                 string blockedByText = GetBlockedByText(card);
                 if (!string.IsNullOrEmpty(blockedByText))
-                    states.Add($"{Models.Strings.Combat_Attacking}, {blockedByText}");
+                    states.Add($"{attackText}, {blockedByText}");
                 else
-                    states.Add(Models.Strings.Combat_Attacking);
+                    states.Add(attackText);
             }
             else if (hasAttackerFrame && isSelected && _duelAnnouncer.IsInDeclareAttackersPhase)
                 states.Add(Models.Strings.Combat_Attacking);
@@ -488,6 +491,31 @@ namespace AccessibleArena.Core.Services
                 return "";
 
             return ", " + string.Join(", ", states);
+        }
+
+        /// <summary>
+        /// Gets the attack target text for an attacking creature.
+        /// Returns null if the creature is attacking the opponent (default case).
+        /// Returns "attacking {CardName}" if attacking a planeswalker or battle.
+        /// </summary>
+        private string GetAttackTargetText(GameObject card)
+        {
+            try
+            {
+                var cdc = CardModelProvider.GetDuelSceneCDC(card);
+                if (cdc == null) return null;
+                var model = CardModelProvider.GetCardModel(cdc);
+                if (model == null) return null;
+                uint targetId = CardStateProvider.GetAttackTargetId(model);
+                if (targetId == 0) return null;
+
+                // Try to resolve as a card on the battlefield (planeswalker, battle)
+                string targetName = CardStateProvider.ResolveInstanceIdToName(targetId);
+                if (!string.IsNullOrEmpty(targetName))
+                    return Models.Strings.Combat_AttackingTarget(targetName);
+            }
+            catch { /* Reflection may fail on different game versions */ }
+            return null;
         }
 
         private string GetBlockingText(GameObject card)

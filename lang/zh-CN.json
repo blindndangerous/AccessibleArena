@@ -704,6 +704,7 @@
   "DamageAssign_Assigned_Format": "{1}中已分配{0}",
   "DamageAssign_Lethal": "致命",
   "Combat_Attacking": "正在攻击",
+  "Combat_Attacking_Format": "正在攻击{0}",
   "Combat_CanAttack": "可以攻击",
   "Combat_Blocking_Format": "正在阻挡{0}",
   "Combat_Blocking": "正在阻挡",

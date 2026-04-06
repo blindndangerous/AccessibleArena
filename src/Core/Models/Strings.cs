@@ -271,6 +271,7 @@ namespace AccessibleArena.Core.Models
         // COMBAT STATES
         // ===========================================
         public static string Combat_Attacking => L.Get("Combat_Attacking");
+        public static string Combat_AttackingTarget(string target) => L.Format("Combat_Attacking_Format", target);
         public static string Combat_CanAttack => L.Get("Combat_CanAttack");
         public static string Combat_Blocking(string target) => L.Format("Combat_Blocking_Format", target);
         public static string Combat_BlockingSimple => L.Get("Combat_Blocking");

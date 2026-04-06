@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.9.1
 
+### Combat
+- Attacking creatures now announce their target when attacking a planeswalker or battle (e.g., "attacking Jace, the Mind Sculptor") — previously only showed "attacking" without indicating the target
+
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission
 

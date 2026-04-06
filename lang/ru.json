@@ -704,6 +704,7 @@
   "DamageAssign_Assigned_Format": "{0} из {1} распределено",
   "DamageAssign_Lethal": "смертельно",
   "Combat_Attacking": "атакует",
+  "Combat_Attacking_Format": "атакует {0}",
   "Combat_CanAttack": "может атаковать",
   "Combat_Blocking_Format": "блокирует {0}",
   "Combat_Blocking": "блокирует",

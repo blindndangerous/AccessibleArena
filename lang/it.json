@@ -704,6 +704,7 @@
   "DamageAssign_Assigned_Format": "{0} di {1} assegnati",
   "DamageAssign_Lethal": "letale",
   "Combat_Attacking": "attacca",
+  "Combat_Attacking_Format": "attacca {0}",
   "Combat_CanAttack": "può attaccare",
   "Combat_Blocking_Format": "blocca {0}",
   "Combat_Blocking": "blocca",

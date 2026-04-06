@@ -704,6 +704,7 @@
   "DamageAssign_Assigned_Format": "{1}중 {0} 배분 완료",
   "DamageAssign_Lethal": "치명적",
   "Combat_Attacking": "공격 중",
+  "Combat_Attacking_Format": "{0} 공격 중",
   "Combat_CanAttack": "공격 가능",
   "Combat_Blocking_Format": "{0}을(를) 방어 중",
   "Combat_Blocking": "방어 중",

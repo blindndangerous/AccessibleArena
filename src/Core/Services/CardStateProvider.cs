@@ -108,6 +108,24 @@ namespace AccessibleArena.Core.Services
         }
 
         /// <summary>
+        /// Gets a uint value from a cached field/property on model.Instance.
+        /// Used for AttackTargetId, AttachedToId.
+        /// </summary>
+        private static uint GetUintFromInstance(object model, string memberName, BindingFlags flags)
+        {
+            var instance = CardModelProvider.GetModelInstance(model);
+            if (instance == null) return 0;
+            try
+            {
+                var member = GetCachedInstanceMember(instance, memberName, flags);
+                if (member == null) return 0;
+                var val = member is PropertyInfo p ? p.GetValue(instance) : ((FieldInfo)member).GetValue(instance);
+                return val is uint id ? id : 0;
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
         /// Gets a List&lt;uint&gt; from a cached field on model.Instance.
         /// Used for BlockingIds, BlockedByIds, TargetIds, TargetedByIds.
         /// </summary>
@@ -399,6 +417,7 @@ namespace AccessibleArena.Core.Services
         public static bool GetIsBlocking(object model) => GetBoolFromInstance(model, "IsBlocking", PublicInstance);
         public static List<uint> GetBlockingIds(object model) => GetUintListFromInstance(model, "BlockingIds", AllInstanceFlags);
         public static List<uint> GetBlockedByIds(object model) => GetUintListFromInstance(model, "BlockedByIds", AllInstanceFlags);
+        public static uint GetAttackTargetId(object model) => GetUintFromInstance(model, "AttackTargetId", PublicInstance);
 
         /// <summary>
         /// Resolves an InstanceId to a card name by scanning all battlefield cards.

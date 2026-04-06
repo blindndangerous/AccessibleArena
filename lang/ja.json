@@ -704,6 +704,7 @@
   "DamageAssign_Assigned_Format": "{1}中{0}割り振り済み",
   "DamageAssign_Lethal": "致死",
   "Combat_Attacking": "攻撃中",
+  "Combat_Attacking_Format": "{0}を攻撃中",
   "Combat_CanAttack": "攻撃可能",
   "Combat_Blocking_Format": "{0}をブロック中",
   "Combat_Blocking": "ブロック中",

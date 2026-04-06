@@ -715,6 +715,7 @@
   "DamageAssign_Assigned_Format": "{0} von {1} zugewiesen",
   "DamageAssign_Lethal": "tödlich",
   "Combat_Attacking": "greift an",
+  "Combat_Attacking_Format": "greift {0} an",
   "Combat_CanAttack": "kann angreifen",
   "Combat_Blocking_Format": "blockt {0}",
   "Combat_Blocking": "blockt",
