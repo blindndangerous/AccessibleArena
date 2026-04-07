@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using MelonLoader;
 using AccessibleArena.Core.Interfaces;
@@ -103,6 +104,7 @@ namespace AccessibleArena.Core.Services
             // Announce on first frame after entering
             if (!_hasAnnounced)
             {
+                ClearEventSystemSelection();
                 AnnounceEntry();
                 _hasAnnounced = true;
             }
@@ -110,6 +112,7 @@ namespace AccessibleArena.Core.Services
             // Tab always reclaims spinner focus (like BrowserNavigator pattern)
             if (Input.GetKeyDown(KeyCode.Tab))
             {
+                ClearEventSystemSelection();
                 _hasFocus = true;
                 AnnounceCurrentSpinner();
                 // Deactivate card info navigator so Up/Down controls the spinner
@@ -120,6 +123,7 @@ namespace AccessibleArena.Core.Services
             // Enter/Space = submit (always consumed when spinner is active)
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space))
             {
+                ClearEventSystemSelection();
                 Submit();
                 return true;
             }
@@ -146,6 +150,7 @@ namespace AccessibleArena.Core.Services
             // Left = previous spinner
             if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
+                ClearEventSystemSelection();
                 Navigate(-1);
                 return true;
             }
@@ -153,6 +158,7 @@ namespace AccessibleArena.Core.Services
             // Right = next spinner
             if (Input.GetKeyDown(KeyCode.RightArrow))
             {
+                ClearEventSystemSelection();
                 Navigate(1);
                 return true;
             }
@@ -160,6 +166,7 @@ namespace AccessibleArena.Core.Services
             // Up = increment value
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
+                ClearEventSystemSelection();
                 AdjustValue(1);
                 return true;
             }
@@ -167,6 +174,7 @@ namespace AccessibleArena.Core.Services
             // Down = decrement value
             if (Input.GetKeyDown(KeyCode.DownArrow))
             {
+                ClearEventSystemSelection();
                 AdjustValue(-1);
                 return true;
             }
@@ -174,6 +182,7 @@ namespace AccessibleArena.Core.Services
             // Home = jump to first spinner
             if (Input.GetKeyDown(KeyCode.Home))
             {
+                ClearEventSystemSelection();
                 _currentIndex = 0;
                 AnnounceCurrentSpinner();
                 return true;
@@ -182,6 +191,7 @@ namespace AccessibleArena.Core.Services
             // End = jump to last spinner
             if (Input.GetKeyDown(KeyCode.End))
             {
+                ClearEventSystemSelection();
                 _currentIndex = _spinners.Count - 1;
                 AnnounceCurrentSpinner();
                 return true;
@@ -256,6 +266,9 @@ namespace AccessibleArena.Core.Services
             _hasFocus = true;
             _hasAnnounced = false;
             _totalMax = ReadGroupMaxValue();
+
+            // Clear EventSystem selection to prevent background buttons from receiving key events
+            ClearEventSystemSelection();
 
             // Deactivate card info navigator so Up/Down controls the spinner, not card blocks
             AccessibleArenaMod.Instance?.CardNavigator?.Deactivate();
@@ -490,6 +503,19 @@ namespace AccessibleArena.Core.Services
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// Clears EventSystem selection to prevent Unity's built-in navigation from
+        /// moving focus to background buttons (e.g. SettingsButton) when arrow keys are pressed.
+        /// </summary>
+        private void ClearEventSystemSelection()
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject != null)
+            {
+                eventSystem.SetSelectedGameObject(null);
+            }
         }
 
         private static void InitializeReflection()
