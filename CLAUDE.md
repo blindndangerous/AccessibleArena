@@ -88,6 +88,12 @@ dotnet build src/AccessibleArena.csproj
 ```
 The build auto-copies the DLL to `$(MtgaPath)\Mods\`. Default is the WotC path; override with `src/local.props` (see above).
 
+### Tests
+```bash
+dotnet test tests/AccessibleArena.Tests
+```
+Runs NUnit tests against pure-logic classes (no game installation needed). Uses stub assemblies for MelonLoader and UnityEngine.
+
 ### Release
 ```bash
 # Create a release (builds, tags, publishes to GitHub)

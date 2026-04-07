@@ -243,6 +243,14 @@ After completing all 5 NPE tutorial stages, the game shows a deck reward screen 
 - Does Backspace activate the Continue button (`NullClaimButton`)?
 - Does `UITextExtractor.GetText()` extract deck names, or does it fall back to "Deck 1", "Deck 2", etc.?
 
+### Skip Tutorial Confirmation Button Not Working
+
+Pressing "Yes" on the "Are you sure?" confirmation popup when trying to skip the tutorial (Color Challenge) does nothing. The popup appears correctly but the confirm button cannot be activated.
+
+**Issue:** [#69](https://github.com/JeanStiletto/AccessibleArena/issues/69)
+
+---
+
 ## Not Reproducible Yet
 
 ### Game Assets Loading Problem
