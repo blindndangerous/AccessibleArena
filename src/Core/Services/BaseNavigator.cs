@@ -2506,6 +2506,10 @@ namespace AccessibleArena.Core.Services
             if (_holdRepeater.Check(KeyCode.LeftArrow, () => HandleCarouselArrow(false))) return;
             if (_holdRepeater.Check(KeyCode.RightArrow, () => HandleCarouselArrow(true))) return;
 
+            // Home/End: jump to first/last item
+            if (Input.GetKeyDown(KeyCode.Home)) { NavigatePopupToIndex(0); return; }
+            if (Input.GetKeyDown(KeyCode.End)) { NavigatePopupToIndex(_elements.Count - 1); return; }
+
             // Backspace/Escape: dismiss popup
             if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Escape))
             {
@@ -2552,6 +2556,16 @@ namespace AccessibleArena.Core.Services
             }
 
             _currentIndex = newIndex;
+            AnnouncePopupCurrentItem();
+        }
+
+        private void NavigatePopupToIndex(int index)
+        {
+            _letterSearch.Clear();
+            if (_elements.Count == 0) return;
+            index = Math.Max(0, Math.Min(index, _elements.Count - 1));
+            if (index == _currentIndex) { AnnouncePopupCurrentItem(); return; }
+            _currentIndex = index;
             AnnouncePopupCurrentItem();
         }
 

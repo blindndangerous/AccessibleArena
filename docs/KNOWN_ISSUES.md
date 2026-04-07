@@ -34,21 +34,9 @@ Adding more of the same card to a deck causes focus to jump to the wrong card, r
 
 ---
 
-### Crafting Popup Missing Home/End Navigation
-
-Home and End keys do not work in the crafting popup for jumping to first/last element.
-
----
-
 ### Event-Specific Quests Show English Text
 
 Event-specific quests (e.g. special event objectives) display English text instead of the user's localized language. Standard daily/weekly quests are localized correctly.
-
----
-
-### Pack Opening Reads Flipped-Down Cards
-
-During pack opening, cards that are still flipped face-down can be read with Up/Down arrow keys, revealing their content before the player flips them.
 
 ---
 

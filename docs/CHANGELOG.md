@@ -41,6 +41,9 @@ All notable changes to Accessible Arena.
 ### Overlay / Web Browser
 - Claiming mailbox rewards that open an embedded web page (e.g. TMNT promo) no longer misdetects as "What's New" with broken navigation — the overlay now delegates to the web browser accessibility system for full keyboard navigation of the page content (untested, may not work fully)
 
+### Popups
+- Home and End keys now work in popups to jump to the first or last element
+
 ### Deck Builder
 - Fixed "Deck creation failed" popup when pressing Done or Backspace to exit the deck builder — the Done button was being activated twice (pointer click + direct method call), causing a duplicate server submission
 
