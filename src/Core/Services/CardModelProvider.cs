@@ -1123,7 +1123,11 @@ namespace AccessibleArena.Core.Services
         /// </summary>
         private static string ParseManaQuantityArray(IEnumerable manaQuantities)
         {
-            var symbols = new List<string>();
+            // Track colored mana grouped by symbol label (insertion-ordered)
+            var colorCounts = new Dictionary<string, int>();
+            var colorOrder = new List<string>();
+            // Hybrid/Phyrexian symbols are kept as individual entries (can't be meaningfully grouped)
+            var complexSymbols = new List<string>();
             int genericCount = 0;
 
             foreach (var mq in manaQuantities)
@@ -1166,11 +1170,11 @@ namespace AccessibleArena.Core.Services
 
                     if (isGeneric)
                     {
-                        // Generic/colorless mana - use the Count field value
                         genericCount += count;
                     }
-                    else
+                    else if (isHybrid || isPhyrexian)
                     {
+                        // Complex symbols kept individually — can't be collapsed into "N hybrid"
                         string symbol = ConvertManaColorToName(colorName);
 
                         if (isHybrid && altColorProp != null)
@@ -1178,33 +1182,47 @@ namespace AccessibleArena.Core.Services
                             var altColor = altColorProp.GetValue(mq);
                             string altColorName = altColor?.ToString() ?? "";
                             if (!string.IsNullOrEmpty(altColorName) && altColorName != colorName)
-                            {
-                                symbol = $"{symbol} or {ConvertManaColorToName(altColorName)}";
-                            }
+                                symbol = Strings.ManaHybrid(symbol, ConvertManaColorToName(altColorName));
                         }
 
                         if (isPhyrexian)
-                        {
-                            symbol = $"Phyrexian {symbol}";
-                        }
+                            symbol = Strings.ManaPhyrexian(symbol);
 
-                        // Add symbol for each mana of this color (e.g., {UU} = Blue, Blue)
                         for (int i = 0; i < count; i++)
+                            complexSymbols.Add(symbol);
+                    }
+                    else
+                    {
+                        // Simple colored mana — group by label (e.g. {BB} → "2 black")
+                        string symbol = ConvertManaColorToName(colorName);
+                        if (!colorCounts.ContainsKey(symbol))
                         {
-                            symbols.Add(symbol);
+                            colorCounts[symbol] = 0;
+                            colorOrder.Add(symbol);
                         }
+                        colorCounts[symbol] += count;
                     }
                 }
                 catch { /* Mana quantity reflection may fail on unexpected types */ }
             }
 
-            // Add generic mana count at the beginning if any
+            var parts = new List<string>();
+
+            // Generic mana first, labeled "colorless" (e.g. "3 colorless" instead of bare "3")
             if (genericCount > 0)
+                parts.Add($"{genericCount} {Strings.ManaColorless}");
+
+            // Grouped simple colors (e.g. "2 black", "1 blue")
+            foreach (var symbol in colorOrder)
             {
-                symbols.Insert(0, genericCount.ToString());
+                int cnt = colorCounts[symbol];
+                parts.Add(cnt > 1 ? $"{cnt} {symbol}" : symbol);
             }
 
-            return symbols.Count > 0 ? string.Join(", ", symbols) : null;
+            // Complex symbols (hybrid, phyrexian) appended individually
+            parts.AddRange(complexSymbols);
+
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
         }
 
         /// <summary>
