@@ -132,9 +132,9 @@ Steam's default overlay hotkey (Shift+Tab) conflicts with the mod's backward nav
 
 In the SelectGroup browser (e.g. Curator of Destinies / Fact or Fiction pile selection), Enter and Space now activate the focused pile button. Previously, Enter activated a face-down card instead of the pile button, and Space fell through to PromptButton_Primary ("Opponent's Turn"), accidentally passing the turn.
 
-**Fix applied:** Added SelectGroup-specific checks: Enter activates the focused button when `_isSelectGroup && _currentButtonIndex >= 0`; Space activates the current pile button the same way; PromptButton_Primary fallback is now excluded for SelectGroup browsers.
+**Fix applied:** Unified direct-choice early return in `ClickConfirmButton` handles SelectGroup, ChoiceList, and OptionalAction browsers identically — Space activates the focused button/card (same as Enter), or announces "No button selected" if nothing is focused. PromptButton fallbacks are excluded for all three browser types.
 
-**Files:** `BrowserNavigator.cs` (Enter handler, ClickConfirmButton)
+**Files:** `BrowserNavigator.cs` (ClickConfirmButton, ClickCancelButton, GetBrowserHintKey)
 
 ---
 

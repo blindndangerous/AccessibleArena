@@ -4,6 +4,9 @@ All notable changes to Accessible Arena.
 
 ## v0.9.1
 
+### Browsers
+- Direct-choice browsers (SelectGroup, ChoiceList, OptionalAction) now treat Space and Enter identically — both activate the focused option. Previously Space could fall through to unrelated duel buttons, accidentally passing the turn or accepting/declining without intent.
+
 ### Mailbox
 - Fixed unread mail items announcing only "Neu" instead of "Neu, mail title" — the unread badge text was intercepted before the mailbox-specific title extraction could run
 

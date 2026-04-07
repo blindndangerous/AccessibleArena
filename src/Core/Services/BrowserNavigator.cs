@@ -166,6 +166,9 @@ namespace AccessibleArena.Core.Services
             if (type == "SelectCards" || type == "LibrarySideboard")
                 return "BrowserHint_SelectCards";
 
+            // OptionalAction (shocklands, etc.): direct-choice, Space = Enter
+            if (_browserInfo.IsOptionalAction) return "BrowserHint_OptionalAction";
+
             // Simple button browsers (YesNo, Dungeon, Optional*, Mutate, LargeScrollList)
             return "BrowserHint";
         }
@@ -2615,6 +2618,20 @@ namespace AccessibleArena.Core.Services
                 return;
             }
 
+            // Direct-choice browsers: Space = Enter (activate focused item)
+            // These browsers have no separate confirm action — clicking a button IS the choice.
+            if (_isSelectGroup || _isChoiceList || _browserInfo?.IsOptionalAction == true)
+            {
+                if (_browserButtons.Count > 0 && _currentButtonIndex >= 0)
+                    ActivateCurrentButton();
+                else if (_browserCards.Count > 0 && _currentCardIndex >= 0)
+                    ActivateCurrentCard();
+                else
+                    _announcer.Announce(Strings.NoButtonSelected, AnnouncementPriority.Normal);
+                BrowserDetector.InvalidateCache();
+                return;
+            }
+
             // London mulligan: click SubmitButton (only if enough cards are on bottom)
             if (_browserInfo?.IsLondon == true)
             {
@@ -2648,37 +2665,11 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
-            // SelectGroup (Fact or Fiction): clicking a pile button IS the confirmation.
-            // Space activates the current pile choice (same as Enter).
-            if (_isSelectGroup && _browserButtons.Count > 0 && _currentButtonIndex >= 0)
-            {
-                ActivateCurrentButton();
-                BrowserDetector.InvalidateCache();
-                return;
-            }
-
             // Try discovered buttons by name pattern (SubmitButton, ConfirmButton, etc.)
             if (TryClickButtonByPatterns(BrowserDetector.ConfirmPatterns, out clickedLabel))
             {
                 _announcer.Announce(clickedLabel, AnnouncementPriority.Normal);
                 BrowserDetector.InvalidateCache(); // Force re-detection on next Update
-                return;
-            }
-
-            // OptionalAction: try MainButton (shockland pay-life choices etc.)
-            if (_browserInfo?.IsOptionalAction == true && TryClickButtonByName("MainButton", out clickedLabel))
-            {
-                _announcer.Announce(clickedLabel, AnnouncementPriority.Normal);
-                BrowserDetector.InvalidateCache();
-                return;
-            }
-
-            // Choice-list (LargeScrollList/SelectNCounters): clicking a choice IS the confirmation.
-            // Space activates the current choice (same as Enter).
-            if (_isChoiceList && _browserButtons.Count > 0 && _currentButtonIndex >= 0)
-            {
-                ActivateCurrentButton();
-                BrowserDetector.InvalidateCache();
                 return;
             }
 
@@ -2749,7 +2740,7 @@ namespace AccessibleArena.Core.Services
 
             // Third priority: PromptButton_Secondary
             // Skip for OptionalAction and choice-list browsers — would click unrelated duel phase buttons
-            if (!(_browserInfo?.IsOptionalAction == true) && !_isChoiceList && TryClickPromptButton(BrowserDetector.PromptButtonSecondaryPrefix, out clickedLabel))
+            if (!(_browserInfo?.IsOptionalAction == true) && !_isChoiceList && !_isSelectGroup && TryClickPromptButton(BrowserDetector.PromptButtonSecondaryPrefix, out clickedLabel))
             {
                 _announcer.Announce(clickedLabel, AnnouncementPriority.Normal);
                 BrowserDetector.InvalidateCache(); // Force re-detection on next Update
