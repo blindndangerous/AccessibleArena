@@ -2665,6 +2665,17 @@ namespace AccessibleArena.Core.Services
                 }
             }
 
+            // SelectCards/SelectCardsMultiZone: prefer workflow reflection over button patterns.
+            // SingleButton in these browsers is often the "Decline" option, not confirm.
+            // The correct confirm is submitting the workflow with the current selection.
+            if (_isHighlightFilteredBrowser && TrySubmitWorkflowViaReflection())
+            {
+                MelonLogger.Msg("[BrowserNavigator] SelectCards workflow submitted via reflection");
+                _announcer.Announce(Strings.Confirmed, AnnouncementPriority.Normal);
+                BrowserDetector.InvalidateCache();
+                return;
+            }
+
             // Try discovered buttons by name pattern (SubmitButton, ConfirmButton, etc.)
             if (TryClickButtonByPatterns(BrowserDetector.ConfirmPatterns, out clickedLabel))
             {
