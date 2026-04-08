@@ -2,6 +2,8 @@
 
 All notable changes to Accessible Arena.
 
+## v0.9.2
+
 ## v0.9.1
 
 ### Riot Ability Dialog Fix (PR #65 by blindndangerous)
