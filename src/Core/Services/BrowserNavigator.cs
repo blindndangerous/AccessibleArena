@@ -838,8 +838,9 @@ namespace AccessibleArena.Core.Services
                     return true;
                 }
 
-                // SelectCards/MultiZone: require double-press to prevent accidental decline
-                if (_isHighlightFilteredBrowser)
+                // MultiZone only: require double-press to prevent accidental decline
+                // (regular SelectCards browsers like "choose a creature" are fine with single press)
+                if (_isMultiZone)
                 {
                     if (_browserConfirmWaitRelease)
                         return true; // Still held from first press — ignore
