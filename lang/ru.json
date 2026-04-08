@@ -336,6 +336,7 @@
   "Confirmed": "Подтверждено",
   "Cancelled": "Отменено",
   "NoConfirmButton": "Кнопка подтверждения не найдена",
+  "BrowserConfirmGuard": "Press Space again to confirm.",
   "KeepOnTop": "оставить",
   "PutOnBottom": "выбрано",
   "CouldNotClick_Format": "Не удалось нажать {0}",

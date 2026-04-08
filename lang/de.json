@@ -347,6 +347,7 @@
   "Confirmed": "Bestätigt",
   "Cancelled": "Abgebrochen",
   "NoConfirmButton": "Keine Bestätigungsschaltfläche gefunden",
+  "BrowserConfirmGuard": "Erneut Leertaste drücken zum Bestätigen.",
   "KeepOnTop": "behalten",
   "PutOnBottom": "ausgewählt",
   "CouldNotClick_Format": "{0} konnte nicht angeklickt werden",

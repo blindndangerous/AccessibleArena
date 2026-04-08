@@ -90,6 +90,10 @@ namespace AccessibleArena.Core.Services
         // Highlight-filtered Tab: skip non-selectable cards in selection browsers
         private bool _isHighlightFilteredBrowser;
 
+        // Browser confirm guard: require double Space press in selection browsers
+        private bool _browserConfirmWarning;
+        private bool _browserConfirmWaitRelease;
+
         // OrderCards browser state (card reordering for library/triggers)
         private bool _isOrderCards;
         private int _orderGrabbedIndex = -1; // Index of card being moved (-1 = none grabbed)
@@ -370,6 +374,8 @@ namespace AccessibleArena.Core.Services
 
             // Clear highlight filter state
             _isHighlightFilteredBrowser = false;
+            _browserConfirmWarning = false;
+            _browserConfirmWaitRelease = false;
 
             // Clear OrderCards state
             _isOrderCards = false;
@@ -436,6 +442,10 @@ namespace AccessibleArena.Core.Services
                 AnnounceBrowserState();
                 _hasAnnouncedEntry = true;
             }
+
+            // Track Space release for browser confirm guard (double-press in selection browsers)
+            if (_browserConfirmWaitRelease && !Input.GetKey(KeyCode.Space))
+                _browserConfirmWaitRelease = false;
 
             // AssignDamage browser: Up/Down controls spinner, Left/Right navigates blockers
             if (_isAssignDamage)
@@ -827,6 +837,25 @@ namespace AccessibleArena.Core.Services
                     PlaceOrderCard();
                     return true;
                 }
+
+                // SelectCards/MultiZone: require double-press to prevent accidental decline
+                if (_isHighlightFilteredBrowser)
+                {
+                    if (_browserConfirmWaitRelease)
+                        return true; // Still held from first press — ignore
+
+                    if (!_browserConfirmWarning)
+                    {
+                        // First press: warn and block
+                        _browserConfirmWarning = true;
+                        _browserConfirmWaitRelease = true;
+                        _announcer.Announce(Strings.BrowserConfirmGuard, AnnouncementPriority.High);
+                        return true;
+                    }
+                    // Second press after release: reset guard and proceed to submit
+                    _browserConfirmWarning = false;
+                }
+
                 ClickConfirmButton();
                 return true;
             }

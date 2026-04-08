@@ -336,6 +336,7 @@
   "Confirmed": "Confirmado",
   "Cancelled": "Cancelado",
   "NoConfirmButton": "Botão de confirmação não encontrado",
+  "BrowserConfirmGuard": "Press Space again to confirm.",
   "KeepOnTop": "manter",
   "PutOnBottom": "selecionado",
   "CouldNotClick_Format": "Não foi possível clicar em {0}",

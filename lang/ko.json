@@ -336,6 +336,7 @@
   "Confirmed": "확정됨",
   "Cancelled": "취소됨",
   "NoConfirmButton": "확인 버튼을 찾을 수 없습니다",
+  "BrowserConfirmGuard": "Press Space again to confirm.",
   "KeepOnTop": "유지",
   "PutOnBottom": "선택됨",
   "CouldNotClick_Format": "{0}을(를) 클릭할 수 없습니다",

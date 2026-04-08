@@ -336,6 +336,7 @@
   "Confirmed": "已確認",
   "Cancelled": "已取消",
   "NoConfirmButton": "未找到確認按鈕",
+  "BrowserConfirmGuard": "Press Space again to confirm.",
   "KeepOnTop": "保留",
   "PutOnBottom": "已選取",
   "CouldNotClick_Format": "無法點擊{0}",

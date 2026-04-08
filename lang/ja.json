@@ -336,6 +336,7 @@
   "Confirmed": "確定しました",
   "Cancelled": "キャンセルしました",
   "NoConfirmButton": "確定ボタンが見つかりません",
+  "BrowserConfirmGuard": "Press Space again to confirm.",
   "KeepOnTop": "キープ",
   "PutOnBottom": "選択済み",
   "CouldNotClick_Format": "{0}をクリックできませんでした",
